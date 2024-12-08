@@ -1,0 +1,44 @@
+# Version Control Best Practices: Ensure that unnecessary or sensitive files are not tracked
+# Security and Compliance: Prevent sensitive files like environment variables and logs from being committed
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Log files
+logs/
+*.log
+
+# Environment variables
+*.env
+src/web/.env.local
+src/backend/.env.local
+
+# Test coverage
+coverage/
+
+# macOS system files
+.DS_Store
+
+# Next.js build artifacts
+src/web/.next/
+
+# Backend cache
+src/backend/.cache/
+
+# Infrastructure files
+infrastructure/terraform/.terraform/
+infrastructure/docker/*.log
+
+# IDE and editor files
+*.iml
+.vscode/
+.idea/
+*.swp
+
+# Temporary and backup files
+*.bak
+*.tmp

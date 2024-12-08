@@ -1,0 +1,77 @@
+# Kubernetes version: 1.24
+# Requirements addressed:
+# - TLS Certificate Management (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Automates the issuance and renewal of TLS certificates to ensure secure communication.
+# - Secure Communication (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Ensures secure communication through HTTPS and TLS encryption.
+
+# Human Tasks:
+# 1. Verify that DNS records are properly configured for domain validation
+# 2. Ensure proper RBAC permissions are set up for cert-manager
+# 3. Configure monitoring for certificate expiration and renewal
+# 4. Review and adjust certificate renewal settings if needed
+
+---
+# ClusterIssuer for Let's Encrypt Production
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: cert-manager
+    environment: production
+  annotations:
+    description: "Let's Encrypt Production Issuer for Estate Kit TLS certificates"
+spec:
+  acme:
+    # Production Let's Encrypt server URL
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Email for important account notifications
+    email: admin@estatekit.com
+    # Private key secret reference
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    # Solver configurations
+    solvers:
+    # HTTP01 challenge solver
+    - http01:
+        ingress:
+          class: nginx
+
+---
+# Certificate for Estate Kit domain
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: estatekit-tls
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: cert-manager
+    environment: production
+  annotations:
+    description: "TLS certificate for Estate Kit domain"
+spec:
+  # Secret name to store the certificate
+  secretName: estatekit-tls-secret
+  # Duration before renewal
+  duration: 2160h # 90 days
+  # Renewal before expiry
+  renewBefore: 360h # 15 days
+  # Common name and DNS names
+  commonName: estatekit.com
+  dnsNames:
+  - estatekit.com
+  - www.estatekit.com
+  # Reference to the issuer
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+    group: cert-manager.io
+  # Use ACME HTTP01 challenge
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth

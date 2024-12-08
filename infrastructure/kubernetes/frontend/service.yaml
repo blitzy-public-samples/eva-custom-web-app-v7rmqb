@@ -1,0 +1,44 @@
+# Kubernetes version: 1.24
+# Requirements addressed:
+# - Frontend Deployment (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures the frontend application is accessible via a Kubernetes Service.
+# - Traffic Routing (Technical Specifications/2.5 Deployment Architecture)
+#   Routes traffic to the appropriate frontend pods based on the service configuration.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    app: frontend
+    component: web
+    part-of: estate-kit
+  annotations:
+    description: "Frontend service for Estate Kit web application"
+    maintainer: "Estate Kit Development Team"
+spec:
+  # Select pods with the frontend label
+  selector:
+    app: frontend
+  
+  # Port configuration
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80  # Service port
+      targetPort: 80  # Container port (matches Nginx configuration)
+  
+  # Use ClusterIP for internal access
+  # External access will be managed by Ingress
+  type: ClusterIP
+
+  # Session affinity configuration
+  sessionAffinity: None
+
+  # Publishing not required as we're using ClusterIP
+  publishNotReadyAddresses: false
+
+  # IP configurations
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv4

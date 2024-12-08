@@ -1,0 +1,101 @@
+# Requirement: Docker Build Optimization
+# Location: Technical Specifications/4.5 Development & Deployment
+# Description: Excludes unnecessary files and directories from Docker builds to optimize image size and build performance.
+
+# Dependencies and package management
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.npm/
+.yarn/
+package-lock.json
+yarn.lock
+
+# Build artifacts and compiled files
+dist/
+build/
+*.pyc
+__pycache__/
+*.mo
+*.o
+*.so
+
+# Development and test files
+tests/
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+jest.config.*
+test/
+*.test.ts
+*.spec.ts
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.editorconfig
+
+# Environment and configuration
+.env
+.env.*
+*.local
+*.dev
+config.local.*
+docker-compose.override.yml
+
+# Documentation and non-essential files
+docs/
+*.md
+LICENSE
+README*
+
+# Logs and debugging
+logs/
+*.log
+debug/
+*.debug
+
+# Temporary files and caches
+tmp/
+temp/
+.cache/
+*.tmp
+*.temp
+
+# Database files
+*.sqlite
+*.db
+migrations/
+
+# Certificates and sensitive files
+*.pem
+*.key
+*.crt
+*.cert
+
+# OS generated files
+.DS_Store
+Thumbbs.db
+
+# Backup files
+*.bak
+*.backup
+
+# Process files
+*.pid
+
+# TypeScript source maps
+*.map
+
+# Development scripts
+scripts/

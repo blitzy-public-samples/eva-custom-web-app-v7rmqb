@@ -1,0 +1,16 @@
+# Addresses requirement: SEO and Web Crawler Management
+# Ensures proper indexing of public content while protecting sensitive areas
+
+User-agent: *
+Allow: /
+
+# Restrict access to sensitive areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+
+# Recommended crawl delay to prevent server overload
+Crawl-delay: 10
+
+# Sitemap location (uncomment and update once sitemap is generated)
+# Sitemap: https://yourdomain.com/sitemap.xml

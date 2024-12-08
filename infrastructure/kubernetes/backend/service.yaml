@@ -1,0 +1,57 @@
+# Kubernetes version: 1.24
+# Purpose: Defines the Kubernetes Service configuration for exposing the backend pods
+# Requirements Addressed:
+# - Backend Service Exposure (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures that backend pods are exposed as a service within the Kubernetes cluster
+# - Traffic Routing (Technical Specifications/2.5 Deployment Architecture)
+#   Routes traffic to the appropriate backend pods based on service selectors
+# - High Availability (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures high availability through load balancing and stable networking
+
+# Human Tasks:
+# 1. Verify that service port configuration matches application port settings
+# 2. Configure network policies to control traffic to/from the service
+# 3. Set up monitoring for service health and performance
+# 4. Review and adjust load balancing settings if needed
+# 5. Configure proper DNS entries for service discovery
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: estate-kit-production
+  labels:
+    app: backend-service
+    component: backend
+    environment: production
+  annotations:
+    description: "Estate Kit Backend Service"
+    maintainer: "admin@estatekit.com"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+spec:
+  # Use ClusterIP for internal service access
+  type: ClusterIP
+  
+  # Port configuration
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80  # Service port
+      targetPort: 8080  # Container port
+  
+  # Selector to identify backend pods
+  selector:
+    app: backend-service
+  
+  # Session affinity configuration
+  sessionAffinity: None
+  
+  # Publishing not ready addresses configuration
+  publishNotReadyAddresses: false
+  
+  # IP family policy configuration
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv4

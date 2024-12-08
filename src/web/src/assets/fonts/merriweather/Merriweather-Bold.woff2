@@ -1,0 +1,15 @@
+Human Tasks Required:
+1. Download the Merriweather Bold font in WOFF2 format from Google Fonts:
+   - Visit https://fonts.google.com/specimen/Merriweather
+   - Select the Bold (700) weight
+   - Download the WOFF2 format
+   
+2. Place the downloaded Merriweather-Bold.woff2 file in:
+   src/web/src/assets/fonts/merriweather/
+
+3. Verify the font file works correctly by:
+   - Checking it loads properly in the browser
+   - Confirming the @font-face declaration in CSS can access it
+   - Testing bold text rendering in the application
+
+4. Ensure proper CORS and caching headers are configured on the web server for .woff2 files

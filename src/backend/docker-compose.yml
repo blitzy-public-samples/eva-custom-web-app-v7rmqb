@@ -1,0 +1,132 @@
+# Estate Kit - Docker Compose Configuration
+# Version: 1.0.0
+#
+# Requirements Addressed:
+# - Containerization (Technical Specifications/2.5 Deployment Architecture)
+#   Implements containerized deployment for backend services using Docker Compose.
+# - Service Orchestration (Technical Specifications/2.5 Deployment Architecture)
+#   Orchestrates multiple backend services and dependencies in a local development environment.
+# - Database Configuration (Technical Specifications/2.2 Container Architecture/Backend Services)
+#   Configures PostgreSQL as the primary database for backend services.
+# - Caching Layer (Technical Specifications/2.3 Component Details/Backend Framework Stack)
+#   Configures Redis as the caching layer for session and temporary data storage.
+
+version: '3.8'
+
+services:
+  api-gateway:
+    image: estatekit/api-gateway:latest
+    container_name: estatekit-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-estatekit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-estatekit_db}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-estatekit-documents}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN:-auth0.estatekit.com}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - estatekit_network
+    restart: unless-stopped
+
+  user-service:
+    image: estatekit/user-service:latest
+    container_name: estatekit-user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-estatekit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-estatekit_db}
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN:-auth0.estatekit.com}
+    depends_on:
+      - postgres
+    networks:
+      - estatekit_network
+    restart: unless-stopped
+
+  document-service:
+    image: estatekit/document-service:latest
+    container_name: estatekit-document-service
+    ports:
+      - "8082:8082"
+    environment:
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET:-estatekit-documents}
+      - POSTGRES_USER=${POSTGRES_USER:-estatekit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-estatekit_db}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - estatekit_network
+    restart: unless-stopped
+
+  notification-service:
+    image: estatekit/notification-service:latest
+    container_name: estatekit-notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-estatekit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-estatekit_db}
+    depends_on:
+      - postgres
+    networks:
+      - estatekit_network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14
+    container_name: estatekit-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-estatekit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword}
+      - POSTGRES_DB=${POSTGRES_DB:-estatekit_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - estatekit_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-estatekit_user} -d ${POSTGRES_DB:-estatekit_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:6.2
+    container_name: estatekit-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - estatekit_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: estatekit-postgres-data
+    driver: local
+  redis_data:
+    name: estatekit-redis-data
+    driver: local
+
+networks:
+  estatekit_network:
+    name: estatekit-network
+    driver: bridge

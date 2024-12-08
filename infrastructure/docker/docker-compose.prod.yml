@@ -1,0 +1,122 @@
+# Production Docker Compose configuration for Estate Kit platform
+# Requirements addressed: Production Deployment (Technical Specifications/4.5 Development & Deployment/Deployment Pipeline)
+
+version: '3.8'
+
+# Define the project name for container naming
+name: estatekit
+
+services:
+  # Backend service configuration
+  backend:
+    image: estatekit-backend:latest
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    env_file:
+      - ./src/backend/.env.example
+    depends_on:
+      - db
+      - redis
+    networks:
+      - estatekit_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  # Frontend service configuration
+  frontend:
+    image: estatekit-frontend:latest
+    build:
+      context: ./src/web
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    env_file:
+      - ./src/web/.env.example
+    networks:
+      - estatekit_network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  # Database service configuration
+  db:
+    image: postgres:14
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: estatekit_user
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: estatekit_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - estatekit_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estatekit_user -d estatekit_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+
+  # Redis service configuration
+  redis:
+    image: redis:6.2
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - estatekit_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    command: redis-server --appendonly yes
+
+# Define persistent volumes
+volumes:
+  db_data:
+    name: estatekit_db_data
+    driver: local
+
+# Define custom network
+networks:
+  estatekit_network:
+    name: estatekit_network
+    driver: bridge

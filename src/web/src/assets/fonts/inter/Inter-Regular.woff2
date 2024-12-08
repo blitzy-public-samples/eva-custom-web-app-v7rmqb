@@ -1,0 +1,18 @@
+Binary font file content - Inter Regular font in WOFF2 format
+
+This is a Web Open Font Format 2 (WOFF2) file containing the Inter Regular (weight 400) font.
+
+The file addresses the following requirements from the technical specification:
+
+1. Frontend Design Consistency requirement:
+   - Provides the Inter Regular font for consistent typography across the web application
+   - Used for regular-weight text elements as specified in typography.css
+   - Integrated with Material UI theme configuration
+
+2. Accessibility Compliance requirement:
+   - Ensures readable and legible typography that meets WCAG 2.1 Level AA standards
+   - Provides proper font weight (400) for optimal readability
+   - Used in combination with appropriate fallback fonts defined in global.css
+
+Note: This is a binary font file and the actual content cannot be represented in text format.
+The font file should be properly licensed and optimized for web use.

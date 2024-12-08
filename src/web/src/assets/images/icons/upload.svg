@@ -1,0 +1,29 @@
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  width="24" 
+  height="24" 
+  viewBox="0 0 24 24" 
+  fill="none" 
+  stroke="currentColor" 
+  stroke-width="2" 
+  stroke-linecap="round" 
+  stroke-linejoin="round"
+  aria-hidden="true"
+  role="img"
+  aria-label="Upload icon"
+>
+  <!-- 
+    Requirements addressed:
+    - File Upload Interface (Technical Specifications/3.1 User Interface Design/Document Upload Interface)
+    Provides a visual representation for file upload actions, enhancing user experience and accessibility.
+  -->
+  
+  <!-- Main upload arrow shape -->
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  
+  <!-- Vertical line of arrow -->
+  <path d="M12 3v12" />
+  
+  <!-- Arrow head pointing upward -->
+  <path d="M17 8l-5-5-5 5" />
+</svg>

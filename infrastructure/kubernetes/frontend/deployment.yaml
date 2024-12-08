@@ -1,0 +1,150 @@
+# Kubernetes version: 1.24
+# Purpose: Defines the Kubernetes Deployment configuration for the frontend application
+# Requirements addressed:
+# - Frontend Deployment (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures the frontend application is deployed in a scalable and resilient manner
+# - Environment-Specific Configuration (Technical Specifications/2.5 Deployment Architecture)
+#   Supports environment-specific configurations through ConfigMaps and Secrets
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend
+    component: web
+    part-of: estate-kit
+  annotations:
+    description: "Frontend deployment for Estate Kit web application"
+    maintainer: "Estate Kit Development Team"
+spec:
+  # Ensure high availability with multiple replicas
+  replicas: 3
+  
+  # Pod selector configuration
+  selector:
+    matchLabels:
+      app: frontend
+  
+  # Template for pod configuration
+  template:
+    metadata:
+      labels:
+        app: frontend
+        component: web
+      annotations:
+        checksum/config: ${CONFIG_CHECKSUM}
+    spec:
+      containers:
+        - name: frontend-container
+          image: estatekit/frontend:latest
+          imagePullPolicy: Always
+          
+          # Container port configuration
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          
+          # Environment configuration from ConfigMap and Secrets
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+            - secretRef:
+                name: api-keys
+          
+          # Resource limits and requests
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+          
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          # Volume mounts for nginx configuration
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+            - name: tmp-volume
+              mountPath: /tmp
+      
+      # Volumes configuration
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+            items:
+              - key: nginx.conf
+                path: default.conf
+        - name: tmp-volume
+          emptyDir: {}
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101  # nginx user
+        fsGroup: 101
+      
+      # Pod scheduling and anti-affinity
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - frontend
+                topologyKey: kubernetes.io/hostname
+      
+      # Tolerations for node scheduling
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+      
+      # Image pull secrets if using private registry
+      imagePullSecrets:
+        - name: registry-credentials
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+
+  # Deployment strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  # Revision history
+  revisionHistoryLimit: 10
+
+  # Minimum ready seconds before pod is considered available
+  minReadySeconds: 5
+
+  # Progress deadline seconds
+  progressDeadlineSeconds: 600

@@ -1,0 +1,124 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Estate Kit Delegate Schema",
+    "description": "OpenAPI schema for delegate-related data structures in the Estate Kit backend system",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {
+      "DelegatePermission": {
+        "type": "object",
+        "description": "Represents a single permission assigned to a delegate",
+        "required": [
+          "permissionId",
+          "resourceType", 
+          "accessLevel"
+        ],
+        "properties": {
+          "permissionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the permission"
+          },
+          "resourceType": {
+            "type": "string",
+            "enum": [
+              "document",
+              "profile",
+              "medical",
+              "financial",
+              "legal"
+            ],
+            "description": "Type of resource this permission applies to"
+          },
+          "accessLevel": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write", 
+              "manage"
+            ],
+            "description": "Level of access granted for the resource"
+          }
+        }
+      },
+      "DelegateSchema": {
+        "type": "object",
+        "description": "Represents a delegate relationship and associated permissions",
+        "required": [
+          "delegateId",
+          "ownerId",
+          "permissions",
+          "role",
+          "expiresAt"
+        ],
+        "properties": {
+          "delegateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the delegate"
+          },
+          "ownerId": {
+            "type": "string", 
+            "format": "uuid",
+            "description": "Identifier of the primary account owner who granted delegate access"
+          },
+          "permissions": {
+            "type": "array",
+            "description": "List of permissions granted to this delegate",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/DelegatePermission"
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "executor",
+              "healthcare_proxy", 
+              "financial_advisor"
+            ],
+            "description": "Role assigned to the delegate"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the delegate access expires"
+          }
+        }
+      },
+      "DelegateResponse": {
+        "type": "object",
+        "description": "Response object for delegate-related API endpoints",
+        "required": [
+          "success",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the operation was successful"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DelegateSchema"
+          },
+          "error": {
+            "type": "object",
+            "description": "Error details if the operation failed",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

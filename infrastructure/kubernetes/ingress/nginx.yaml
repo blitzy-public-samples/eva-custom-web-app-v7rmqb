@@ -1,0 +1,72 @@
+# Kubernetes version: 1.24
+# Requirements addressed:
+# - Traffic Routing (Technical Specifications/2.5 Deployment Architecture)
+#   Routes external traffic to the appropriate frontend and backend services based on defined rules.
+# - Secure Communication (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Ensures secure communication through HTTPS and TLS termination.
+# - High Availability (Technical Specifications/2.5 Deployment Architecture)
+#   Provides high availability by distributing traffic across multiple service pods.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: estate-kit-ingress
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: ingress
+    environment: production
+  annotations:
+    # Rewrite target path
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Force SSL/TLS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Set maximum request body size to 10MB
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Enable CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    # Configure CORS headers
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # Configure security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: SAMEORIGIN";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+    # Enable session affinity
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+
+spec:
+  # TLS configuration
+  tls:
+  - hosts:
+    - estatekit.com
+    - www.estatekit.com
+    secretName: tls-secret
+
+  # Routing rules
+  rules:
+  - host: estatekit.com
+    http:
+      paths:
+      # Frontend service route
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      
+      # Backend API route
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 80

@@ -1,0 +1,38 @@
+# Kubernetes version: 1.24
+# Purpose: Defines Kubernetes Namespaces for the Estate Kit platform
+# Requirements Addressed:
+# - Resource Organization and Isolation (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures logical separation and isolation of resources within the Kubernetes cluster
+#   for better management and security.
+
+# Human Tasks:
+# 1. Verify namespace naming aligns with organization's naming conventions
+# 2. Ensure proper RBAC policies are configured for each namespace
+# 3. Set up resource quotas and limits for each namespace
+# 4. Configure network policies for namespace isolation
+# 5. Set up monitoring and logging for namespace-level metrics
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: estate-kit-production
+  labels:
+    app: estate-kit
+    environment: production
+  annotations:
+    maintainer: admin@estatekit.com
+    description: "Production namespace for the Estate Kit platform"
+    kubernetes.io/metadata.name: estate-kit-production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: estate-kit-staging
+  labels:
+    app: estate-kit
+    environment: staging
+  annotations:
+    maintainer: admin@estatekit.com
+    description: "Staging namespace for the Estate Kit platform"
+    kubernetes.io/metadata.name: estate-kit-staging

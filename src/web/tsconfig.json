@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ES2022",                       // Specify ECMAScript target version
+    "module": "ESNext",                       // Specify module code generation
+    "lib": [                                  // Specify library files to be included in the compilation
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
+    
+    /* Strict Type-Checking Options */
+    "strict": true,                           // Enable all strict type-checking options
+    "allowJs": false,                         // Do not allow JavaScript files to be compiled
+    "skipLibCheck": true,                     // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in file names
+    
+    /* Module Resolution Options */
+    "moduleResolution": "Node",               // Resolve modules using Node.js style
+    "esModuleInterop": true,                  // Enable interoperability between CommonJS and ES Modules
+    "resolveJsonModule": true,                // Allow importing .json files
+    "isolatedModules": true,                  // Ensure each file can be safely transpiled without relying on other imports
+    
+    /* React Options */
+    "jsx": "react-jsx",                       // Support JSX in .tsx files without importing React
+    
+    /* Emit Options */
+    "noEmit": true                           // Do not emit outputs (Vite will handle this)
+  },
+  "include": [
+    "src"                                     // Only include files in the src directory
+  ],
+  "exclude": [
+    "node_modules",                           // Exclude node_modules from compilation
+    "build"                                   // Exclude build output directory
+  ]
+}

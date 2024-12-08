@@ -1,0 +1,116 @@
+# Kubernetes version: 1.24
+# Purpose: Defines the Kubernetes Deployment configuration for the Estate Kit backend services
+# Requirements Addressed:
+# - Backend Deployment (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures backend services are deployed as pods within the Kubernetes cluster with appropriate scaling and resource allocation.
+# - Environment Configuration (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Uses environment variables to securely configure the backend services.
+# - High Availability (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures high availability of backend services through replica management and health checks.
+
+# Human Tasks:
+# 1. Verify resource limits match cluster capacity and application requirements
+# 2. Configure horizontal pod autoscaling based on load testing results
+# 3. Review health check endpoints and timing configurations
+# 4. Ensure proper network policies are in place
+# 5. Set up monitoring and alerting for pod health
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: backend-service
+    environment: production
+  annotations:
+    description: "Estate Kit Backend Service Deployment"
+    maintainer: "admin@estatekit.com"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: backend-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: backend-container
+        image: estate-kit-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: backend-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - backend-service
+              topologyKey: kubernetes.io/hostname

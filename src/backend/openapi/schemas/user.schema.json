@@ -1,0 +1,316 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Estate Kit User Schema",
+    "description": "OpenAPI schema for user-related data structures in the Estate Kit backend system",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "description": "Represents a user in the Estate Kit system",
+        "required": [
+          "userId",
+          "email",
+          "name",
+          "role",
+          "permissions"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address - primary identifier for authentication",
+            "minLength": 5,
+            "maxLength": 255,
+            "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+          },
+          "name": {
+            "type": "string",
+            "description": "User's full name",
+            "minLength": 2,
+            "maxLength": 100,
+            "pattern": "^[a-zA-Z\\s-']+$"
+          },
+          "role": {
+            "type": "string",
+            "description": "User's role in the system",
+            "enum": [
+              "owner",
+              "delegate",
+              "admin"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "description": "Array of permissions assigned to the user",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "minItems": 1,
+            "maxItems": 50
+          },
+          "subscriptions": {
+            "type": "array",
+            "description": "Array of user's active subscriptions",
+            "items": {
+              "$ref": "#/components/schemas/UserSubscription"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "description": "Array of documents owned by or shared with the user",
+            "items": {
+              "$ref": "#/components/schemas/Document"
+            }
+          },
+          "auditLogs": {
+            "type": "array",
+            "description": "Array of audit logs related to the user's actions",
+            "items": {
+              "$ref": "#/components/schemas/AuditLog"
+            }
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "description": "Represents a permission assigned to a user",
+        "required": [
+          "permissionId",
+          "resourceType",
+          "accessLevel"
+        ],
+        "properties": {
+          "permissionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the permission"
+          },
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource this permission applies to",
+            "enum": [
+              "document",
+              "profile",
+              "medical",
+              "financial",
+              "legal"
+            ]
+          },
+          "accessLevel": {
+            "type": "string",
+            "description": "Level of access granted",
+            "enum": [
+              "read",
+              "write",
+              "manage",
+              "admin"
+            ]
+          }
+        }
+      },
+      "UserSubscription": {
+        "type": "object",
+        "description": "Represents a user's subscription",
+        "required": [
+          "userId",
+          "planId",
+          "status",
+          "startDate",
+          "endDate"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns the subscription"
+          },
+          "planId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the subscription plan"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the subscription",
+            "enum": [
+              "active",
+              "inactive",
+              "cancelled"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date when the subscription started"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date when the subscription ends"
+          }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "description": "Represents a document in the system",
+        "required": [
+          "documentId",
+          "title",
+          "category",
+          "status",
+          "metadata"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the document"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the document",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the document",
+            "enum": [
+              "medical",
+              "financial",
+              "legal",
+              "personal"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the document",
+            "enum": [
+              "draft",
+              "pending_review",
+              "approved",
+              "archived"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the document",
+            "additionalProperties": true
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "description": "Represents an audit log entry",
+        "required": [
+          "id",
+          "userId",
+          "action",
+          "timestamp",
+          "details",
+          "severity",
+          "status",
+          "metadata"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the audit log entry"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who performed the action"
+          },
+          "action": {
+            "type": "string",
+            "description": "Type of action performed",
+            "enum": [
+              "USER_LOGIN",
+              "USER_LOGOUT",
+              "USER_PROFILE_UPDATE",
+              "USER_PASSWORD_CHANGE",
+              "USER_MFA_UPDATE",
+              "DOCUMENT_UPLOAD",
+              "DOCUMENT_VIEW",
+              "DOCUMENT_UPDATE",
+              "DOCUMENT_DELETE",
+              "DOCUMENT_SHARE",
+              "DELEGATE_INVITE",
+              "DELEGATE_ACCEPT",
+              "DELEGATE_REMOVE",
+              "DELEGATE_PERMISSION_UPDATE",
+              "SYSTEM_ERROR",
+              "SYSTEM_CONFIG_UPDATE",
+              "SYSTEM_MAINTENANCE"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the action occurred"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional details about the action",
+            "additionalProperties": true
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity level of the audit event",
+            "enum": [
+              "INFO",
+              "WARNING",
+              "ERROR",
+              "CRITICAL"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the audited action",
+            "enum": [
+              "SUCCESS",
+              "FAILURE",
+              "PENDING",
+              "CANCELLED"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the audit event",
+            "additionalProperties": true
+          },
+          "sourceIp": {
+            "type": "string",
+            "format": "ipv4",
+            "description": "Source IP address of the request"
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "User agent string of the client"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Request ID for correlation"
+          },
+          "resourceIds": {
+            "type": "array",
+            "description": "Related resource identifiers",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+# Format: pattern  owner1 owner2 ...
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Requirements addressed:
+# - Code Review Automation: Automatically assigns code reviewers based on file/directory ownership
+# - Code Quality Assurance: Ensures domain experts review changes to specific parts of the codebase
+
+# Default owners for everything in the repo
+# These owners will be the default owners for everything in the repository
+*       @team-lead @project-maintainer
+
+# Backend team owns all files under src/backend/
+src/backend/**    @backend-team
+
+# Frontend team owns all files under src/web/
+src/web/**    @frontend-team
+
+# DevOps team owns all infrastructure-related files
+infrastructure/**    @devops-team
+
+# CI/CD team owns all GitHub workflow files
+.github/workflows/**    @ci-cd-team

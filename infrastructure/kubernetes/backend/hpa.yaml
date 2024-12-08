@@ -1,0 +1,62 @@
+# Kubernetes version: 1.24
+# Purpose: Defines the Kubernetes Horizontal Pod Autoscaler (HPA) configuration for the Estate Kit backend services
+# Requirements Addressed:
+# - Dynamic Scaling (Technical Specifications/2.5 Deployment Architecture)
+#   Ensures that backend services can scale dynamically based on resource utilization metrics such as CPU and memory.
+# - High Availability (Technical Specifications/2.5 Deployment Architecture)
+#   Supports high availability of backend services by dynamically adjusting the number of pods to handle varying workloads.
+
+# Human Tasks:
+# 1. Verify that metrics-server is installed and functioning in the cluster
+# 2. Review and adjust scaling thresholds based on load testing results
+# 3. Configure alerts for scaling events
+# 4. Monitor HPA behavior during peak usage periods
+# 5. Adjust min/max replicas based on production workload patterns
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: backend-service
+    environment: production
+  annotations:
+    description: "HPA for Estate Kit Backend Service"
+    maintainer: "admin@estatekit.com"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 120
+      selectPolicy: Min

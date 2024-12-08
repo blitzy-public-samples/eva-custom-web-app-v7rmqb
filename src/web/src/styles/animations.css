@@ -1,0 +1,116 @@
+/* Human Tasks:
+1. Ensure users have the option to reduce motion in their OS/browser settings
+2. Test animations across different browsers for consistent behavior
+3. Verify animations meet WCAG 2.1 guidelines for motion and flashing content
+4. Confirm animation timing works well for elderly users (primary demographic)
+*/
+
+/* Global animation variables */
+:root {
+  --animation-duration: 0.5s;
+  --animation-timing-function: ease-in;
+  --animation-iteration-count: 1;
+  
+  --slide-duration: 0.7s;
+  --slide-timing-function: ease-out;
+  
+  --pulse-duration: 1s;
+  --pulse-timing-function: ease-in-out;
+  --pulse-iteration-count: infinite;
+}
+
+/* Respect user's motion preferences - Addresses Accessibility Compliance requirement */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Fade In animation - Addresses Frontend Design Consistency requirement */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation-name: fadeIn;
+  animation-duration: var(--animation-duration);
+  animation-timing-function: var(--animation-timing-function);
+  animation-iteration-count: var(--animation-iteration-count);
+  animation-fill-mode: both;
+}
+
+/* Slide In animation - Addresses Frontend Design Consistency requirement */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.slideIn {
+  animation-name: slideIn;
+  animation-duration: var(--slide-duration);
+  animation-timing-function: var(--slide-timing-function);
+  animation-iteration-count: var(--animation-iteration-count);
+  animation-fill-mode: both;
+}
+
+/* Pulse animation - Addresses Frontend Design Consistency requirement */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulse {
+  animation-name: pulse;
+  animation-duration: var(--pulse-duration);
+  animation-timing-function: var(--pulse-timing-function);
+  animation-iteration-count: var(--pulse-iteration-count);
+  animation-fill-mode: both;
+}
+
+/* Utility classes for animation control - Addresses Accessibility Compliance requirement */
+.animation-paused {
+  animation-play-state: paused !important;
+}
+
+.animation-running {
+  animation-play-state: running !important;
+}
+
+/* Animation delay utilities for staggered animations */
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Ensure animations don't cause layout shifts - Addresses Accessibility Compliance requirement */
+.animated {
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}

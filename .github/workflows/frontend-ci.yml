@@ -1,0 +1,165 @@
+# Frontend CI Pipeline
+# Addresses requirement: Frontend CI/CD Pipeline
+# Location: Technical Specifications/4.5 Development & Deployment
+
+name: Frontend CI
+
+# Trigger workflow on push and pull requests to main branch
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/web/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/web/**'
+
+# Environment variables
+env:
+  NODE_VERSION: '16.x'
+  CACHE_KEY: "node-modules-${{ hashFiles('**/package-lock.json') }}"
+  WORKING_DIRECTORY: 'src/web'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      # Cache node_modules
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ${{ env.WORKING_DIRECTORY }}/.npm
+          key: ${{ env.CACHE_KEY }}
+          restore-keys: |
+            node-modules-
+
+      # Install dependencies
+      - name: Install Dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci
+
+      # Run ESLint
+      - name: Run ESLint
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run lint
+        
+      # Run Prettier check
+      - name: Check Code Formatting
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npx prettier --check .
+
+      # Run Jest tests
+      - name: Run Tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test
+        env:
+          CI: true
+
+      # Build application
+      - name: Build Application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+
+      # Upload build artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 7
+
+      # Cache build output
+      - name: Cache Build Output
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          key: build-${{ github.sha }}
+          restore-keys: |
+            build-
+
+  # Add security scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Run npm audit
+      - name: Run npm audit
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm audit
+
+      # Run Snyk security scan
+      - name: Run Snyk Security Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # Deploy to staging (only on main branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: dist
+
+      # Add your deployment steps here
+      # Example: Deploy to Azure Static Web Apps
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your deployment commands here
+
+  # Deploy to production (manual trigger)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production
+      url: https://estatekit.com
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: dist
+
+      # Add your production deployment steps here
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your deployment commands here

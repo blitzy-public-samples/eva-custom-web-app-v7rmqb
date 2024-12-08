@@ -1,0 +1,42 @@
+# Requirements Addressed:
+# - Resource Aggregation and Management (Technical Specifications/2.5 Deployment Architecture)
+#   Simplifies the management and deployment of Kubernetes resources by aggregating them into a single configuration.
+# - Environment-Specific Customization (Technical Specifications/2.5 Deployment Architecture)
+#   Supports environment-specific customization of Kubernetes resources for staging, production, and development environments.
+
+# Human Tasks:
+# 1. Verify that all referenced YAML files exist in the correct paths
+# 2. Ensure namespace matches the target environment
+# 3. Review and update common labels as needed
+# 4. Validate resource configurations before deployment
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Target namespace for all resources
+namespace: estate-kit-production
+
+# Common labels to be added to all resources
+commonLabels:
+  app: estate-kit
+
+# List of resources to be included in the deployment
+resources:
+  # Base resources
+  - base/secrets.yaml
+  - base/configmap.yaml
+  - base/namespace.yaml
+  
+  # Frontend resources
+  - frontend/deployment.yaml
+  - frontend/service.yaml
+  - frontend/hpa.yaml
+  
+  # Backend resources
+  - backend/deployment.yaml
+  - backend/service.yaml
+  - backend/hpa.yaml
+  
+  # Ingress resources
+  - ingress/nginx.yaml
+  - ingress/cert-manager.yaml

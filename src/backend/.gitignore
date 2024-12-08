@@ -1,0 +1,89 @@
+# Node.js dependencies
+node_modules/
+
+# Build artifacts
+dist/
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Python cache directories
+__pycache__/
+*.pyc
+
+# Test coverage reports
+coverage/
+
+# Docker Compose override
+docker-compose.override.yml
+
+# Process ID files
+*.pid
+
+# Database migration files
+migrations/
+
+# Python cache in tests
+tests/__pycache__/
+
+# Temporary files
+tmp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local development files
+*.local
+*.dev
+
+# Backup files
+*.bak
+*.backup
+
+# Debug files
+debug/
+*.debug
+
+# Certificate files
+*.pem
+*.key
+*.crt
+
+# Local configuration overrides
+config.local.js
+config.local.py
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Cache directories
+.cache/
+.npm/
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Package lock files (maintain only one lock file)
+package-lock.json
+yarn.lock
+
+# Database files
+*.sqlite
+*.db
+
+# Compiled translations
+*.mo

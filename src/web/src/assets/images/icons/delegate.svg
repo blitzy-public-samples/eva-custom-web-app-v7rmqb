@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Requirements addressed:
+- Delegate Management Interface (Technical Specifications/3.1 User Interface Design/Delegate Management)
+  Provides a visual representation for delegate-related actions, enhancing user experience and accessibility.
+-->
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Primary user circle representing the owner -->
+    <circle 
+        cx="12" 
+        cy="7" 
+        r="4" 
+        stroke="currentColor" 
+        stroke-width="2"
+        stroke-linecap="round"
+        fill="none"
+    />
+    
+    <!-- Body shape for the owner -->
+    <path 
+        d="M12 11C9.23858 11 7 13.2386 7 16V19H17V16C17 13.2386 14.7614 11 12 11Z" 
+        stroke="currentColor" 
+        stroke-width="2"
+        stroke-linecap="round"
+        fill="none"
+    />
+    
+    <!-- Secondary smaller circle representing the delegate -->
+    <circle 
+        cx="17" 
+        cy="15" 
+        r="3" 
+        stroke="currentColor" 
+        stroke-width="2"
+        stroke-linecap="round"
+        fill="none"
+    />
+    
+    <!-- Connection line between owner and delegate -->
+    <path 
+        d="M15 15H19M17 13V17" 
+        stroke="currentColor" 
+        stroke-width="2"
+        stroke-linecap="round"
+    />
+</svg>

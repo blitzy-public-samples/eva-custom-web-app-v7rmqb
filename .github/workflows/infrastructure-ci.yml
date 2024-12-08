@@ -1,0 +1,198 @@
+# Requirements addressed:
+# - Infrastructure Automation (Technical Specifications/2.5 Deployment Architecture)
+#   Automates the deployment and management of infrastructure components such as VPC, S3, RDS, ECR, and EKS.
+# - Monitoring & Observability (Technical Specifications/2.7 Cross-Cutting Concerns/Monitoring & Observability)
+#   Ensures that monitoring tools like Prometheus and Grafana are deployed and configured correctly.
+# - Data Security (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Automates the rotation of sensitive secrets and ensures secure database backups.
+
+name: Infrastructure CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/**'
+      - '.github/workflows/infrastructure-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/**'
+      - '.github/workflows/infrastructure-ci.yml'
+  schedule:
+    # Run secret rotation and backups every night at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  AWS_REGION: us-west-2
+  TF_VERSION: 1.4.0
+  KUBECTL_VERSION: 1.24
+  AWS_CLI_VERSION: 2.0
+
+jobs:
+  validate-terraform:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform
+        working-directory: infrastructure/terraform/aws
+        run: |
+          terraform init -backend=true \
+            -backend-config="bucket=estate-kit-terraform-state" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Validate Terraform
+        working-directory: infrastructure/terraform/aws
+        run: terraform validate
+
+      - name: Run Terraform Plan
+        if: github.event_name == 'pull_request'
+        working-directory: infrastructure/terraform/aws
+        run: terraform plan -no-color
+        continue-on-error: true
+
+  apply-terraform:
+    name: Apply Terraform
+    needs: validate-terraform
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform
+        working-directory: infrastructure/terraform/aws
+        run: |
+          terraform init -backend=true \
+            -backend-config="bucket=estate-kit-terraform-state" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      - name: Apply Terraform
+        working-directory: infrastructure/terraform/aws
+        run: terraform apply -auto-approve
+
+  setup-monitoring:
+    name: Setup Monitoring
+    needs: apply-terraform
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name estate-kit-cluster --region ${{ env.AWS_REGION }}
+
+      - name: Setup monitoring
+        run: |
+          chmod +x infrastructure/scripts/setup-monitoring.sh
+          ./infrastructure/scripts/setup-monitoring.sh
+
+  rotate-secrets:
+    name: Rotate Secrets
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name estate-kit-cluster --region ${{ env.AWS_REGION }}
+
+      - name: Rotate secrets
+        run: |
+          chmod +x infrastructure/scripts/rotate-secrets.sh
+          ./infrastructure/scripts/rotate-secrets.sh
+
+  backup-database:
+    name: Backup Database
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name estate-kit-cluster --region ${{ env.AWS_REGION }}
+
+      - name: Backup database
+        run: |
+          chmod +x infrastructure/scripts/backup-db.sh
+          ./infrastructure/scripts/backup-db.sh

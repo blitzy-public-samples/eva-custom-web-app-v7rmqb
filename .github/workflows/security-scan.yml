@@ -1,0 +1,118 @@
+# Estate Kit - Security Scan Workflow
+# Version: 1.0.0
+#
+# Requirements Addressed:
+# - Security Architecture (Technical Specifications/2.7 Cross-Cutting Concerns/Security Architecture)
+#   Implements automated security scans to validate encryption, dependencies, and configurations.
+# - Backend Testing (Technical Specifications/4.5 Development & Deployment)
+#   Ensures that security tests are integrated into the CI/CD pipeline.
+
+name: Security Scan Workflow
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scan every Monday at 2:00 AM UTC
+    - cron: '0 2 * * 1'
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    env:
+      NODE_VERSION: '18.x'
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+      AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+      AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd src/backend
+          npm ci
+
+      - name: Run npm audit
+        run: |
+          cd src/backend
+          npm audit --audit-level=high
+        continue-on-error: false
+
+      - name: Install Snyk
+        run: |
+          npm install -g snyk@latest
+          snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Snyk security scan
+        run: |
+          cd src/backend
+          snyk test --severity-threshold=high
+        continue-on-error: false
+
+      - name: Run security audit script
+        run: |
+          cd src/backend
+          npm run security-audit
+        env:
+          NODE_ENV: test
+
+      - name: Run security-related tests
+        run: |
+          cd src/backend
+          npm run test:security
+        env:
+          NODE_ENV: test
+
+      - name: Generate security report
+        run: |
+          cd src/backend
+          echo "Security Scan Report - $(date)" > security-report.txt
+          echo "NPM Audit Results:" >> security-report.txt
+          npm audit --json >> security-report.txt
+          echo "Snyk Scan Results:" >> security-report.txt
+          snyk test --json >> security-report.txt
+          echo "Security Audit Results:" >> security-report.txt
+          npm run security-audit --json >> security-report.txt
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: src/backend/security-report.txt
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Security Scan Failed',
+              body: 'The security scan workflow has failed. Please check the workflow logs for details.',
+              labels: ['security', 'high-priority']
+            });
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write

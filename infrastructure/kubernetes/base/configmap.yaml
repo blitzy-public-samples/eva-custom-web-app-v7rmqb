@@ -1,0 +1,81 @@
+# Kubernetes version: 1.24
+# Purpose: Defines Kubernetes ConfigMaps for storing non-sensitive configuration data
+# Requirements Addressed:
+# - Environment-Specific Configuration (Technical Specifications/2.5 Deployment Architecture)
+#   Supports environment-specific configurations for staging, production, and development environments
+# - Resource Organization (Technical Specifications/2.5 Deployment Architecture)
+#   Facilitates the organization of non-sensitive configuration data for different services and environments
+
+# Human Tasks:
+# 1. Verify configuration values match environment requirements
+# 2. Ensure proper RBAC permissions are set for ConfigMap access
+# 3. Set up monitoring for ConfigMap changes
+# 4. Implement ConfigMap versioning strategy
+# 5. Configure proper backup procedures for ConfigMaps
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: backend
+    environment: production
+  annotations:
+    description: "Application-level configuration data for the Estate Kit platform"
+    last-updated: "2024-02-15"
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "info"
+  API_BASE_URL: "https://api.estatekit.com"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: estate-kit-production
+  labels:
+    app: estate-kit
+    component: frontend
+    environment: production
+  annotations:
+    description: "Frontend-specific configuration data for the Estate Kit platform"
+    last-updated: "2024-02-15"
+data:
+  REACT_APP_API_BASE_URL: "https://api.estatekit.com"
+  REACT_APP_ENV: "production"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: estate-kit-staging
+  labels:
+    app: estate-kit
+    component: backend
+    environment: staging
+  annotations:
+    description: "Application-level configuration data for the Estate Kit platform - Staging"
+    last-updated: "2024-02-15"
+data:
+  APP_ENV: "staging"
+  LOG_LEVEL: "debug"
+  API_BASE_URL: "https://api.staging.estatekit.com"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: estate-kit-staging
+  labels:
+    app: estate-kit
+    component: frontend
+    environment: staging
+  annotations:
+    description: "Frontend-specific configuration data for the Estate Kit platform - Staging"
+    last-updated: "2024-02-15"
+data:
+  REACT_APP_API_BASE_URL: "https://api.staging.estatekit.com"
+  REACT_APP_ENV: "staging"

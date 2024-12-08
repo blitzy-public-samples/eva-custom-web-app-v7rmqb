@@ -1,0 +1,162 @@
+# Automated Release Workflow for Estate Kit Platform
+# Requirements Addressed:
+# - Automated Release Workflow (Technical Specifications/4.5 Development & Deployment/Deployment Pipeline)
+# - Testing Framework Integration (Technical Specifications/4.5 Development & Deployment/Testing)
+# - Build and Deployment Consistency (Technical Specifications/4.5 Development & Deployment/Deployment Pipeline)
+
+name: Release Workflow
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+
+env:
+  NODE_VERSION: '16.x'
+  BACKEND_WORKDIR: 'src/backend'
+  FRONTEND_WORKDIR: 'src/web'
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Validate version tag
+        run: |
+          if [[ ! "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version tag format. Must be in format v*.*.* (e.g., v1.0.0)"
+            exit 1
+          fi
+
+  build-backend:
+    name: Build Backend
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.BACKEND_WORKDIR }}/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ${{ env.BACKEND_WORKDIR }}
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: ${{ env.BACKEND_WORKDIR }}
+        run: npm test
+
+      - name: Build backend
+        working-directory: ${{ env.BACKEND_WORKDIR }}
+        run: npm run build
+
+      - name: Upload backend artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-dist
+          path: ${{ env.BACKEND_WORKDIR }}/dist
+          retention-days: 1
+
+  build-frontend:
+    name: Build Frontend
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.FRONTEND_WORKDIR }}/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+        run: npm test
+
+      - name: Build frontend
+        working-directory: ${{ env.FRONTEND_WORKDIR }}
+        run: npm run build
+
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: ${{ env.FRONTEND_WORKDIR }}/dist
+          retention-days: 1
+
+  deploy:
+    name: Deploy Release
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-dist
+          path: backend-dist
+
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying version ${{ github.ref_name }} to production"
+          # Add deployment steps here based on your infrastructure
+          # This could include:
+          # - AWS deployment commands
+          # - Docker container builds and pushes
+          # - Kubernetes deployments
+          # - Database migrations
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes "Release ${{ github.ref_name }}" \
+            --draft=false \
+            --prerelease=false
+
+  notify:
+    name: Send Notifications
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify on success
+        if: ${{ success() }}
+        run: |
+          echo "Release ${{ github.ref_name }} deployed successfully"
+          # Add notification logic (e.g., Slack, email)
+
+      - name: Notify on failure
+        if: ${{ failure() }}
+        run: |
+          echo "Release ${{ github.ref_name }} deployment failed"
+          # Add failure notification logic

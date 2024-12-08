@@ -1,0 +1,77 @@
+# Addresses requirement: Version Control Hygiene (Technical Specifications/4.5 Development & Deployment)
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+*.tfplan
+.terraform.lock.hcl
+
+# Kubernetes configuration files containing sensitive data
+# Addresses requirement: Version Control Hygiene (Technical Specifications/4.5 Development & Deployment)
+*.yaml
+*.yml
+*.kubeconfig
+kube.config
+kubeconfig
+*secret*.yaml
+*secrets*.yaml
+
+# Docker configuration files
+# Addresses requirement: Version Control Hygiene (Technical Specifications/4.5 Development & Deployment)
+*.env
+.env.*
+*.log
+*.bak
+docker-compose.override.yml
+
+# Scripts and temporary files
+# Addresses requirement: Version Control Hygiene (Technical Specifications/4.5 Development & Deployment)
+*.sh
+*.log
+*.tmp
+*.temp
+*.swp
+.DS_Store
+
+# AWS credentials and configuration
+.aws/
+aws.json
+credentials
+config
+
+# Monitoring and logging files
+prometheus-data/
+grafana-data/
+*.log.*
+monitoring/data/
+
+# Certificate files and keys
+*.pem
+*.key
+*.crt
+*.csr
+*.srl
+
+# Local development files
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+*~
+
+# Package manager files
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build and distribution files
+dist/
+build/
+*.zip
+*.tar.gz

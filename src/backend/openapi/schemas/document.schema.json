@@ -1,0 +1,102 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "schemas": {
+      "DocumentSchema": {
+        "type": "object",
+        "description": "Schema for document-related operations in the Estate Kit backend system",
+        "required": [
+          "documentId",
+          "title",
+          "category",
+          "status",
+          "metadata",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the document",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^[\\w\\s\\-\\.]+$",
+            "description": "Title of the document",
+            "example": "Medical Power of Attorney"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "medical",
+              "financial",
+              "legal",
+              "personal"
+            ],
+            "description": "Category of the document for organization and access control"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending_review",
+              "approved",
+              "archived"
+            ],
+            "description": "Current status of the document"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata about the document",
+            "required": [
+              "version",
+              "size",
+              "mimeType",
+              "originalName"
+            ],
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "Version of the document",
+                "example": "1.0.0"
+              },
+              "size": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Size of the document in bytes",
+                "example": 1048576
+              },
+              "mimeType": {
+                "type": "string",
+                "description": "MIME type of the document",
+                "example": "application/pdf"
+              },
+              "originalName": {
+                "type": "string",
+                "description": "Original filename of the document",
+                "example": "medical_power_of_attorney.pdf"
+              }
+            },
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the document was created",
+            "example": "2024-02-15T14:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the document was last updated",
+            "example": "2024-02-15T14:30:00Z"
+          }
+        }
+      }
+    }
+  }
+}

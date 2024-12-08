@@ -1,0 +1,8 @@
+{
+  // Addresses Code Formatting Standards requirement from Technical Specifications/4.5 Development & Deployment/Development Tools
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "printWidth": 80
+}

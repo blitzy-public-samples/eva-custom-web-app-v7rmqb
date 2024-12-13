@@ -8,10 +8,9 @@
  * @package axios ^1.4.0
  */
 
-import { ApiService } from './api.service';
+import { apiService } from './api.service';
 import { 
   Document, 
-  DocumentType, 
   DocumentStatus, 
   DocumentUploadRequest, 
   DocumentUploadState 
@@ -24,6 +23,11 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 // Types for upload progress tracking
 type UploadProgressCallback = (progress: number) => void;
+
+interface ProgressEvent {
+  loaded: number;
+  total: number;
+}
 
 /**
  * Enhanced encryption monitoring interface for document security
@@ -39,7 +43,6 @@ interface EncryptionMonitor {
  */
 export class DocumentService {
   private static instance: DocumentService;
-  private apiService: ApiService;
   private uploadProgress: Map<string, DocumentUploadState>;
   private encryptionMonitor: EncryptionMonitor;
 
@@ -47,7 +50,6 @@ export class DocumentService {
    * Private constructor implementing singleton pattern with security initialization
    */
   private constructor() {
-    this.apiService = ApiService.getInstance();
     this.uploadProgress = new Map<string, DocumentUploadState>();
     this.encryptionMonitor = {
       status: new Map<string, boolean>(),
@@ -104,15 +106,15 @@ export class DocumentService {
 
       // Upload with retry logic and progress tracking
       let retryCount = 0;
-      let document: Document;
+      let uploadedDocument: Document | null = null;
 
       while (retryCount < MAX_UPLOAD_RETRIES) {
         try {
-          document = await this.apiService.post<Document>(
+          uploadedDocument = await apiService.post<Document>(
             API_BASE_PATH,
             formData,
             {
-              onUploadProgress: (progressEvent) => {
+              onUploadProgress: (progressEvent: ProgressEvent) => {
                 const progress = Math.round(
                   (progressEvent.loaded * 100) / progressEvent.total
                 );
@@ -123,12 +125,12 @@ export class DocumentService {
           );
 
           // Start encryption monitoring
-          this.monitorEncryption(document.id);
+          this.monitorEncryption(uploadedDocument.id);
           break;
-        } catch (error) {
+        } catch (error: unknown) {
           retryCount++;
           uploadState.retryCount = retryCount;
-          uploadState.error = error.message;
+          uploadState.error = error instanceof Error ? error.message : 'Unknown error occurred';
 
           if (retryCount === MAX_UPLOAD_RETRIES) {
             throw new Error(`Upload failed after ${MAX_UPLOAD_RETRIES} attempts`);
@@ -141,23 +143,27 @@ export class DocumentService {
         }
       }
 
+      if (!uploadedDocument) {
+        throw new Error('Document upload failed');
+      }
+
       // Update upload state
-      uploadState.documentId = document.id;
+      uploadState.documentId = uploadedDocument.id;
       uploadState.status = DocumentStatus.COMPLETED;
-      this.uploadProgress.set(document.id, uploadState);
+      this.uploadProgress.set(uploadedDocument.id, uploadState);
 
       // Log audit trail
       this.logAuditEvent('DOCUMENT_UPLOAD', {
-        documentId: document.id,
+        documentId: uploadedDocument.id,
         type: request.type,
         size: request.file.size
       });
 
-      return document;
-    } catch (error) {
+      return uploadedDocument;
+    } catch (error: unknown) {
       // Log security event
       this.logSecurityEvent('UPLOAD_FAILURE', {
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
         type: request.type
       });
       throw error;
@@ -170,12 +176,12 @@ export class DocumentService {
   public async secureDeleteDocument(documentId: string): Promise<void> {
     try {
       // Verify document exists and user has permission
-      const document = await this.apiService.get<Document>(
+      const document = await apiService.get<Document>(
         `${API_BASE_PATH}/${documentId}`
       );
 
       // Request secure deletion
-      await this.apiService.delete(`${API_BASE_PATH}/${documentId}`);
+      await apiService.delete(`${API_BASE_PATH}/${documentId}`);
 
       // Clear encryption monitoring
       this.encryptionMonitor.status.delete(documentId);
@@ -186,11 +192,11 @@ export class DocumentService {
         documentId,
         type: document.type
       });
-    } catch (error) {
+    } catch (error: unknown) {
       // Log security event
       this.logSecurityEvent('DELETE_FAILURE', {
         documentId,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       });
       throw error;
     }
@@ -205,7 +211,7 @@ export class DocumentService {
 
     const checkEncryption = async () => {
       try {
-        const document = await this.apiService.get<Document>(
+        const document = await apiService.get<Document>(
           `${API_BASE_PATH}/${documentId}`
         );
 
@@ -221,10 +227,10 @@ export class DocumentService {
 
         // Continue monitoring
         setTimeout(checkEncryption, 2000);
-      } catch (error) {
+      } catch (error: unknown) {
         this.logSecurityEvent('ENCRYPTION_MONITOR_ERROR', {
           documentId,
-          error: error.message
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
         });
       }
     };

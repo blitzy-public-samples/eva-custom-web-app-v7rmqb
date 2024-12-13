@@ -20,7 +20,7 @@ import { useDocument } from '../../hooks/useDocument';
 
 // Types
 import { DocumentType, Document } from '../../types/document.types';
-import { UserRole } from '../../types/user.types';
+import { UserRole } from '../../types/auth.types';
 
 // Interface for tab panel props
 interface DocumentTabPanelProps {
@@ -61,21 +61,15 @@ const TabPanel: React.FC<DocumentTabPanelProps> = ({
 export const Documents: React.FC = () => {
   // State management
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedType, setSelectedType] = useState<DocumentType | undefined>();
   const { enqueueSnackbar } = useSnackbar();
 
   // Custom hook for document operations
   const {
-    documents,
     loading,
     error,
-    uploadProgress,
-    encryptionStatus,
-    uploadDocument,
-    deleteDocument,
     refreshDocuments,
     verifyDocumentEncryption
-  } = useDocument(selectedType);
+  } = useDocument();
 
   // Effect for error handling
   useEffect(() => {
@@ -103,32 +97,19 @@ export const Documents: React.FC = () => {
   /**
    * Handles successful document upload with security verification
    */
-  const handleUploadComplete = async (document: Document) => {
-    try {
-      // Verify encryption status
-      const isEncrypted = await verifyDocumentEncryption(document.id);
-      if (!isEncrypted) {
-        enqueueSnackbar('Document encryption verification failed', { variant: 'error' });
-        return;
-      }
-
-      enqueueSnackbar('Document uploaded successfully', { variant: 'success' });
-      refreshDocuments();
-    } catch (error) {
-      enqueueSnackbar('Error verifying document security', { variant: 'error' });
-    }
-  };
-
-  /**
-   * Handles document deletion with security checks
-   */
-  const handleDeleteDocument = async (documentId: string) => {
-    try {
-      await deleteDocument(documentId);
-      enqueueSnackbar('Document deleted successfully', { variant: 'success' });
-    } catch (error) {
-      enqueueSnackbar('Error deleting document', { variant: 'error' });
-    }
+  const handleUploadComplete = (document: Document) => {
+    verifyDocumentEncryption(document.id)
+      .then(isEncrypted => {
+        if (!isEncrypted) {
+          enqueueSnackbar('Document encryption verification failed', { variant: 'error' });
+          return;
+        }
+        enqueueSnackbar('Document uploaded successfully', { variant: 'success' });
+        refreshDocuments();
+      })
+      .catch(() => {
+        enqueueSnackbar('Error verifying document security', { variant: 'error' });
+      });
   };
 
   return (
@@ -177,7 +158,6 @@ export const Documents: React.FC = () => {
           </Box>
         ) : (
           <DocumentList
-            type={selectedType}
             userRole={UserRole.OWNER}
             encryptionRequired={true}
             className="document-list"
@@ -206,21 +186,25 @@ export const Documents: React.FC = () => {
         role="status"
         aria-live="polite"
         className="visually-hidden"
-      />
+      >
+        <span></span>
+      </div>
 
-      <style jsx>{`
-        .visually-hidden {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
-      `}</style>
+      <style>
+        {`
+          .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+          }
+        `}
+      </style>
     </Container>
   );
 };

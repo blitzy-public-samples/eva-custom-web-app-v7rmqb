@@ -14,101 +14,100 @@ import '../styles/variables.css';
  * @version MUI 5.11+
  */
 
-const theme = createTheme({
-  // Color palette with WCAG AA compliant combinations
-  palette: {
-    primary: {
-      main: 'var(--color-primary)',
-      light: 'var(--color-primary-light)',
-      dark: 'var(--color-primary-dark)',
-      contrastText: '#FFFFFF',
-    },
-    secondary: {
-      main: 'var(--color-secondary)',
-      light: 'var(--color-secondary-light)',
-      dark: 'var(--color-secondary-dark)',
-      contrastText: '#FFFFFF',
-    },
-    error: {
-      main: 'var(--color-error)',
-      light: 'var(--color-error-light)',
-      dark: 'var(--color-error-dark)',
-      contrastText: '#FFFFFF',
-    },
-    text: {
-      primary: 'var(--color-text)',
-      secondary: 'var(--color-text-secondary)',
-    },
-    background: {
-      default: 'var(--color-background)',
-      paper: 'var(--color-background-paper)',
-    },
+export const palette = {
+  primary: {
+    main: 'var(--color-primary)',
+    light: 'var(--color-primary-light)',
+    dark: 'var(--color-primary-dark)',
+    contrastText: '#FFFFFF',
   },
-
-  // Typography with senior-friendly sizing
-  typography: {
-    fontFamily: 'var(--font-family-base)',
-    h1: {
-      fontFamily: 'var(--font-family-heading)',
-      fontSize: '2.488rem',
-      fontWeight: 700,
-      lineHeight: 1.2,
-      letterSpacing: '-0.02em',
-    },
-    h2: {
-      fontFamily: 'var(--font-family-heading)',
-      fontSize: '2.074rem',
-      fontWeight: 700,
-      lineHeight: 1.3,
-      letterSpacing: '-0.01em',
-    },
-    h3: {
-      fontFamily: 'var(--font-family-heading)',
-      fontSize: '1.728rem',
-      fontWeight: 700,
-      lineHeight: 1.4,
-    },
-    h4: {
-      fontFamily: 'var(--font-family-heading)',
-      fontSize: '1.44rem',
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-    h5: {
-      fontFamily: 'var(--font-family-heading)',
-      fontSize: '1.2rem',
-      fontWeight: 600,
-      lineHeight: 1.4,
-    },
-    body1: {
-      fontSize: '1.125rem',
-      lineHeight: 1.6,
-      letterSpacing: '0.01em',
-    },
-    body2: {
-      fontSize: '1rem',
-      lineHeight: 1.5,
-      letterSpacing: '0.01em',
-    },
-    button: {
-      fontSize: '1.125rem',
-      fontWeight: 600,
-      letterSpacing: '0.02em',
-      textTransform: 'none',
-    },
+  secondary: {
+    main: 'var(--color-secondary)',
+    light: 'var(--color-secondary-light)',
+    dark: 'var(--color-secondary-dark)',
+    contrastText: '#FFFFFF',
   },
+  error: {
+    main: 'var(--color-error)',
+    light: 'var(--color-error-light)',
+    dark: 'var(--color-error-dark)',
+    contrastText: '#FFFFFF',
+  },
+  text: {
+    primary: 'var(--color-text)',
+    secondary: 'var(--color-text-secondary)',
+  },
+  background: {
+    default: 'var(--color-background)',
+    paper: 'var(--color-background-paper)',
+  },
+};
 
-  // Spacing system based on 8px unit
-  spacing: (factor: number) => `${8 * factor}px`,
+export const typography = {
+  fontFamily: 'var(--font-family-base)',
+  h1: {
+    fontFamily: 'var(--font-family-heading)',
+    fontSize: '2.488rem',
+    fontWeight: 700,
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
+  },
+  h2: {
+    fontFamily: 'var(--font-family-heading)',
+    fontSize: '2.074rem',
+    fontWeight: 700,
+    lineHeight: 1.3,
+    letterSpacing: '-0.01em',
+  },
+  h3: {
+    fontFamily: 'var(--font-family-heading)',
+    fontSize: '1.728rem',
+    fontWeight: 700,
+    lineHeight: 1.4,
+  },
+  h4: {
+    fontFamily: 'var(--font-family-heading)',
+    fontSize: '1.44rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+  },
+  h5: {
+    fontFamily: 'var(--font-family-heading)',
+    fontSize: '1.2rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+  },
+  body1: {
+    fontSize: '1.125rem',
+    lineHeight: 1.6,
+    letterSpacing: '0.01em',
+  },
+  body2: {
+    fontSize: '1rem',
+    lineHeight: 1.5,
+    letterSpacing: '0.01em',
+  },
+  button: {
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    textTransform: 'none',
+  },
+};
 
-  // Component customization for accessibility
+export const spacing = (factor: number) => `${8 * factor}px`;
+
+export const theme = createTheme({
+  palette,
+  typography,
+  spacing,
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           padding: '16px 32px',
           borderRadius: 'var(--border-radius-md)',
-          minHeight: '48px', // Enhanced touch target
+          minHeight: '48px',
           '&:focus-visible': {
             outline: `3px solid var(--color-primary-light)`,
             outlineOffset: '2px',

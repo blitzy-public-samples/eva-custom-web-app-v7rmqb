@@ -10,7 +10,7 @@
 
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import { auth0Client } from '../config/auth.config';
-import { ApiService } from '../services/api.service';
+import { apiService } from '../services/api.service';
 import {
   Delegate,
   CreateDelegateDTO,
@@ -47,7 +47,6 @@ interface PaginatedResponse<T> {
  */
 export class DelegateService {
   private static instance: DelegateService;
-  private apiService: ApiService;
   private auth0Client: Auth0Client;
 
   /**
@@ -55,7 +54,6 @@ export class DelegateService {
    */
   private constructor() {
     this.auth0Client = auth0Client;
-    this.apiService = ApiService.getInstance();
   }
 
   /**
@@ -84,7 +82,7 @@ export class DelegateService {
         ...(filter.search && { search: filter.search })
       });
 
-      return await this.apiService.get<PaginatedResponse<Delegate>>(
+      return await apiService.get<PaginatedResponse<Delegate>>(
         `/delegates?${queryParams.toString()}`
       );
     } catch (error) {
@@ -101,13 +99,9 @@ export class DelegateService {
       // Validate permissions based on role
       this.validateRolePermissions(delegateData.role, delegateData.permissions);
 
-      // Create Auth0 user for delegate
-      const auth0User = await this.createAuth0DelegateUser(delegateData.email);
-
       // Create delegate with validated permissions
-      const delegate = await this.apiService.post<Delegate>('/delegates', {
+      const delegate = await apiService.post<Delegate>('/delegates', {
         ...delegateData,
-        delegateId: auth0User.sub,
         status: DelegateStatus.PENDING
       });
 
@@ -132,7 +126,7 @@ export class DelegateService {
       // Validate permissions based on role
       this.validateRolePermissions(updateData.role, updateData.permissions);
 
-      return await this.apiService.put<Delegate>(`/delegates/${id}`, updateData);
+      return await apiService.put<Delegate>(`/delegates/${id}`, updateData);
     } catch (error) {
       console.error('Failed to update delegate:', error);
       throw error;
@@ -144,12 +138,12 @@ export class DelegateService {
    */
   public async revokeDelegate(id: string): Promise<void> {
     try {
-      await this.apiService.put<Delegate>(`/delegates/${id}`, {
+      await apiService.put<Delegate>(`/delegates/${id}`, {
         status: DelegateStatus.REVOKED
       });
 
       // Revoke Auth0 access
-      const delegate = await this.apiService.get<Delegate>(`/delegates/${id}`);
+      const delegate = await apiService.get<Delegate>(`/delegates/${id}`);
       await this.revokeAuth0Access(delegate.delegateId);
     } catch (error) {
       console.error('Failed to revoke delegate access:', error);
@@ -202,31 +196,11 @@ export class DelegateService {
   }
 
   /**
-   * Creates Auth0 user account for delegate
-   */
-  private async createAuth0DelegateUser(email: string): Promise<any> {
-    try {
-      const response = await this.auth0Client.createUser({
-        email,
-        connection: 'Username-Password-Authentication',
-        email_verified: false,
-        app_metadata: {
-          roles: ['delegate']
-        }
-      });
-      return response;
-    } catch (error) {
-      console.error('Failed to create Auth0 user:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Sends secure invitation email to delegate
    */
   private async sendDelegateInvitation(delegate: Delegate): Promise<void> {
     try {
-      await this.apiService.post('/notifications/delegate-invitation', {
+      await apiService.post('/notifications/delegate-invitation', {
         delegateId: delegate.id,
         email: delegate.email,
         role: delegate.role
@@ -242,8 +216,9 @@ export class DelegateService {
    */
   private async revokeAuth0Access(delegateId: string): Promise<void> {
     try {
-      await this.auth0Client.updateUser(delegateId, {
-        blocked: true
+      // Use token endpoint to revoke access
+      await apiService.post('/auth/revoke-access', {
+        delegateId
       });
     } catch (error) {
       console.error('Failed to revoke Auth0 access:', error);

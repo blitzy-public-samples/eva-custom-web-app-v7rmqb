@@ -8,15 +8,13 @@
  * @package @auth0/auth0-spa-js ^2.1.0
  */
 
-import { ApiService } from './api.service';
+import { apiService } from './api.service';
 import { auth0Client } from '../config/auth.config';
-import { Auth0Client } from '@auth0/auth0-spa-js';
 import {
   LoginPayload,
   RegisterPayload,
   AuthToken,
   AuthErrorType,
-  MFAStatus,
   SessionSecurityOptions
 } from '../types/auth.types';
 
@@ -40,13 +38,11 @@ interface RateLimiter {
  */
 class AuthService {
   private static instance: AuthService;
-  private apiService: ApiService;
   private rateLimiter: RateLimiter;
   private readonly MFA_REQUIRED: boolean = true;
   private readonly TOKEN_EXPIRY_BUFFER: number = 300000; // 5 minutes in milliseconds
 
   private constructor() {
-    this.apiService = new ApiService();
     this.rateLimiter = {
       attempts: 0,
       lastAttempt: 0,
@@ -78,7 +74,7 @@ class AuthService {
       // Attempt authentication with Auth0
       await auth0Client.loginWithRedirect({
         authorizationParams: {
-          prompt: this.MFA_REQUIRED ? 'login mfa' : 'login'
+          prompt: this.MFA_REQUIRED ? 'login' : 'login'
         }
       });
 
@@ -119,7 +115,7 @@ class AuthService {
       });
 
       // Create user profile in backend
-      await this.apiService.post('/users', {
+      await apiService.post('/users', {
         email: userData.email,
         name: userData.name,
         province: userData.province
@@ -139,7 +135,7 @@ class AuthService {
   public async logout(): Promise<void> {
     try {
       // Invalidate backend session
-      await this.apiService.post('/auth/logout');
+      await apiService.post('/auth/logout');
 
       // Clear Auth0 session
       await auth0Client.logout({

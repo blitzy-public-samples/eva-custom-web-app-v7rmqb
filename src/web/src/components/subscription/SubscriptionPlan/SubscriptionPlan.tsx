@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import Card from '../../common/Card/Card';
-import { useSubscription } from '../../../hooks/useSubscription';
 import type { ISubscriptionPlanDetails } from '../../../types/subscription.types';
 
 /**
@@ -65,7 +64,7 @@ export const SubscriptionPlan: React.FC<SubscriptionPlanProps> = memo(({
   /**
    * Renders plan features with enhanced visibility
    */
-  const renderFeatures = memo(() => (
+  const Features = memo(() => (
     <List 
       aria-label={`${plan.name} features`}
       sx={{ 
@@ -111,8 +110,7 @@ export const SubscriptionPlan: React.FC<SubscriptionPlanProps> = memo(({
       <Card
         title={plan.name}
         subtitle={plan.description}
-        elevation={plan.isPopular ? 3 : 1}
-        className={plan.isPopular ? 'popular-plan' : ''}
+        elevation={1}
         aria-label={`${plan.name} subscription plan`}
         testId={`subscription-plan-${plan.id}`}
       >
@@ -140,7 +138,7 @@ export const SubscriptionPlan: React.FC<SubscriptionPlanProps> = memo(({
           </Typography>
         </Typography>
 
-        {renderFeatures()}
+        <Features />
 
         <Button
           variant={isCurrentPlan ? "outlined" : "contained"}

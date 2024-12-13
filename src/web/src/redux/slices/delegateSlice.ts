@@ -19,8 +19,6 @@ import {
   CreateDelegateDTO, 
   UpdateDelegateDTO, 
   DelegateRole, 
-  DelegateStatus, 
-  DelegatePermission, 
   DelegateAuditLog 
 } from '../types/delegate.types';
 import DelegateService from '../../services/delegate.service';
@@ -56,9 +54,9 @@ const initialState = delegateAdapter.getInitialState<DelegateState>({
 // Async thunk for fetching delegates with cache validation
 export const fetchDelegates = createAsyncThunk(
   'delegates/fetchDelegates',
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const delegateService = DelegateService.getInstance();
+      const delegateService = new DelegateService();
       const delegates = await delegateService.getDelegates();
       return delegates;
     } catch (error) {
@@ -80,7 +78,7 @@ export const createDelegate = createAsyncThunk(
   'delegates/createDelegate',
   async (delegateData: CreateDelegateDTO, { rejectWithValue }) => {
     try {
-      const delegateService = DelegateService.getInstance();
+      const delegateService = new DelegateService();
       const newDelegate = await delegateService.createDelegate(delegateData);
       return newDelegate;
     } catch (error) {
@@ -97,7 +95,7 @@ export const updateDelegate = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const delegateService = DelegateService.getInstance();
+      const delegateService = new DelegateService();
       const updatedDelegate = await delegateService.updateDelegate(id, data);
       return updatedDelegate;
     } catch (error) {
@@ -111,7 +109,7 @@ export const removeDelegate = createAsyncThunk(
   'delegates/removeDelegate',
   async (delegateId: string, { rejectWithValue }) => {
     try {
-      const delegateService = DelegateService.getInstance();
+      const delegateService = new DelegateService();
       await delegateService.revokeDelegate(delegateId);
       return delegateId;
     } catch (error) {

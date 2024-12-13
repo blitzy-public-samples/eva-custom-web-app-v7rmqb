@@ -3,7 +3,9 @@ import { Stack } from '@mui/material'; // v5.11+
 import * as yup from 'yup'; // ^1.0.0
 import Form from '../../common/Form/Form';
 import Input from '../../common/Input/Input';
+import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
+import { Auth0Context } from '../../../types/auth.types';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -51,7 +53,6 @@ export interface ProfileFormData {
 // Props interface for ProfileForm component
 export interface ProfileFormProps {
   onSubmit: (values: ProfileFormData) => Promise<void>;
-  loading?: boolean;
   initialData?: ProfileFormData | null;
 }
 
@@ -91,7 +92,6 @@ const validationSchema = yup.object().shape({
  */
 const ProfileForm: React.FC<ProfileFormProps> = React.memo(({ 
   onSubmit, 
-  loading = false, 
   initialData = null 
 }) => {
   // Get current user data from auth context
@@ -106,9 +106,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: Record<string, any>, auth: Auth0Context) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values as ProfileFormData);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -127,43 +127,60 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       analyticsEvent="profile_update"
       testId="profile-form"
     >
-      <Stack spacing={3} width="100%">
-        <Input
-          id={FORM_FIELDS.NAME}
-          label="Full Name"
-          type="text"
-          required
-          autoComplete="name"
-          placeholder="Enter your full name"
-        />
+      {({ values, handleChange, handleBlur }) => (
+        <Stack spacing={3} width="100%">
+          <Input
+            id={FORM_FIELDS.NAME}
+            label="Full Name"
+            type="text"
+            required
+            autoComplete="name"
+            placeholder="Enter your full name"
+            value={values.name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Input
-          id={FORM_FIELDS.EMAIL}
-          label="Email Address"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="Enter your email address"
-        />
+          <Input
+            id={FORM_FIELDS.EMAIL}
+            label="Email Address"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="Enter your email address"
+            value={values.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Input
-          id={FORM_FIELDS.PHONE}
-          label="Phone Number"
-          type="tel"
-          required
-          autoComplete="tel"
-          placeholder="Enter your phone number (e.g., 123-456-7890)"
-        />
+          <Input
+            id={FORM_FIELDS.PHONE}
+            label="Phone Number"
+            type="tel"
+            required
+            autoComplete="tel"
+            placeholder="Enter your phone number (e.g., 123-456-7890)"
+            value={values.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Input
-          id={FORM_FIELDS.PROVINCE}
-          label="Province"
-          type="text"
-          required
-          autoComplete="address-level1"
-          placeholder="Select your province"
-        />
-      </Stack>
+          <Select
+            id={FORM_FIELDS.PROVINCE}
+            label="Province"
+            required
+            autoComplete="address-level1"
+            placeholder="Select your province"
+            value={values.province}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            options={PROVINCES.map(province => ({
+              value: province,
+              label: province
+            }))}
+          />
+        </Stack>
+      )}
     </Form>
   );
 });

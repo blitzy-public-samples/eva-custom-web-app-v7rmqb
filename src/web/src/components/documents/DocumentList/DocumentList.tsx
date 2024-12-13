@@ -3,8 +3,8 @@ import { Box, Typography, Alert } from '@mui/material';
 import DocumentCard from '../DocumentCard/DocumentCard';
 import Table from '../../common/Table/Table';
 import Loading from '../../common/Loading/Loading';
-import { Document, DocumentType, DocumentStatus } from '../../../types/document.types';
-import { UserRole } from '../../../types/user.types';
+import { Document, DocumentType } from '../../../types/document.types';
+import { UserRole } from '../../../types/auth.types';
 import DocumentService from '../../../services/document.service';
 
 /**
@@ -51,8 +51,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<string>('lastModified');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   /**
    * Fetches documents with security context and error handling
@@ -62,14 +60,14 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await DocumentService.getInstance().getDocuments({
+      const response = await DocumentService.getDocuments({
         type,
         userRole,
         encryptionRequired,
       });
 
       // Verify document encryption status
-      const verifiedDocuments = response.filter(doc => 
+      const verifiedDocuments = response.filter((doc: Document) => 
         !encryptionRequired || doc.metadata.encryptionStatus
       );
 
@@ -88,7 +86,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const handleDelete = useCallback(async (documentId: string) => {
     try {
       setError(null);
-      await DocumentService.getInstance().secureDeleteDocument(documentId);
+      await DocumentService.secureDeleteDocument(documentId);
       
       // Update document list after successful deletion
       setDocuments(prevDocs => 
@@ -104,9 +102,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({
    * Handles secure document sorting with performance monitoring
    */
   const handleSort = useCallback((columnId: string, direction: 'asc' | 'desc') => {
-    setSortField(columnId);
-    setSortDirection(direction);
-
     setDocuments(prevDocs => {
       const sortedDocs = [...prevDocs].sort((a, b) => {
         const aValue = a[columnId as keyof Document];

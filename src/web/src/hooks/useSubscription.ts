@@ -12,8 +12,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
-  ISubscription, 
-  ISubscriptionPlanDetails,
   ISubscriptionUpdateDTO 
 } from '../types/subscription.types';
 import { 

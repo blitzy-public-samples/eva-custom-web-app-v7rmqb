@@ -15,7 +15,6 @@ import {
   fetchDocuments,
   uploadDocument,
   deleteDocument,
-  verifyEncryption,
   selectDocuments,
   selectDocumentLoading,
   selectDocumentError,
@@ -26,9 +25,9 @@ import {
 import {
   Document,
   DocumentType,
-  DocumentUploadRequest,
-  EncryptionStatus
+  DocumentUploadRequest
 } from '../types/document.types';
+import { AppDispatch } from '../redux/store';
 
 // Performance monitoring thresholds
 const PERFORMANCE_THRESHOLDS = {
@@ -46,7 +45,7 @@ const RETRY_DELAY = 1000; // 1 second
  * Implements PIPEDA-compliant operations with comprehensive monitoring
  */
 export const useDocument = (type?: DocumentType) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   
   // Redux selectors
   const documents = useSelector(selectDocuments);
@@ -70,7 +69,7 @@ export const useDocument = (type?: DocumentType) => {
 
       const fetchWithRetry = async (): Promise<void> => {
         try {
-          await dispatch(fetchDocuments(type)).unwrap();
+          await dispatch(fetchDocuments(type));
           
           // Performance monitoring
           const duration = Date.now() - operationStartTime.current;
@@ -105,9 +104,6 @@ export const useDocument = (type?: DocumentType) => {
       const uploadWithRetry = async (): Promise<Document> => {
         try {
           const document = await dispatch(uploadDocument(request)).unwrap();
-          
-          // Verify encryption status
-          await dispatch(verifyEncryption(document.id)).unwrap();
 
           // Performance monitoring
           const duration = Date.now() - operationStartTime.current;
@@ -143,7 +139,7 @@ export const useDocument = (type?: DocumentType) => {
 
       const deleteWithRetry = async (): Promise<void> => {
         try {
-          await dispatch(deleteDocument(documentId)).unwrap();
+          await dispatch(deleteDocument(documentId));
           
           // Performance monitoring
           const duration = Date.now() - operationStartTime.current;
@@ -163,18 +159,6 @@ export const useDocument = (type?: DocumentType) => {
       await deleteWithRetry();
     } catch (error) {
       console.error('Document deletion failed:', error);
-      throw error;
-    }
-  }, [dispatch]);
-
-  /**
-   * Verifies document encryption status
-   */
-  const verifyDocumentEncryption = useCallback(async (documentId: string): Promise<EncryptionStatus> => {
-    try {
-      return await dispatch(verifyEncryption(documentId)).unwrap();
-    } catch (error) {
-      console.error('Encryption verification failed:', error);
       throw error;
     }
   }, [dispatch]);
@@ -199,8 +183,7 @@ export const useDocument = (type?: DocumentType) => {
     performanceMetrics,
     uploadDocument: handleUploadDocument,
     deleteDocument: handleDeleteDocument,
-    refreshDocuments,
-    verifyDocumentEncryption
+    refreshDocuments
   };
 };
 

@@ -33,28 +33,28 @@ interface CircuitBreakerState {
   isOpen: boolean;
 }
 
+// Extend AxiosRequestConfig to include custom properties
+interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+  startTime?: number;
+}
+
 class ApiService {
-  private axiosInstance: AxiosInstance;
-  private circuitBreaker: CircuitBreakerState;
-  private metricsBuffer: MetricsData[];
+  private axiosInstance: AxiosInstance = axios.create({
+    baseURL: apiConfig.baseURL,
+    timeout: apiConfig.timeout,
+    headers: apiConfig.headers,
+    withCredentials: true
+  });
+
+  private circuitBreaker: CircuitBreakerState = {
+    failures: 0,
+    lastFailure: 0,
+    isOpen: false
+  };
+
+  private metricsBuffer: MetricsData[] = [];
 
   constructor() {
-    this.initializeAxiosInstance();
-    this.initializeCircuitBreaker();
-    this.metricsBuffer = [];
-  }
-
-  /**
-   * Initializes Axios instance with enhanced security and monitoring features
-   */
-  private initializeAxiosInstance(): void {
-    this.axiosInstance = axios.create({
-      baseURL: apiConfig.baseURL,
-      timeout: apiConfig.timeout,
-      headers: apiConfig.headers,
-      withCredentials: true
-    });
-
     this.setupRequestInterceptors();
     this.setupResponseInterceptors();
   }
@@ -64,7 +64,7 @@ class ApiService {
    */
   private setupRequestInterceptors(): void {
     this.axiosInstance.interceptors.request.use(
-      async (config) => {
+      async (config: ExtendedAxiosRequestConfig) => {
         // Circuit breaker check
         if (this.isCircuitBreakerOpen()) {
           throw new Error('Circuit breaker is open');
@@ -72,6 +72,7 @@ class ApiService {
 
         // Add correlation ID for request tracing
         const correlationId = this.generateCorrelationId();
+        config.headers = config.headers || {};
         config.headers['X-Correlation-ID'] = correlationId;
 
         // Validate and refresh authentication token
@@ -84,7 +85,7 @@ class ApiService {
         await this.validateMFAStatus();
 
         // Add request timestamp for performance monitoring
-        config.metadata = { startTime: Date.now() };
+        config.startTime = Date.now();
 
         return config;
       },
@@ -102,7 +103,7 @@ class ApiService {
         this.recordMetrics(response);
 
         // Validate response integrity
-        this.validateResponse(response);
+        this.validateResponseIntegrity(response);
 
         // Reset circuit breaker on successful response
         this.resetCircuitBreaker();
@@ -141,8 +142,12 @@ class ApiService {
         // Retry original request
         return this.axiosInstance(error.config!);
       } catch (refreshError) {
-        // Force re-authentication
-        await auth0Client.logout({ returnTo: window.location.origin });
+        // Force re-authentication with correct options type
+        await auth0Client.logout({
+          logoutParams: {
+            returnTo: window.location.origin
+          }
+        });
       }
     }
 
@@ -224,8 +229,8 @@ class ApiService {
    */
   private async validateMFAStatus(): Promise<void> {
     try {
-      const mfaStatus = await auth0Client.checkMFAStatus();
-      if (!mfaStatus.verified) {
+      const user = await auth0Client.getUser();
+      if (user && !user.email_verified) {
         throw new Error('MFA verification required');
       }
     } catch (error) {
@@ -237,14 +242,6 @@ class ApiService {
   /**
    * Circuit breaker implementation
    */
-  private initializeCircuitBreaker(): void {
-    this.circuitBreaker = {
-      failures: 0,
-      lastFailure: 0,
-      isOpen: false
-    };
-  }
-
   private isCircuitBreakerOpen(): boolean {
     if (!this.circuitBreaker.isOpen) return false;
     
@@ -280,7 +277,8 @@ class ApiService {
    * Monitoring and metrics
    */
   private recordMetrics(response: AxiosResponse): void {
-    const startTime = response.config.metadata?.startTime;
+    const config = response.config as ExtendedAxiosRequestConfig;
+    const startTime = config.startTime;
     if (!startTime) return;
 
     const metrics: MetricsData = {
@@ -295,9 +293,16 @@ class ApiService {
     this.flushMetricsIfNeeded();
   }
 
-  private recordErrorMetrics(errorContext: any): void {
+  private recordErrorMetrics(errorContext: Record<string, any>): void {
     // Implementation for error metrics recording
-    // This would typically send metrics to a monitoring service
+    const errorMetric = {
+      timestamp: Date.now(),
+      type: 'error',
+      ...errorContext
+    };
+    
+    this.metricsBuffer.push(errorMetric as MetricsData);
+    this.flushMetricsIfNeeded();
   }
 
   private flushMetricsIfNeeded(): void {
@@ -329,9 +334,11 @@ class ApiService {
     }
   }
 
-  private validateResponse(response: AxiosResponse): void {
+  private validateResponseIntegrity(response: AxiosResponse): void {
     // Implement response validation logic
-    // This could include checking response integrity, format, etc.
+    if (!response.data || !response.status) {
+      throw new Error('Invalid response format');
+    }
   }
 }
 

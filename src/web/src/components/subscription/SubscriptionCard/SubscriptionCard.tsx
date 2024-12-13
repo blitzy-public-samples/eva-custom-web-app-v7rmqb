@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography, Button, Stack } from '@mui/material';
 import { format } from 'date-fns';
-import Card, { CardProps } from '../../common/Card/Card';
+import Card from '../../common/Card/Card';
 import { ISubscription, SubscriptionStatus } from '../../../types/subscription.types';
 
 /**

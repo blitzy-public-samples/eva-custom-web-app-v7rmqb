@@ -161,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
           </IconButton>
         )}
 
-        <Logo variant="h1" component="div" sx={{ flexGrow: 1 }}>
+        <Logo variant="h1" sx={{ flexGrow: 1 }}>
           Estate Kit
         </Logo>
 

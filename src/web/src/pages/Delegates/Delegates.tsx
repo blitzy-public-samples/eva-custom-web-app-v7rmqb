@@ -8,12 +8,11 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Stack, Typography, Button, Dialog, IconButton, Alert, CircularProgress } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Box, Stack, Typography, Button, Dialog, Alert, CircularProgress } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 import DelegateList from '../../components/delegates/DelegateList/DelegateList';
 import DelegateForm from '../../components/delegates/DelegateForm/DelegateForm';
 import { useDelegate } from '../../hooks/useDelegate';
-import { DelegateStatus } from '../../types/delegate.types';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -47,13 +46,12 @@ const Delegates: React.FC = React.memo(() => {
     error: delegateError,
     fetchDelegates,
     removeDelegate,
-    refreshCache,
-    auditLog
+    refreshCache
   } = useDelegate();
 
   // Track page view for analytics
   useEffect(() => {
-    window.analytics?.track(ANALYTICS_EVENTS.PAGE_VIEW);
+    (window as any).analytics?.track(ANALYTICS_EVENTS.PAGE_VIEW);
   }, []);
 
   // Initial data fetch
@@ -71,7 +69,7 @@ const Delegates: React.FC = React.memo(() => {
     setDialogMode('add');
     setSelectedDelegateId(null);
     setIsDialogOpen(true);
-    window.analytics?.track(ANALYTICS_EVENTS.ADD_DELEGATE);
+    (window as any).analytics?.track(ANALYTICS_EVENTS.ADD_DELEGATE);
   }, []);
 
   /**
@@ -81,7 +79,7 @@ const Delegates: React.FC = React.memo(() => {
     setDialogMode('edit');
     setSelectedDelegateId(delegateId);
     setIsDialogOpen(true);
-    window.analytics?.track(ANALYTICS_EVENTS.EDIT_DELEGATE, { delegateId });
+    (window as any).analytics?.track(ANALYTICS_EVENTS.EDIT_DELEGATE, { delegateId });
   }, []);
 
   /**
@@ -90,7 +88,7 @@ const Delegates: React.FC = React.memo(() => {
   const handleDeleteDelegate = useCallback(async (delegateId: string) => {
     try {
       if (window.confirm('Are you sure you want to remove this delegate\'s access?')) {
-        window.analytics?.track(ANALYTICS_EVENTS.DELETE_DELEGATE, { delegateId });
+        (window as any).analytics?.track(ANALYTICS_EVENTS.DELETE_DELEGATE, { delegateId });
         await removeDelegate(delegateId);
         await refreshCache();
       }
@@ -106,7 +104,7 @@ const Delegates: React.FC = React.memo(() => {
   const handleDialogClose = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedDelegateId(null);
-    window.analytics?.track(ANALYTICS_EVENTS.DIALOG_CLOSE);
+    (window as any).analytics?.track(ANALYTICS_EVENTS.DIALOG_CLOSE);
   }, []);
 
   /**
@@ -221,7 +219,7 @@ const Delegates: React.FC = React.memo(() => {
           </Typography>
 
           <DelegateForm
-            delegate={selectedDelegateId ? delegates.find(d => d.id === selectedDelegateId) : undefined}
+            delegate={selectedDelegateId ? (delegates as any[]).find(d => d.id === selectedDelegateId) : undefined}
             onSuccess={handleSuccess}
             onCancel={handleDialogClose}
             onError={handleError}

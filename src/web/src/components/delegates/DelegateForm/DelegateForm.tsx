@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next'; // v12.0.0
-import { useQueryClient } from 'react-query'; // v4.0.0
-import * as yup from 'yup'; // v1.0.0
-import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/material'; // v5.11+
-import Form, { FormProps } from '../../../components/common/Form/Form';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import * as yup from 'yup';
+import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/material';
+import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { UserRole } from '../../../../../backend/src/types/user.types';
 
@@ -15,9 +15,20 @@ const ANALYTICS_EVENTS = {
   DELEGATE_FORM_ERROR: 'delegate_form_error'
 } as const;
 
+// Interface for delegate data
+interface DelegateData {
+  id?: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  permissions: DelegatePermission[];
+  expiresAt: Date | null;
+  notes: string;
+}
+
 // Interface for delegate form props
 interface DelegateFormProps {
-  delegate?: Delegate;
+  delegate?: DelegateData;
   onSuccess: () => void;
   onCancel: () => void;
   onError?: (error: Error) => void;
@@ -27,6 +38,15 @@ interface DelegateFormProps {
 interface DelegatePermission {
   resourceType: 'FINANCIAL' | 'MEDICAL' | 'LEGAL';
   accessLevel: 'READ' | 'WRITE';
+}
+
+// Declare analytics interface
+declare global {
+  interface Window {
+    analytics?: {
+      track: (event: string, properties?: Record<string, unknown>) => void;
+    };
+  }
 }
 
 // Initial form values
@@ -56,7 +76,7 @@ const ROLE_PERMISSIONS: Record<UserRole, DelegatePermission[]> = {
     { resourceType: 'LEGAL', accessLevel: 'READ' },
     { resourceType: 'FINANCIAL', accessLevel: 'READ' }
   ],
-  [UserRole.OWNER]: [] // Owner role not applicable for delegates
+  [UserRole.OWNER]: []
 };
 
 /**
@@ -102,7 +122,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: typeof INITIAL_VALUES) => {
+  const handleSubmit = useCallback(async (values: typeof INITIAL_VALUES, auth: any) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -125,7 +145,6 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         throw new Error(t('delegate.form.errors.submit'));
       }
 
-      // Invalidate and refetch delegates query
       queryClient.invalidateQueries('delegates');
 
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUCCESS, {
@@ -144,7 +163,6 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     }
   }, [delegate, onSuccess, onError, queryClient, t]);
 
-  // Track form interactions for analytics
   useEffect(() => {
     window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_START);
   }, []);
@@ -168,6 +186,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Typography>
 
         <Input
+          name="email"
           id="email"
           label={t('delegate.form.email')}
           type="email"
@@ -176,6 +195,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         />
 
         <Input
+          name="name"
           id="name"
           label={t('delegate.form.name')}
           required
@@ -204,16 +224,18 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Box>
 
         <Input
+          name="expiresAt"
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
-          type="date"
+          type="text"
           InputLabelProps={{ shrink: true }}
         />
 
         <Input
+          name="notes"
           id="notes"
           label={t('delegate.form.notes')}
-          multiline
+          type="text"
           rows={4}
         />
       </Stack>

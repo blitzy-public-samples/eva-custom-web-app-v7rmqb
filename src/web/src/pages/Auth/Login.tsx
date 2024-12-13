@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import Form from '../../components/common/Form/Form';
 import type { LoginPayload } from '../../types/auth.types';
+import type { Auth0Context } from '../../types/auth.types';
 
 // Constants for accessibility and analytics
 const ARIA_LABELS = {
@@ -54,18 +55,24 @@ const Login: React.FC = React.memo(() => {
 
   /**
    * Handles form submission with enhanced security and error handling
-   * @param formData - Login credentials
+   * @param values - Form values
+   * @param auth - Auth0 context
    */
-  const handleSubmit = async (formData: LoginPayload) => {
+  const handleSubmit = async (values: Record<string, any>, auth: Auth0Context) => {
     try {
       // Log login attempt (sanitized)
       console.info('Login attempt:', {
         timestamp: new Date().toISOString(),
-        email: formData.email.replace(/[^@\w.-]/g, '')
+        email: values.email.replace(/[^@\w.-]/g, '')
       });
 
+      const loginData: LoginPayload = {
+        email: values.email,
+        password: values.password
+      };
+
       // Attempt login
-      await login(formData);
+      await login(loginData);
 
       // Navigate to dashboard on success
       navigate('/dashboard');

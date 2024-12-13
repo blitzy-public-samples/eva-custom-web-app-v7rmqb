@@ -25,7 +25,7 @@ export interface InputProps {
 }
 
 // Styled TextField component using design system tokens
-const StyledTextField = styled(TextField)(({ theme }) => ({
+const StyledTextField = styled(TextField)(() => ({
   '& .MuiInputBase-root': {
     fontSize: 'var(--font-size-base)',
     fontFamily: 'var(--font-family-base)',

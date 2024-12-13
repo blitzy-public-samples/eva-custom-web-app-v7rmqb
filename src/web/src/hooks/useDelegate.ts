@@ -16,31 +16,20 @@ import {
   createDelegate,
   updateDelegate,
   removeDelegate,
-  selectDelegates,
+  selectDelegateIds,
   selectDelegateStatus,
   selectDelegateError,
-  addAuditLogEntry,
-  invalidateCache
+  addAuditLogEntry
 } from '../redux/slices/delegateSlice';
 import {
-  Delegate,
   CreateDelegateDTO,
   UpdateDelegateDTO,
   DelegateRole,
-  DelegateStatus,
-  ResourceType,
   AccessLevel
 } from '../types/delegate.types';
 
 // Cache status type for tracking cache state
 type CacheStatus = 'valid' | 'stale' | 'invalid';
-
-// Enhanced error type for delegate operations
-interface DelegateError {
-  code: string;
-  message: string;
-  details?: Record<string, any>;
-}
 
 /**
  * Custom hook for managing delegate operations with enhanced security and monitoring
@@ -50,7 +39,7 @@ export const useDelegate = () => {
   const dispatch = useDispatch();
 
   // Redux state selectors
-  const delegates = useSelector(selectDelegates);
+  const delegateIds = useSelector(selectDelegateIds);
   const status = useSelector(selectDelegateStatus);
   const error = useSelector(selectDelegateError);
 
@@ -68,7 +57,7 @@ export const useDelegate = () => {
     delegateId: string,
     action: string
   ): Promise<boolean> => {
-    const delegate = delegates.find(d => d.id === delegateId);
+    const delegate = delegateIds.find((d: string) => d === delegateId);
     if (!delegate) return false;
 
     // Permission matrix based on role
@@ -97,8 +86,9 @@ export const useDelegate = () => {
       }
     };
 
-    return !!permissionMatrix[delegate.role]?.[action];
-  }, [delegates]);
+    const delegateRole = delegate.role as DelegateRole;
+    return !!permissionMatrix[delegateRole]?.[action];
+  }, [delegateIds]);
 
   /**
    * Adds audit log entry for delegate operations
@@ -128,7 +118,7 @@ export const useDelegate = () => {
         return;
       }
 
-      await dispatch(fetchDelegates());
+      await dispatch(fetchDelegates() as any);
       setLastRefresh(Date.now());
       setCacheStatus('valid');
       logAuditEvent('FETCH_DELEGATES', 'system');
@@ -158,7 +148,7 @@ export const useDelegate = () => {
         }
       });
 
-      const result = await dispatch(createDelegate(data));
+      const result = await dispatch(createDelegate(data) as any);
       logAuditEvent('CREATE_DELEGATE', result.payload.id, { data });
       setCacheStatus('stale');
       return result;
@@ -181,7 +171,7 @@ export const useDelegate = () => {
         throw new Error('Insufficient permissions to update delegate');
       }
 
-      const result = await dispatch(updateDelegate({ id, data }));
+      const result = await dispatch(updateDelegate({ id, data }) as any);
       logAuditEvent('UPDATE_DELEGATE', id, { data });
       setCacheStatus('stale');
       return result;
@@ -203,7 +193,7 @@ export const useDelegate = () => {
         throw new Error('Insufficient permissions to remove delegate');
       }
 
-      const result = await dispatch(removeDelegate(id));
+      const result = await dispatch(removeDelegate(id) as any);
       logAuditEvent('REMOVE_DELEGATE', id);
       setCacheStatus('stale');
       return result;
@@ -234,7 +224,7 @@ export const useDelegate = () => {
 
   // Memoized return value
   return useMemo(() => ({
-    delegates,
+    delegateIds,
     status,
     error,
     cacheStatus,
@@ -245,7 +235,7 @@ export const useDelegate = () => {
     validatePermissions,
     refreshCache
   }), [
-    delegates,
+    delegateIds,
     status,
     error,
     cacheStatus,

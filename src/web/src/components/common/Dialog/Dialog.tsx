@@ -7,9 +7,9 @@ import {
   Button,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { FocusTrap } from '@mui/base';
-import { palette, spacing, typography } from '../../../config/theme.config';
 
 /**
  * Interface for CustomDialog component props with enhanced accessibility features
@@ -62,7 +62,8 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
   const previousFocus = useRef<HTMLElement | null>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   
-  // Media query for responsive behavior
+  // Get theme and media query for responsive behavior
+  const theme = useTheme();
   const isMobile = useMediaQuery('(max-width:768px)');
 
   // Sound effects for feedback
@@ -84,11 +85,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
   }, [open]);
 
   // Handle dialog close
-  const handleClose = useCallback((event?: React.SyntheticEvent) => {
-    if (event) {
-      event.preventDefault();
-    }
-    
+  const handleClose = useCallback((_: {}, reason: "backdropClick" | "escapeKeyDown") => {
     playSound('close');
     onClose();
     
@@ -105,14 +102,14 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
     if (onConfirm) {
       onConfirm();
     }
-    handleClose();
-  }, [onConfirm, handleClose, playSound]);
+    onClose();
+  }, [onConfirm, onClose, playSound]);
 
   // Keyboard navigation handler
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     switch (event.key) {
       case 'Escape':
-        handleClose();
+        onClose();
         break;
       case 'Enter':
         if (onConfirm) {
@@ -125,7 +122,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
       default:
         break;
     }
-  }, [handleClose, handleConfirm, onConfirm]);
+  }, [onClose, handleConfirm, onConfirm]);
 
   return (
     <FocusTrap open={open}>
@@ -139,7 +136,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
         onKeyDown={handleKeyDown}
         sx={{
           '& .MuiDialog-paper': {
-            padding: spacing(3),
+            padding: theme.spacing(3),
             ...(reduceMotion && {
               transition: 'none',
             }),
@@ -149,10 +146,10 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
         <DialogTitle
           id="dialog-title"
           sx={{
-            fontSize: largeText ? typography.h4.fontSize : typography.h5.fontSize,
-            fontWeight: typography.h5.fontWeight,
-            color: palette.text.primary,
-            padding: spacing(2),
+            fontSize: largeText ? theme.typography.h4.fontSize : theme.typography.h5.fontSize,
+            fontWeight: theme.typography.h5.fontWeight,
+            color: theme.palette.text.primary,
+            padding: theme.spacing(2),
           }}
         >
           {title}
@@ -161,7 +158,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
         <DialogContent
           id="dialog-description"
           sx={{
-            padding: spacing(2),
+            padding: theme.spacing(2),
             '& > *': {
               fontSize: largeText ? '1.25rem' : '1.125rem',
               lineHeight: 1.6,
@@ -171,7 +168,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
           {description && (
             <Typography
               variant="body1"
-              sx={{ marginBottom: spacing(2) }}
+              sx={{ marginBottom: theme.spacing(2) }}
               color="textSecondary"
             >
               {description}
@@ -182,8 +179,8 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
 
         <DialogActions
           sx={{
-            padding: spacing(2),
-            gap: spacing(2),
+            padding: theme.spacing(2),
+            gap: theme.spacing(2),
             flexDirection: isMobile ? 'column' : 'row',
             '& > button': {
               margin: 0,
@@ -193,7 +190,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
         >
           <Button
             variant="outlined"
-            onClick={handleClose}
+            onClick={() => onClose()}
             size="large"
             sx={{
               fontSize: largeText ? '1.25rem' : '1.125rem',

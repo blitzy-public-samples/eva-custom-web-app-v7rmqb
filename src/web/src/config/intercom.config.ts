@@ -1,5 +1,4 @@
-// @types/intercom-web version: 2.8.0
-import type { IntercomSettings } from '@types/intercom-web';
+import type { IntercomSettings } from 'intercom-web';
 
 /**
  * Environment validation for required Intercom configuration

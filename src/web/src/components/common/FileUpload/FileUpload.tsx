@@ -11,12 +11,9 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  IconButton,
-  Tooltip,
   useTheme
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CloseIcon from '@mui/icons-material/Close';
 import { DocumentType, DocumentUploadState, DocumentStatus } from '../../types/document.types';
 
 // Styled components for enhanced accessibility and visual feedback

@@ -13,12 +13,12 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Container, styled, useMediaQuery, useTheme } from '@mui/material';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Header } from '../Header/Header';
-import { Footer } from '../Footer/Footer';
+import Footer from '../Footer/Footer';
 import Sidebar from '../Sidebar/Sidebar';
 import { useAuth } from '../../../hooks/useAuth';
 
 // Enhanced styled components with accessibility improvements
-const LayoutContainer = styled(Box)(({ theme }) => ({
+const LayoutContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
   minHeight: '100vh',
@@ -29,9 +29,9 @@ const LayoutContainer = styled(Box)(({ theme }) => ({
     outline: '3px solid var(--color-primary)',
     outlineOffset: '2px',
   },
-}));
+});
 
-const MainContent = styled(Container)(({ theme }) => ({
+const MainContent = styled(Box)(({ theme }) => ({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
@@ -140,7 +140,6 @@ export const MainLayout: React.FC<MainLayoutProps> = React.memo(({
 
         <MainContent
           maxWidth="lg"
-          component="main"
           role="main"
           aria-label="Main content"
         >

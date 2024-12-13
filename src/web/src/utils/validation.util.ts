@@ -127,6 +127,36 @@ export const validateRegisterPayload = (payload: RegisterPayload): ValidationRes
 };
 
 /**
+ * Validates form data against a Zod schema
+ * @param data - Form data to validate
+ * @param schema - Zod schema to validate against
+ * @returns Validation result with bilingual error messages
+ */
+export const validateFormData = <T>(data: T, schema: z.ZodSchema<T>): ValidationResult => {
+  try {
+    schema.parse(data);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        errors: {
+          en: error.errors.map(e => e.message),
+          fr: error.errors.map(e => translateError(e.message))
+        }
+      };
+    }
+    return {
+      success: false,
+      errors: {
+        en: ['Invalid form data'],
+        fr: ['Données de formulaire invalides']
+      }
+    };
+  }
+};
+
+/**
  * Validates Canadian phone numbers with area code verification
  * @param phoneNumber - Phone number to validate
  * @param province - Canadian province for area code validation

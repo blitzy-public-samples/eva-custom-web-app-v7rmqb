@@ -244,6 +244,14 @@ const subscriptionSlice = createSlice({
   }
 });
 
+// Export thunks as a group
+export const subscriptionThunks = {
+  fetchCurrentSubscription,
+  fetchSubscriptionPlans,
+  updateSubscription,
+  cancelSubscription
+};
+
 // Configure persistence
 const persistConfig = {
   key: 'subscription',

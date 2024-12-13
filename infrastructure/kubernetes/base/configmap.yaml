@@ -1,0 +1,74 @@
+# Kubernetes ConfigMap for Estate Kit Application
+# Version: v1
+# Purpose: Manages non-sensitive configuration data for the Estate Kit application
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: config
+    environment: ${ENV}
+    managed-by: terraform
+    version: ${VERSION}
+    tier: configuration
+  annotations:
+    description: "Estate Kit application configuration"
+    owner: "DevOps"
+    last-updated: ${TIMESTAMP}
+    config-version: ${CONFIG_VERSION}
+    backup-policy: "daily"
+    security-review-required: "true"
+data:
+  NODE_ENV: ${ENV}
+  API_URL: "https://api.estatekit.ca"
+  FRONTEND_URL: "https://estatekit.ca"
+  S3_BUCKET: "estate-kit-documents-${ENV}"
+  LOG_LEVEL: "info"
+  AWS_REGION: "ca-central-1"
+  CDN_DOMAIN: "cdn.estatekit.ca"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feature-flags
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: config
+    environment: ${ENV}
+    managed-by: terraform
+    version: ${VERSION}
+    tier: configuration
+data:
+  ENABLE_AUDIT_LOGS: "true"
+  ENABLE_DOCUMENT_VERSIONING: "true"
+  ENABLE_MFA: "true"
+  ENABLE_DELEGATE_ACCESS: "true"
+  ENABLE_DOCUMENT_ENCRYPTION: "true"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-endpoints
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: config
+    environment: ${ENV}
+    managed-by: terraform
+    version: ${VERSION}
+    tier: configuration
+data:
+  REDIS_HOST: "redis.estate-kit.svc.cluster.local"
+  POSTGRES_HOST: "postgres.estate-kit.svc.cluster.local"
+  SANITY_PROJECT_ID: ${SANITY_PROJECT_ID}
+  SANITY_DATASET: ${ENV}
+  AUTH0_DOMAIN: "estatekit.auth0.com"
+  SHOPIFY_STORE_URL: "store.estatekit.ca"
+  INTERCOM_APP_ID: ${INTERCOM_APP_ID}

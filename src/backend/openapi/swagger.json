@@ -1,0 +1,429 @@
+# OpenAPI 3.0.0 specification for Estate Kit API
+# Version: 1.0.0
+# Contact: support@estatekit.com
+# Compliance: PIPEDA, HIPAA
+
+openapi: 3.0.0
+
+info:
+  title: Estate Kit API
+  description: |
+    Secure API for Estate Kit platform providing estate planning services with 
+    PIPEDA and HIPAA compliance. Enables document management, delegate access control,
+    and secure digital vault functionality.
+  version: 1.0.0
+  contact:
+    name: Estate Kit Support
+    email: support@estatekit.com
+  x-api-id: estate-kit-api
+  x-compliance: 
+    - PIPEDA
+    - HIPAA
+
+servers:
+  - url: https://api.estatekit.com/v1
+    description: Production server
+  - url: https://staging-api.estatekit.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /users:
+    post:
+      summary: Create new user account
+      tags: [Users]
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    
+    get:
+      summary: Get user profile
+      tags: [Users]
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /documents:
+    post:
+      summary: Upload new document
+      tags: [Documents]
+      operationId: uploadDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUpload'
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+
+    get:
+      summary: List user documents
+      tags: [Documents]
+      operationId: listDocuments
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [medical, financial, legal, personal]
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /delegates:
+    post:
+      summary: Add new delegate
+      tags: [Delegates]
+      operationId: addDelegate
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DelegateCreate'
+      responses:
+        '201':
+          description: Delegate added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delegate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        province:
+          type: string
+          enum: [AB, BC, MB, NB, NL, NS, NT, NU, ON, PE, QC, SK, YT]
+        profile:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - name
+        - province
+
+    UserCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+        province:
+          type: string
+          enum: [AB, BC, MB, NB, NL, NS, NT, NU, ON, PE, QC, SK, YT]
+        password:
+          type: string
+          format: password
+          minLength: 12
+      required:
+        - email
+        - name
+        - province
+        - password
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        category:
+          type: string
+          enum: [medical, financial, legal, personal]
+        file_type:
+          type: string
+        size:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - category
+        - file_type
+        - size
+
+    DocumentUpload:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum: [medical, financial, legal, personal]
+        file:
+          type: string
+          format: binary
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - title
+        - category
+        - file
+
+    DocumentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    Delegate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [executor, healthcare_proxy, financial_advisor, legal_advisor]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read_medical, read_financial, read_legal, read_personal]
+        status:
+          type: string
+          enum: [pending, active, revoked]
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - role
+        - permissions
+        - status
+
+    DelegateCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [executor, healthcare_proxy, financial_advisor, legal_advisor]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read_medical, read_financial, read_legal, read_personal]
+        expires_at:
+          type: string
+          format: date-time
+      required:
+        - email
+        - role
+        - permissions
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      required: false
+      description: Page number for pagination
+
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      required: false
+      description: Number of items per page
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    PayloadTooLarge:
+      description: Request payload too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-token-lifetime: 1800
+
+x-rate-limit:
+  rate: 1000
+  burst: 50
+  period: 1m
+
+x-cors:
+  allowed-origins:
+    - https://estatekit.com
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed-headers:
+    - Authorization
+    - Content-Type
+  expose-headers:
+    - X-Request-ID
+    - X-Rate-Limit-Remaining
+  max-age: 3600

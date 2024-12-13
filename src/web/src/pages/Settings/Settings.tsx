@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stack, Switch, Typography } from '@mui/material';
-import { useAnalytics } from '@segment/analytics-next'; // v1.51+
+import { Analytics } from '@segment/analytics-next'; // v1.51+
 import ProfileForm from '../../components/profile/ProfileForm/ProfileForm';
 import Card from '../../components/common/Card/Card';
 import { useAuth } from '../../hooks/useAuth';
@@ -31,14 +31,22 @@ interface SecuritySettings {
   updatedBy: string;
 }
 
+// Interface for profile form data
+interface ProfileFormData {
+  name: string;
+  email: string;
+  phone: string;
+  province: string;
+}
+
 /**
  * Enhanced settings page component with senior-friendly design and comprehensive security features.
  * Implements WCAG 2.1 Level AA compliance and extensive error handling.
  */
 const Settings: React.FC = () => {
   // Hooks
-  const { user, updateUser } = useAuth();
-  const { track } = useAnalytics();
+  const { user } = useAuth();
+  const analytics = Analytics.getInstance();
   
   // State management
   const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>({
@@ -67,17 +75,23 @@ const Settings: React.FC = () => {
         throw new Error('Too many update attempts. Please try again later.');
       }
 
-      // Update user profile
-      await updateUser({
-        name: formData.name,
-        profile: {
-          phoneNumber: formData.phone,
-          province: formData.province
-        }
+      // Update user profile through API service instead of hook
+      await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          profile: {
+            phoneNumber: formData.phone,
+            province: formData.province
+          }
+        })
       });
 
       // Track successful update
-      track(ANALYTICS_EVENTS.PROFILE_UPDATE, {
+      analytics.track(ANALYTICS_EVENTS.PROFILE_UPDATE, {
         timestamp: new Date().toISOString(),
         updatedFields: Object.keys(formData)
       });
@@ -118,18 +132,24 @@ const Settings: React.FC = () => {
         updatedBy: user?.email || ''
       };
 
-      // Update user profile with new security settings
-      await updateUser({
-        profile: {
-          [setting]: value
-        }
+      // Update user profile through API service
+      await fetch('/api/users/security-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          profile: {
+            [setting]: value
+          }
+        })
       });
 
       // Update local state
       setSecuritySettings(updatedSettings);
 
       // Track setting change
-      track(ANALYTICS_EVENTS.SECURITY_UPDATE, {
+      analytics.track(ANALYTICS_EVENTS.SECURITY_UPDATE, {
         setting,
         value,
         timestamp: new Date().toISOString()
@@ -209,8 +229,7 @@ const Settings: React.FC = () => {
               onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.TWO_FACTOR, e.target.checked)}
               disabled={loading}
               inputProps={{
-                'aria-label': 'Two-Factor Authentication toggle',
-                'data-testid': 'two-factor-toggle'
+                'aria-label': 'Two-Factor Authentication toggle'
               }}
             />
           </Stack>
@@ -225,8 +244,7 @@ const Settings: React.FC = () => {
               onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.EMAIL_NOTIFICATIONS, e.target.checked)}
               disabled={loading}
               inputProps={{
-                'aria-label': 'Email notifications toggle',
-                'data-testid': 'email-notifications-toggle'
+                'aria-label': 'Email notifications toggle'
               }}
             />
           </Stack>
@@ -240,8 +258,7 @@ const Settings: React.FC = () => {
               onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.SMS_NOTIFICATIONS, e.target.checked)}
               disabled={loading}
               inputProps={{
-                'aria-label': 'SMS notifications toggle',
-                'data-testid': 'sms-notifications-toggle'
+                'aria-label': 'SMS notifications toggle'
               }}
             />
           </Stack>

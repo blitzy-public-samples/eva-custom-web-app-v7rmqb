@@ -1,4 +1,39 @@
-import type { IntercomSettings } from 'intercom-web';
+// Temporary type definition until @types/intercom-web is properly installed
+type IntercomSettings = {
+  app_id: string;
+  accessibility?: {
+    ariaLabels?: boolean;
+    highContrast?: boolean;
+    keyboardShortcuts?: boolean;
+    screenReaderSupport?: boolean;
+    focusManagement?: boolean;
+    colorContrastRatio?: string;
+    focusVisible?: boolean;
+    reducedMotion?: boolean;
+    ariaLabel?: string;
+    tabIndex?: number;
+  };
+  alignment?: string;
+  horizontal_padding?: number;
+  vertical_padding?: number;
+  custom_launcher_selector?: string;
+  hide_default_launcher?: boolean;
+  lazy_loading?: boolean;
+  session_duration?: number;
+  style?: {
+    backgroundColor?: string;
+    actionColor?: string;
+    fontFamily?: string;
+    fontSize?: string;
+    animationDuration?: string;
+  };
+  secure_mode?: boolean;
+  data_encryption?: boolean;
+  privacy_mode?: boolean;
+  cookie_secure?: boolean;
+  http_only?: boolean;
+  same_site?: string;
+};
 
 /**
  * Environment validation for required Intercom configuration

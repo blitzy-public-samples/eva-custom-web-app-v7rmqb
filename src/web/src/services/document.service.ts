@@ -38,7 +38,7 @@ interface EncryptionMonitor {
  * with comprehensive security features and PIPEDA compliance
  */
 export class DocumentService {
-  private static instance: DocumentService;
+  private static instance: DocumentService | null = null;
   private uploadProgress: Map<string, DocumentUploadState>;
   private encryptionMonitor: EncryptionMonitor;
 
@@ -61,6 +61,37 @@ export class DocumentService {
       DocumentService.instance = new DocumentService();
     }
     return DocumentService.instance;
+  }
+
+  /**
+   * Retrieves documents based on specified criteria
+   */
+  public async getDocuments(
+    type?: string,
+    userRole?: string,
+    encryptionRequired?: boolean
+  ): Promise<Document[]> {
+    try {
+      const params = new URLSearchParams();
+      if (type) params.append('type', type);
+      if (userRole) params.append('userRole', userRole);
+      if (encryptionRequired !== undefined) {
+        params.append('encryptionRequired', encryptionRequired.toString());
+      }
+
+      const response = await apiService.get<Document[]>(
+        `${API_BASE_PATH}?${params.toString()}`
+      );
+
+      return response;
+    } catch (error: unknown) {
+      this.logSecurityEvent('GET_DOCUMENTS_FAILURE', {
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        type,
+        userRole
+      });
+      throw error;
+    }
   }
 
   /**

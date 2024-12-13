@@ -9,7 +9,7 @@
  */
 
 import { Client as ShopifyBuy } from '@shopify/buy-sdk';
-import { ApiService } from './api.service';
+import { apiService } from './api.service';
 import { 
   ISubscription, 
   ISubscriptionCreateDTO,
@@ -33,7 +33,6 @@ const SHOPIFY_CONFIG = {
  */
 export class SubscriptionService {
   private static instance: SubscriptionService;
-  private apiService: ApiService;
   private shopifyClient: ShopifyBuy;
   private subscriptionPlansCache: Map<string, ISubscriptionPlanDetails>;
 
@@ -41,7 +40,6 @@ export class SubscriptionService {
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
-    this.apiService = ApiService.getInstance();
     this.shopifyClient = ShopifyBuy.buildClient(SHOPIFY_CONFIG);
     this.subscriptionPlansCache = new Map();
   }
@@ -75,7 +73,7 @@ export class SubscriptionService {
       });
 
       // Create subscription in our backend
-      const subscription = await this.apiService.post<ISubscription>('/api/v1/subscriptions', {
+      const subscription = await apiService.post<ISubscription>('/api/v1/subscriptions', {
         ...data,
         shopifyCustomerId: shopifyCustomer.id,
         shopifySubscriptionId: shopifySubscription.id,
@@ -103,7 +101,7 @@ export class SubscriptionService {
       }
 
       // Update subscription in our backend
-      const updatedSubscription = await this.apiService.put<ISubscription>(
+      const updatedSubscription = await apiService.put<ISubscription>(
         `/api/v1/subscriptions/${subscriptionId}`,
         updates
       );
@@ -120,7 +118,7 @@ export class SubscriptionService {
    */
   public async cancelSubscription(subscriptionId: string): Promise<ISubscription> {
     try {
-      const subscription = await this.apiService.get<ISubscription>(
+      const subscription = await apiService.get<ISubscription>(
         `/api/v1/subscriptions/${subscriptionId}`
       );
 
@@ -143,7 +141,7 @@ export class SubscriptionService {
    * Gets subscription details by ID
    */
   public async getSubscription(subscriptionId: string): Promise<ISubscription> {
-    return await this.apiService.get<ISubscription>(
+    return await apiService.get<ISubscription>(
       `/api/v1/subscriptions/${subscriptionId}`
     );
   }
@@ -156,7 +154,7 @@ export class SubscriptionService {
       return this.subscriptionPlansCache.get(plan)!;
     }
 
-    const planDetails = await this.apiService.get<ISubscriptionPlanDetails>(
+    const planDetails = await apiService.get<ISubscriptionPlanDetails>(
       `/api/v1/subscription-plans/${plan}`
     );
     
@@ -185,11 +183,11 @@ export class SubscriptionService {
   private async getOrCreateShopifyCustomer(userId: string): Promise<any> {
     try {
       // Try to get existing customer
-      const customer = await this.apiService.get(`/api/v1/users/${userId}/shopify-customer`);
+      const customer = await apiService.get(`/api/v1/users/${userId}/shopify-customer`);
       return customer;
     } catch (error) {
       // Create new Shopify customer if not exists
-      const userData = await this.apiService.get(`/api/v1/users/${userId}`);
+      const userData = await apiService.get(`/api/v1/users/${userId}`);
       return await this.shopifyClient.createCustomer({
         email: userData.email,
         firstName: userData.name.split(' ')[0],

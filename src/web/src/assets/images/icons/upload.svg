@@ -1,0 +1,35 @@
+<svg 
+  xmlns="http://www.w3.org/2000/svg" 
+  viewBox="0 0 24 24" 
+  width="24" 
+  height="24" 
+  fill="currentColor" 
+  role="img" 
+  aria-label="Upload file"
+  aria-hidden="false"
+  class="upload-icon"
+>
+  <!-- Simple, clear arrow pointing upward with a base line -->
+  <path d="M12 3a1 1 0 0 0-1 1v11.586l-4.293-4.293a1 1 0 0 0-1.414 1.414l6 6a1 1 0 0 0 1.414 0l6-6a1 1 0 0 0-1.414-1.414L13 15.586V4a1 1 0 0 0-1-1z" />
+  <!-- Base line indicating upload target -->
+  <path d="M5 20a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H5z" />
+  
+  <!-- Add CSS for hover and active states -->
+  <style>
+    .upload-icon {
+      transition: transform 0.2s ease;
+    }
+    .upload-icon:hover {
+      transform: scale(1.1);
+      fill: #48BB78;
+    }
+    .upload-icon:active {
+      transform: scale(0.95);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .upload-icon {
+        transition: none;
+      }
+    }
+  </style>
+</svg>

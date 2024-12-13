@@ -47,14 +47,11 @@ interface PaginatedResponse<T> {
  */
 export class DelegateService {
   private static instance: DelegateService;
-  private auth0Client: Auth0Client;
 
   /**
    * Private constructor initializing API service and Auth0 client
    */
-  private constructor() {
-    this.auth0Client = auth0Client;
-  }
+  private constructor() {}
 
   /**
    * Gets singleton instance of DelegateService

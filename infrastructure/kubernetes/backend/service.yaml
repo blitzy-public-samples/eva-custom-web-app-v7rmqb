@@ -1,0 +1,61 @@
+# Kubernetes Service configuration for Estate Kit backend services
+# Version: v1
+# Purpose: Define load balancing, port mappings and service discovery for backend API services
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: estate-kit-backend
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: v1
+    tier: backend
+  annotations:
+    description: "Estate Kit backend API service"
+    owner: "DevOps"
+    # Prometheus monitoring configuration
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+    # AWS Load Balancer configuration
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+
+spec:
+  type: ClusterIP
+  # Port configurations for different service endpoints
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+    - name: health
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+  
+  # Pod selector for service targeting
+  selector:
+    app: estate-kit
+    component: backend
+    tier: backend
+  
+  # Disable session affinity for better load distribution
+  sessionAffinity: None
+  
+  # Don't publish pods that aren't ready
+  publishNotReadyAddresses: false
+  
+  # Topology aware routing configuration
+  topologyKeys:
+    - "kubernetes.io/hostname"
+    - "topology.kubernetes.io/zone"
+    - "*"

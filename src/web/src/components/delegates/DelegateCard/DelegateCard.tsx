@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography, Chip, IconButton, Tooltip, Box, CircularProgress, Alert } from '@mui/material';
 import { Edit, Delete, AccessTime, Check, Error, Info } from '@mui/icons-material';
 import { format } from 'date-fns'; // v2.30+
-import Card, { CardProps } from '../../common/Card/Card';
+import Card from '../../common/Card/Card';
 import { 
   Delegate, 
   DelegateRole, 
@@ -23,7 +23,6 @@ export interface DelegateCardProps {
   testId?: string;
   loading?: boolean;
   error?: string;
-  showConfirmation?: boolean;
 }
 
 /**
@@ -39,7 +38,7 @@ const ROLE_DISPLAY: Record<DelegateRole, string> = {
 /**
  * Returns WCAG-compliant color for status chip based on delegate status
  */
-const getStatusColor = (status: DelegateStatus): string => {
+const getStatusColor = (status: DelegateStatus): 'success' | 'warning' | 'error' | 'default' => {
   switch (status) {
     case DelegateStatus.ACTIVE:
       return 'success';
@@ -85,7 +84,6 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({
   testId = 'delegate-card',
   loading = false,
   error,
-  showConfirmation = false,
 }) => {
   const statusText = {
     [DelegateStatus.ACTIVE]: 'Active',
@@ -199,7 +197,7 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({
             icon={delegate.status === DelegateStatus.ACTIVE ? <Check /> : <Info />}
             label={statusText}
             color={getStatusColor(delegate.status)}
-            size="large"
+            size="medium"
             sx={{ 
               fontSize: '1rem',
               height: '32px',

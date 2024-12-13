@@ -1,0 +1,80 @@
+node_modules
+.npm/
+npm-debug.log*
+
+# Build outputs
+dist
+coverage
+
+# Test files
+tests
+*.test.*
+jest.config.ts
+
+# Version control
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+*.key
+*.pem
+.ssh/
+
+# Logs
+*.log
+
+# Development configurations
+.vscode/
+.editorconfig
+.prettierrc
+.eslintrc*
+nodemon.json
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+
+# System files
+.DS_Store
+
+# Security and certificates
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# Cache and temporary files
+.cache/
+tmp/
+temp/
+
+# IDE specific
+.idea/
+*.swp
+*.swo
+
+# Build and CI configurations
+.circleci/
+.github/
+Jenkinsfile*
+*.yml
+*.yaml
+!package.json
+!package-lock.json
+!tsconfig.json
+
+# Development tools
+.eslintcache
+.stylelintcache
+.prettier*
+
+# Debug files
+.debug/
+*.debug
+
+# Local development
+local/
+dev/

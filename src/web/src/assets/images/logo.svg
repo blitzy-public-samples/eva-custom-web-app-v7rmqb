@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  viewBox="0 0 200 40" 
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-labelledby="logoTitle logoDesc"
+  xml:lang="en"
+  preserveAspectRatio="xMidYMid"
+>
+  <title id="logoTitle">Estate Kit</title>
+  <desc id="logoDesc">Estate Kit's primary logo featuring high contrast design</desc>
+  
+  <!-- Background shield shape -->
+  <path 
+    d="M40 20c0 11-9 20-20 20S0 31 0 20 9 0 20 0s20 9 20 20z" 
+    fill="#2C5282"
+  />
+  
+  <!-- House icon representing estate -->
+  <path 
+    d="M20 8l-12 10h4v10h16V18h4L20 8zm4 16h-8v-6h8v6z" 
+    fill="#48BB78"
+  />
+  
+  <!-- Text "Estate Kit" -->
+  <text 
+    x="50" 
+    y="27" 
+    font-family="Inter, -apple-system, system-ui, sans-serif" 
+    font-size="24" 
+    font-weight="600" 
+    fill="#2C5282"
+    letter-spacing=".5"
+  >
+    Estate Kit
+  </text>
+  
+  <!-- Decorative underline -->
+  <path 
+    d="M50 30h100" 
+    stroke="#48BB78" 
+    stroke-width="2" 
+    stroke-linecap="round"
+  />
+</svg>

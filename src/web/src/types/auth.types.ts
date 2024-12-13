@@ -1,0 +1,115 @@
+// @auth0/auth0-spa-js version: ^2.1.0
+import { Auth0Client } from '@auth0/auth0-spa-js';
+import { User } from '../../backend/src/types/user.types';
+
+/**
+ * Configuration interface for Auth0 authentication settings.
+ * Required for initializing Auth0 client with proper OIDC/OAuth2 parameters.
+ */
+export interface Auth0Config {
+    domain: string;          // Auth0 tenant domain
+    clientId: string;        // Application client ID
+    audience: string;        // API identifier
+    redirectUri: string;     // Post-authentication redirect URI
+}
+
+/**
+ * Login request payload interface with enhanced security tracking.
+ * Used for initiating authentication process with credentials.
+ */
+export interface LoginPayload {
+    email: string;          // User email address
+    password: string;       // User password (never stored)
+}
+
+/**
+ * Registration payload interface with comprehensive security options.
+ * Includes required fields for account creation with security preferences.
+ */
+export interface RegisterPayload {
+    email: string;          // User email address
+    password: string;       // User password (never stored)
+    name: string;          // User's full name
+    province: Province;     // Canadian province selection
+    acceptedTerms: boolean; // Terms acceptance flag
+    mfaPreference: boolean; // MFA opt-in preference
+}
+
+/**
+ * Authentication state interface for Redux store.
+ * Tracks comprehensive authentication status including MFA state.
+ */
+export interface AuthState {
+    isAuthenticated: boolean;     // Primary authentication status
+    user: User | null;           // Current user information
+    loading: boolean;            // Authentication process status
+    error: string | null;        // Authentication error message
+    mfaPending: boolean;         // MFA verification pending
+    mfaVerified: boolean;        // MFA verification complete
+}
+
+/**
+ * Authentication tokens interface for session management.
+ * Implements JWT token structure with expiration tracking.
+ */
+export interface AuthToken {
+    accessToken: string;         // JWT access token
+    idToken: string;            // OpenID Connect ID token
+    expiresAt: number;          // Token expiration timestamp
+}
+
+/**
+ * Supported Canadian provinces enum.
+ * Used for jurisdiction-specific features and requirements.
+ */
+export enum Province {
+    ALBERTA = 'ALBERTA',
+    BRITISH_COLUMBIA = 'BRITISH_COLUMBIA',
+    ONTARIO = 'ONTARIO'
+}
+
+/**
+ * MFA verification status enum.
+ * Tracks the state of multi-factor authentication process.
+ */
+export enum MFAStatus {
+    NOT_STARTED = 'NOT_STARTED',
+    PENDING = 'PENDING',
+    VERIFIED = 'VERIFIED',
+    FAILED = 'FAILED'
+}
+
+/**
+ * Auth0 client configuration options interface.
+ * Extends base Auth0 configuration with application-specific settings.
+ */
+export interface Auth0ClientOptions {
+    client: Auth0Client;
+    config: Auth0Config;
+    audience: string;
+    scope: string;
+}
+
+/**
+ * Session security options interface.
+ * Defines security parameters for user sessions.
+ */
+export interface SessionSecurityOptions {
+    requireMFA: boolean;         // MFA requirement flag
+    sessionTimeout: number;      // Session timeout in minutes
+    maxFailedAttempts: number;   // Maximum failed login attempts
+    passwordExpiry: number;      // Password expiry in days
+}
+
+/**
+ * Authentication error types enum.
+ * Categorizes possible authentication failure scenarios.
+ */
+export enum AuthErrorType {
+    INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+    MFA_REQUIRED = 'MFA_REQUIRED',
+    MFA_FAILED = 'MFA_FAILED',
+    SESSION_EXPIRED = 'SESSION_EXPIRED',
+    ACCOUNT_LOCKED = 'ACCOUNT_LOCKED',
+    NETWORK_ERROR = 'NETWORK_ERROR'
+}

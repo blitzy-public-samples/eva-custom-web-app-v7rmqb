@@ -1,6 +1,16 @@
 // @auth0/auth0-spa-js version: ^2.1.0
 import { Auth0Client } from '@auth0/auth0-spa-js';
-import { User } from '../../backend/src/types/user.types';
+
+/**
+ * Basic user interface for frontend usage
+ */
+export interface User {
+    id: string;
+    email: string;
+    name: string;
+    province: Province;
+    mfaEnabled: boolean;
+}
 
 /**
  * Configuration interface for Auth0 authentication settings.

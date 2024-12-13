@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import { 
   Select,
@@ -14,9 +14,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Alert
+  Alert,
+  SelectChangeEvent
 } from '@mui/material';
-import { FileUpload, FileUploadProps } from '../../common/FileUpload/FileUpload';
+import { FileUpload } from '../../common/FileUpload/FileUpload';
 import { DocumentType } from '../../../types/document.types';
 import DocumentService from '../../../services/document.service';
 
@@ -45,7 +46,7 @@ const UploadContainer = styled(Box)(({ theme }) => ({
 
 // Interface definitions
 export interface DocumentUploadProps {
-  onUploadComplete: (document: Document) => void;
+  onUploadComplete: (document: any) => void;
   onUploadError: (error: string) => void;
   maxFileSize?: number;
   allowedFileTypes?: string[];
@@ -67,10 +68,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const announcerRef = useRef<HTMLDivElement>(null);
 
   // Handle document type selection with accessibility
   const handleDocumentTypeChange = useCallback((
-    event: React.ChangeEvent<{ value: unknown }>
+    event: SelectChangeEvent<DocumentType>
   ) => {
     const value = event.target.value as DocumentType;
     setSelectedType(value);
@@ -79,9 +81,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     // Announce selection for screen readers
     const announcement = `Selected document type: ${value.toLowerCase().replace('_', ' ')}`;
     window.setTimeout(() => {
-      const announcer = document.getElementById('upload-announcer');
-      if (announcer) {
-        announcer.textContent = announcement;
+      if (announcerRef.current) {
+        announcerRef.current.textContent = announcement;
       }
     }, 100);
   }, []);
@@ -108,7 +109,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             fileName: file.name,
             fileSize: file.size,
             mimeType: file.type,
-            checksumSHA256: await calculateChecksum(file)
+            checksumSHA256: await calculateChecksum(file),
+            encryptionStatus: 'ENCRYPTED',
+            storageLocation: 'S3',
+            retentionPeriod: '7-YEARS'
           },
           accessControl: {
             delegateIds: [],
@@ -122,9 +126,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           (progress: number) => {
             setUploadProgress(progress);
             // Update ARIA live region for screen readers
-            const announcer = document.getElementById('upload-announcer');
-            if (announcer) {
-              announcer.textContent = `Upload progress: ${progress}%`;
+            if (announcerRef.current) {
+              announcerRef.current.textContent = `Upload progress: ${progress}%`;
             }
           }
         );
@@ -134,9 +137,8 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         onUploadComplete(document);
 
         // Success announcement for screen readers
-        const announcer = document.getElementById('upload-announcer');
-        if (announcer) {
-          announcer.textContent = `${file.name} uploaded successfully`;
+        if (announcerRef.current) {
+          announcerRef.current.textContent = `${file.name} uploaded successfully`;
         }
       } catch (error) {
         currentAttempt++;
@@ -226,7 +228,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       {/* Hidden announcer for screen readers */}
       <div
-        id="upload-announcer"
+        ref={announcerRef}
         role="status"
         aria-live="polite"
         className="visually-hidden"

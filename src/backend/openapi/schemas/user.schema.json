@@ -1,0 +1,169 @@
+/**
+ * @fileoverview Core user-related type definitions for Estate Kit platform
+ * @version 1.0.0
+ */
+
+/**
+ * Possible roles a user can have in the system
+ */
+export enum UserRole {
+  OWNER = 'OWNER',
+  EXECUTOR = 'EXECUTOR',
+  HEALTHCARE_PROXY = 'HEALTHCARE_PROXY',
+  FINANCIAL_ADVISOR = 'FINANCIAL_ADVISOR',
+  LEGAL_ADVISOR = 'LEGAL_ADVISOR'
+}
+
+/**
+ * Possible statuses of a user account
+ */
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PENDING = 'PENDING',
+  SUSPENDED = 'SUSPENDED',
+  LOCKED = 'LOCKED'
+}
+
+/**
+ * Multi-factor authentication methods supported by the system
+ */
+export enum MFAMethod {
+  SMS = 'SMS',
+  EMAIL = 'EMAIL',
+  AUTHENTICATOR_APP = 'AUTHENTICATOR_APP'
+}
+
+/**
+ * Security question and answer pair for account recovery
+ */
+export interface SecurityQuestion {
+  questionId: string;
+  answer: string;
+  lastUpdated?: string;
+}
+
+/**
+ * Information about the user's login device
+ */
+export interface DeviceInfo {
+  userAgent: string;
+  ipAddress: string;
+}
+
+/**
+ * User session and security information
+ */
+export interface SessionInfo {
+  lastLogin: string;
+  failedLoginAttempts: number;
+  lastFailedLogin?: string;
+  deviceInfo: DeviceInfo;
+}
+
+/**
+ * Audit log entry for user account changes
+ */
+export interface AuditLogEntry {
+  action: string;
+  timestamp: string;
+  performedBy: string;
+}
+
+/**
+ * User profile information
+ */
+export interface UserProfile {
+  phoneNumber?: string;
+  province: string;
+  mfaEnabled: boolean;
+  mfaMethod?: MFAMethod;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  securityQuestions: SecurityQuestion[];
+  lastPasswordChange: string;
+  passwordExpiryDays: number;
+}
+
+/**
+ * Complete user information
+ */
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  profile: UserProfile;
+  role: UserRole;
+  status: UserStatus;
+  session: SessionInfo;
+  createdAt: string;
+  updatedAt: string;
+  auditLog?: AuditLogEntry[];
+}
+
+/**
+ * Data required to create a new user
+ */
+export interface CreateUserDTO {
+  email: string;
+  name: string;
+  password: string;
+  province: string;
+  securityQuestions: SecurityQuestion[];
+}
+
+/**
+ * Profile update data for existing user
+ */
+export interface UpdateProfileDTO {
+  phoneNumber?: string;
+  province?: string;
+  mfaEnabled?: boolean;
+  mfaMethod?: MFAMethod;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+}
+
+/**
+ * Data that can be updated for an existing user
+ */
+export interface UpdateUserDTO {
+  name?: string;
+  profile?: UpdateProfileDTO;
+  securityQuestions?: SecurityQuestion[];
+  status?: UserStatus;
+}
+
+/**
+ * Password validation pattern
+ * Requires:
+ * - At least 12 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ */
+export const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+
+/**
+ * Phone number validation pattern (E.164 format)
+ */
+export const PHONE_PATTERN = /^\+?[1-9]\d{1,14}$/;
+
+/**
+ * Constants for user-related limitations
+ */
+export const USER_CONSTANTS = {
+  MIN_PASSWORD_LENGTH: 12,
+  MAX_PASSWORD_LENGTH: 128,
+  MIN_NAME_LENGTH: 1,
+  MAX_NAME_LENGTH: 100,
+  MAX_EMAIL_LENGTH: 255,
+  MIN_PROVINCE_LENGTH: 2,
+  MAX_PROVINCE_LENGTH: 50,
+  MIN_SECURITY_QUESTIONS: 2,
+  MAX_SECURITY_QUESTIONS: 3,
+  DEFAULT_PASSWORD_EXPIRY_DAYS: 90,
+  MIN_PASSWORD_EXPIRY_DAYS: 30,
+  MAX_PASSWORD_EXPIRY_DAYS: 90
+} as const;

@@ -1,6 +1,5 @@
 import React from 'react'; // v18.2.0
 import { Box, Container, Typography, Link, styled } from '@mui/material'; // v5.11.0
-import { theme } from '../../../config/theme.config';
 
 /**
  * Interface for Footer component props

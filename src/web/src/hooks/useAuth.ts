@@ -13,7 +13,7 @@ import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   login, 
-  verifyMfa, 
+  verifyMFA, 
   refreshSession 
 } from '../redux/slices/authSlice';
 import type { 
@@ -21,6 +21,7 @@ import type {
   AuthError 
 } from '../types/auth.types';
 import { auth0Client } from '../config/auth.config';
+import { AppDispatch } from '../redux/store';
 
 // Security constants
 const SESSION_CHECK_INTERVAL = 60000; // 1 minute
@@ -31,7 +32,7 @@ const SESSION_EXPIRY_BUFFER = 300000; // 5 minutes before expiry
  * with comprehensive security features including MFA and session management.
  */
 export const useAuth = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const authState = useSelector((state: { auth: AuthState }) => state.auth);
 
   /**
@@ -44,8 +45,8 @@ export const useAuth = () => {
     const checkAndRefreshSession = async () => {
       try {
         // Check if session is active and needs refresh
-        if (authState.isAuthenticated && authState.sessionExpiry) {
-          const timeUntilExpiry = authState.sessionExpiry - Date.now();
+        if (authState.isAuthenticated && authState.token?.expiresAt) {
+          const timeUntilExpiry = new Date(authState.token.expiresAt).getTime() - Date.now();
           
           if (timeUntilExpiry <= SESSION_EXPIRY_BUFFER) {
             await handleSessionRefresh();
@@ -75,7 +76,7 @@ export const useAuth = () => {
         clearInterval(sessionCheckInterval);
       }
     };
-  }, [authState.isAuthenticated, authState.sessionExpiry]);
+  }, [authState.isAuthenticated, authState.token?.expiresAt]);
 
   /**
    * Enhanced login handler with MFA support and security logging
@@ -92,12 +93,12 @@ export const useAuth = () => {
       const result = await dispatch(login(credentials)).unwrap();
 
       // Handle MFA requirement
-      if (result.mfaRequired && !result.mfaVerified) {
+      if (result.requiresMFA && !result.isMFAVerified) {
         console.info('MFA required for:', {
           timestamp: new Date().toISOString(),
           email: credentials.email.replace(/[^@\w.-]/g, '')
         });
-        return { mfaRequired: true };
+        return { requiresMFA: true };
       }
 
       return result;
@@ -122,7 +123,7 @@ export const useAuth = () => {
       });
 
       // Dispatch MFA verification
-      const result = await dispatch(verifyMfa(mfaCode)).unwrap();
+      const result = await dispatch(verifyMFA(mfaCode)).unwrap();
 
       // Log successful MFA verification
       console.info('MFA verification successful:', {
@@ -215,9 +216,9 @@ export const useAuth = () => {
     user: authState.user,
     loading: authState.loading,
     error: authState.error as AuthError | null,
-    mfaRequired: authState.mfaRequired,
-    mfaVerified: authState.mfaVerified,
-    sessionExpiry: authState.sessionExpiry,
+    requiresMFA: authState.requiresMFA,
+    isMFAVerified: authState.isMFAVerified,
+    token: authState.token,
 
     // Authentication operations
     login: handleLogin,

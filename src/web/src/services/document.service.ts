@@ -15,6 +15,7 @@ import {
   DocumentUploadRequest, 
   DocumentUploadState 
 } from '../types/document.types';
+import { AxiosProgressEvent } from 'axios';
 
 // Constants for document service configuration
 const API_BASE_PATH = '/api/v1/documents';
@@ -23,11 +24,6 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 // Types for upload progress tracking
 type UploadProgressCallback = (progress: number) => void;
-
-interface ProgressEvent {
-  loaded: number;
-  total: number;
-}
 
 /**
  * Enhanced encryption monitoring interface for document security
@@ -114,10 +110,10 @@ export class DocumentService {
             API_BASE_PATH,
             formData,
             {
-              onUploadProgress: (progressEvent: ProgressEvent) => {
-                const progress = Math.round(
-                  (progressEvent.loaded * 100) / progressEvent.total
-                );
+              onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+                const progress = progressEvent.total
+                  ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                  : 0;
                 uploadState.progress = progress;
                 onProgress?.(progress);
               }

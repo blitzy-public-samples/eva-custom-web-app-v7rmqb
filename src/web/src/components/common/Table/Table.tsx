@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Table as MuiTable, 
   TableBody, 
@@ -139,6 +139,39 @@ const Table: React.FC<TableProps> = ({
     },
   };
 
+  const hiddenStyles = {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: 0,
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+  };
+
+  const sortButtonStyles = {
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    font: 'inherit',
+    color: 'inherit',
+    cursor: 'pointer',
+    minHeight: '44px',
+    minWidth: '44px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    textAlign: 'left',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+    '&:focus': {
+      outline: `2px solid ${theme.palette.primary.main}`,
+      outlineOffset: '2px',
+    },
+  };
+
   return (
     <div ref={tableRef}>
       {/* Hidden live region for screen reader announcements */}
@@ -147,7 +180,7 @@ const Table: React.FC<TableProps> = ({
         ref={announceRef}
         aria-live="polite"
         aria-atomic="true"
-        className="visually-hidden"
+        sx={hiddenStyles}
       />
 
       <TableContainer component={Paper}>
@@ -173,7 +206,7 @@ const Table: React.FC<TableProps> = ({
                   {column.sortable && sortable ? (
                     <button
                       onClick={() => handleSort(column.id)}
-                      className="table-sort-button"
+                      sx={sortButtonStyles}
                       aria-label={`Sort by ${column.label}`}
                     >
                       {column.label}
@@ -224,43 +257,6 @@ const Table: React.FC<TableProps> = ({
           />
         )}
       </TableContainer>
-
-      <style jsx>{`
-        .visually-hidden {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
-
-        .table-sort-button {
-          background: none;
-          border: none;
-          padding: 0;
-          font: inherit;
-          color: inherit;
-          cursor: pointer;
-          min-height: 44px;
-          min-width: 44px;
-          display: inline-flex;
-          align-items: center;
-          text-align: left;
-        }
-
-        .table-sort-button:hover {
-          text-decoration: underline;
-        }
-
-        .table-sort-button:focus {
-          outline: 2px solid ${theme.palette.primary.main};
-          outline-offset: 2px;
-        }
-      `}</style>
     </div>
   );
 };

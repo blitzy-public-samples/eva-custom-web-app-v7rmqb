@@ -1,0 +1,109 @@
+ESTATE KIT PROPRIETARY LICENSE
+Version 1.0.0
+Last Updated: 2024-02-15
+
+1. DEFINITIONS
+
+"Estate Kit" refers to the proprietary software platform, including all physical and digital components, developed and owned by Estate Kit Inc.
+
+"Software" means the complete Estate Kit solution, including but not limited to source code, documentation, assets, configurations, physical kit components, digital vault infrastructure, security protocols, and business workflows.
+
+"Licensee" refers to the authorized user or entity granted access to use Estate Kit services.
+
+"Confidential Information" includes all proprietary information, technical data, trade secrets, and know-how related to Estate Kit.
+
+2. GRANT OF LICENSE
+
+Estate Kit Inc. grants Licensee a limited, non-transferable, non-exclusive right to use the Software solely for authorized estate planning purposes in accordance with the subscription terms and conditions.
+
+3. RESTRICTIONS
+
+Licensee shall not:
+a) Redistribute, modify, sublicense, or transfer the Software
+b) Reverse engineer, decompile, or disassemble the Software
+c) Use the Software for competitive purposes
+d) Attempt to circumvent security measures
+e) Access the system without authorization
+f) Create derivative works based on the Software
+g) Remove or alter any proprietary notices
+
+4. PROPRIETARY RIGHTS
+
+Estate Kit Inc. retains all right, title, and interest in:
+a) Frontend application code
+b) Backend services code
+c) Infrastructure configurations
+d) Database schemas
+e) API specifications
+f) User interface designs
+g) Business logic
+h) Integration implementations
+i) Security architecture
+j) Data encryption protocols
+k) Access control mechanisms
+l) Document management systems
+m) Delegate access frameworks
+n) Physical kit designs
+o) Digital vault architecture
+
+5. THIRD-PARTY SERVICES
+
+The Software integrates with third-party services subject to their respective terms:
+a) Auth0 - Authentication and identity management (OAuth 2.0/OIDC standards)
+b) Shopify - E-commerce platform integration (PCI DSS standards)
+c) SendGrid - Communication services (CASL requirements)
+d) Intercom - Customer support integration (Data privacy standards)
+e) Sanity.io - Content management (Content security standards)
+f) AWS services - Cloud infrastructure (SOC 2 standards)
+
+6. CONFIDENTIALITY
+
+6.1 PIPEDA Compliance
+- Mandatory consent management
+- Strict data access controls
+- Information security safeguards
+
+6.2 HIPAA Compliance
+- Protected Health Information (PHI) security
+- Comprehensive access logging
+- Data encryption requirements
+
+6.3 Bank-Level Security
+- Enterprise encryption standards
+- Role-based access controls
+- Audit logging
+- Incident response protocols
+
+7. COMPLIANCE
+
+Licensee shall comply with:
+a) Personal Information Protection and Electronic Documents Act (PIPEDA)
+b) Health Insurance Portability and Accountability Act (HIPAA)
+c) Applicable provincial privacy laws
+d) Canadian electronic commerce laws
+e) All security and privacy requirements specified by Estate Kit Inc.
+
+8. TERM AND TERMINATION
+
+8.1 This license is effective until terminated.
+
+8.2 Estate Kit Inc. may terminate this license immediately if Licensee:
+a) Violates any provision of this license
+b) Fails to maintain required security standards
+c) Breaches confidentiality obligations
+d) Violates applicable privacy laws
+
+8.3 Upon termination:
+a) All rights granted shall cease
+b) Licensee must cease all use of the Software
+c) Confidentiality obligations survive termination
+
+9. GOVERNING LAW
+
+This license shall be governed by and construed in accordance with the laws of Canada. Any disputes shall be subject to the exclusive jurisdiction of the courts of Canada.
+
+For questions regarding this license, contact:
+Estate Kit Inc.
+[Contact Information]
+
+© 2024 Estate Kit Inc. All rights reserved.

@@ -1,0 +1,168 @@
+# cert-manager.io/v1 - Version 1.12.0
+# Purpose: Automated TLS certificate management configuration for Estate Kit
+# Security Level: Critical - Manages TLS certificates for HIPAA/PIPEDA compliance
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  namespace: cert-manager
+  labels:
+    app: estate-kit
+    component: cert-manager
+    managed-by: terraform
+    security-tier: critical
+    compliance: hipaa-pipeda
+  annotations:
+    description: "Production Let's Encrypt certificate issuer for Estate Kit"
+    owner: DevOps
+    security-level: high
+    backup-policy: enabled
+    monitoring-policy: critical
+    compliance-requirements: PIPEDA,HIPAA
+spec:
+  acme:
+    # Production Let's Encrypt ACME server
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ${DEVOPS_EMAIL}
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+            podTemplate:
+              spec:
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  fsGroup: 1000
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  namespace: cert-manager
+  labels:
+    app: estate-kit
+    component: cert-manager
+    managed-by: terraform
+    security-tier: critical
+    compliance: hipaa-pipeda
+  annotations:
+    description: "Staging Let's Encrypt certificate issuer for testing"
+    owner: DevOps
+    security-level: high
+    backup-policy: enabled
+    monitoring-policy: critical
+    compliance-requirements: PIPEDA,HIPAA
+spec:
+  acme:
+    # Staging Let's Encrypt ACME server for testing
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: ${DEVOPS_EMAIL}
+    privateKeySecretRef:
+      name: letsencrypt-staging-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+            podTemplate:
+              spec:
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  fsGroup: 1000
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: estate-kit-tls
+  namespace: cert-manager
+  labels:
+    app: estate-kit
+    component: cert-manager
+    managed-by: terraform
+    security-tier: critical
+spec:
+  secretName: estate-kit-tls-cert
+  duration: 2160h  # 90 days
+  renewBefore: 720h  # 30 days
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  dnsNames:
+    - ${DOMAIN_NAME}
+    - "*.${DOMAIN_NAME}"
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+    group: cert-manager.io
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cert-manager
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: cert-manager
+  namespaceSelector:
+    matchNames:
+      - cert-manager
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 25s
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: cert-manager
+      rules:
+        - alert: CertificateExpiryWarning
+          expr: |
+            certmanager_certificate_expiration_timestamp_seconds - time() < 720 * 3600
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} expires in less than 30 days"
+            
+        - alert: CertificateExpiryCritical
+          expr: |
+            certmanager_certificate_expiration_timestamp_seconds - time() < 168 * 3600
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} expires in less than 7 days"
+            
+        - alert: CertificateRenewalFailure
+          expr: |
+            increase(certmanager_certificate_renewal_failures_total[24h]) > 3
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} has failed renewal attempts"

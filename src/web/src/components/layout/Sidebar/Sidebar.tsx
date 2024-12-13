@@ -19,7 +19,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
   useMediaQuery,
   useTheme
 } from '@mui/material';
@@ -29,8 +28,7 @@ import {
   People as PeopleIcon,
   Subscriptions as SubscriptionIcon,
   Settings as SettingsIcon,
-  Help as HelpIcon,
-  Menu as MenuIcon
+  Help as HelpIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../../hooks/useAuth';
 import '../../../styles/variables.css';

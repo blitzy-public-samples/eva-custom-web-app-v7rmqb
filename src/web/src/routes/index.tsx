@@ -11,23 +11,23 @@
  * @package @auth0/auth0-react ^2.0.0
  */
 
-import { FC, Suspense, lazy } from 'react';
+import { FC, Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
-import { useAuth } from '@auth0/auth0-react';
-import { PublicRoute } from './PublicRoute';
+import { useAuth0 } from '@auth0/auth0-react';
+import PublicRoute from './PublicRoute';
 import { PrivateRoute } from './PrivateRoute';
 
 // Lazy-loaded components for optimized loading
-const Login = lazy(() => import('../pages/Login'));
-const Register = lazy(() => import('../pages/Register'));
-const Dashboard = lazy(() => import('../pages/Dashboard'));
-const Documents = lazy(() => import('../pages/Documents'));
-const Delegates = lazy(() => import('../pages/Delegates'));
-const Profile = lazy(() => import('../pages/Profile'));
-const MFAVerify = lazy(() => import('../pages/MFAVerify'));
-const NotFound = lazy(() => import('../pages/NotFound'));
-const Unauthorized = lazy(() => import('../pages/Unauthorized'));
+const Login = lazy(() => import('../pages/Auth/Login'));
+const Register = lazy(() => import('../pages/Auth/Register'));
+const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
+const Documents = lazy(() => import('../pages/Documents/Documents'));
+const Delegates = lazy(() => import('../pages/Delegates/Delegates'));
+const Profile = lazy(() => import('../pages/Profile/Profile'));
+const MFAVerify = lazy(() => import('../pages/Auth/MFAVerify'));
+const NotFound = lazy(() => import('../pages/Auth/NotFound'));
+const Unauthorized = lazy(() => import('../pages/Auth/Unauthorized'));
 
 // Error fallback component
 const ErrorFallback: FC<{ error: Error }> = ({ error }) => (
@@ -49,7 +49,7 @@ const LoadingFallback: FC = () => (
  * Main routing component implementing secure route protection and analytics
  */
 export const AppRoutes: FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth0();
   const location = useLocation();
 
   // Track route changes for analytics

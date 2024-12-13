@@ -1,0 +1,101 @@
+/**
+ * Estate Kit Design System Tokens
+ * 
+ * This file defines core CSS custom properties (variables) that implement
+ * the design system for Estate Kit. All values are optimized for:
+ * - WCAG 2.1 Level AA compliance
+ * - Senior-friendly interface design
+ * - Consistent visual hierarchy
+ * - Responsive layout scaling
+ */
+
+:root {
+  /* Color System - Primary 
+   * Base blue optimized for accessibility with 4.5:1 minimum contrast ratio
+   */
+  --color-primary: #2C5282;        /* Blue 700 */
+  --color-primary-light: #4299E1;  /* Blue 500 */
+  --color-primary-dark: #2A4365;   /* Blue 800 */
+
+  /* Color System - Secondary
+   * Supporting green for success states and actions
+   */
+  --color-secondary: #48BB78;      /* Green 500 */
+  --color-secondary-light: #68D391; /* Green 400 */
+  --color-secondary-dark: #2F855A;  /* Green 700 */
+
+  /* Color System - Error
+   * High contrast red for error states and warnings
+   */
+  --color-error: #E53E3E;         /* Red 600 */
+  --color-error-light: #FC8181;   /* Red 400 */
+  --color-error-dark: #C53030;    /* Red 700 */
+
+  /* Color System - Neutral & Text
+   * High contrast text colors for readability
+   */
+  --color-neutral: #718096;        /* Gray 500 */
+  --color-text: #1A202C;          /* Gray 900 - Main text */
+  --color-text-secondary: #4A5568; /* Gray 700 - Secondary text */
+
+  /* Color System - Background
+   * Light, neutral backgrounds for reduced eye strain
+   */
+  --color-background: #FFFFFF;     /* Pure white */
+  --color-background-paper: #F7FAFC; /* Gray 50 */
+
+  /* Typography - Font Families
+   * System fonts with reliable fallbacks
+   */
+  --font-family-base: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-family-heading: 'Merriweather', serif;
+
+  /* Typography - Sizing
+   * 16px minimum base size for readability
+   * 1.2 scale ratio for harmonious hierarchy
+   */
+  --font-size-base: 16px;
+  --font-scale-ratio: 1.2;
+
+  /* Typography - Weights
+   * Limited weight range for clear hierarchy
+   */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Spacing System
+   * 8px base unit with proportional scaling
+   * Larger spacing values for improved touch targets
+   */
+  --spacing-unit: 8px;
+  --spacing-xs: calc(var(--spacing-unit) * 0.5); /* 4px */
+  --spacing-sm: var(--spacing-unit);             /* 8px */
+  --spacing-md: calc(var(--spacing-unit) * 2);   /* 16px */
+  --spacing-lg: calc(var(--spacing-unit) * 3);   /* 24px */
+  --spacing-xl: calc(var(--spacing-unit) * 4);   /* 32px */
+
+  /* Breakpoints
+   * Conservative breakpoints for predictable layouts
+   * Mobile-first with standard device sizes
+   */
+  --breakpoint-mobile: 320px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1440px;
+
+  /* Border Radius
+   * Consistent rounding for visual softness
+   */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+
+  /* Box Shadows
+   * Subtle elevation hierarchy with reduced opacity
+   * for better contrast and depth perception
+   */
+  --box-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --box-shadow-md: 0 4px 6px rgba(0,0,0,0.12);
+  --box-shadow-lg: 0 10px 15px rgba(0,0,0,0.20);
+}

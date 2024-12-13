@@ -5,10 +5,10 @@
  * Manages user subscriptions and integrates with Shopify e-commerce platform
  * for the Estate Kit application.
  * 
- * @package @shopify/buy-sdk ^2.0.0
+ * @package shopify-buy ^2.0.0
  */
 
-import { Client as ShopifyBuy } from '@shopify/buy-sdk';
+import Client from 'shopify-buy';
 import { apiService } from './api.service';
 import { 
   ISubscription, 
@@ -33,14 +33,14 @@ const SHOPIFY_CONFIG = {
  */
 export class SubscriptionService {
   private static instance: SubscriptionService;
-  private shopifyClient: ShopifyBuy;
+  private shopifyClient: Client;
   private subscriptionPlansCache: Map<string, ISubscriptionPlanDetails>;
 
   /**
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
-    this.shopifyClient = ShopifyBuy.buildClient(SHOPIFY_CONFIG);
+    this.shopifyClient = Client.buildClient(SHOPIFY_CONFIG);
     this.subscriptionPlansCache = new Map();
   }
 
@@ -187,7 +187,11 @@ export class SubscriptionService {
       return customer;
     } catch (error) {
       // Create new Shopify customer if not exists
-      const userData = await apiService.get(`/api/v1/users/${userId}`);
+      const userData = await apiService.get<{
+        email: string;
+        name: string;
+      }>(`/api/v1/users/${userId}`);
+      
       return await this.shopifyClient.createCustomer({
         email: userData.email,
         firstName: userData.name.split(' ')[0],

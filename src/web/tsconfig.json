@@ -58,10 +58,6 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.d.ts",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.test.tsx",
     "src/**/*.stories.tsx"
   ],
   "exclude": [
@@ -70,13 +66,12 @@
     "build",
     "coverage",
     ".docker",
-    "**/*.js"
-  ],
-  
-  // Project References
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
+    "**/*.js",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.test.ts",
+    "src/**/test.*.ts"
   ]
 }

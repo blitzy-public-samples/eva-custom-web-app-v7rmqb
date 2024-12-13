@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card as MuiCard, CardContent, CardActions, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { theme } from '../../config/theme.config';
 
 /**
  * Interface for Card component props with comprehensive accessibility and interaction features
@@ -36,33 +35,34 @@ export interface CardProps {
 /**
  * Styled Card component with enhanced visual feedback and accessibility features
  */
-const StyledCard = styled(MuiCard)(({ theme }) => ({
-  borderRadius: theme.spacing(2),
-  transition: 'all 0.3s ease-in-out',
-  minHeight: '100px',
-  position: 'relative',
-  backgroundColor: theme.palette.background.paper,
-  cursor: (props: CardProps) => props.interactive ? 'pointer' : 'default',
+const StyledCard = styled(MuiCard)<CardProps>`
+  border-radius: ${({ theme }) => theme.spacing(2)};
+  transition: all 0.3s ease-in-out;
+  min-height: 100px;
+  position: relative;
+  background-color: ${({ theme }) => theme.palette.background.paper};
+  cursor: ${({ interactive }) => interactive ? 'pointer' : 'default'};
   
-  '&:hover': {
-    transform: (props: CardProps) => props.interactive ? 'translateY(-2px)' : 'none',
-    boxShadow: (props: CardProps) => props.interactive ? theme.shadows[props.elevation || 1 + 2] : theme.shadows[props.elevation || 1],
-  },
+  &:hover {
+    transform: ${({ interactive }) => interactive ? 'translateY(-2px)' : 'none'};
+    box-shadow: ${({ theme, interactive, elevation }) => 
+      interactive ? theme.shadows[elevation || 3] : theme.shadows[elevation || 1]};
+  }
 
-  '&:focus-visible': {
-    outline: `3px solid ${theme.palette.primary.main}`,
-    outlineOffset: '2px',
-  },
+  &:focus-visible {
+    outline: 3px solid ${({ theme }) => theme.palette.primary.main};
+    outline-offset: 2px;
+  }
 
-  '& .MuiCardContent-root': {
-    padding: theme.spacing(3),
-  },
+  .MuiCardContent-root {
+    padding: ${({ theme }) => theme.spacing(3)};
+  }
 
-  '& .MuiCardActions-root': {
-    padding: theme.spacing(2),
-    justifyContent: 'flex-end',
-  },
-}));
+  .MuiCardActions-root {
+    padding: ${({ theme }) => theme.spacing(2)};
+    justify-content: flex-end;
+  }
+`;
 
 /**
  * Senior-friendly Card component with enhanced accessibility features
@@ -117,6 +117,7 @@ export const Card: React.FC<CardProps> = React.memo(({
       role={interactive ? 'button' : 'region'}
       aria-label={ariaLabel || title}
       tabIndex={interactive && focusable ? tabIndex || 0 : undefined}
+      interactive={interactive}
       {...props}
     >
       <CardContent>
@@ -126,7 +127,6 @@ export const Card: React.FC<CardProps> = React.memo(({
           gutterBottom
           color="text.primary"
           sx={{ 
-            fontFamily: theme.typography.h5.fontFamily,
             fontSize: '1.2rem',
             fontWeight: 600 
           }}
@@ -141,7 +141,7 @@ export const Card: React.FC<CardProps> = React.memo(({
             gutterBottom
             sx={{ 
               fontSize: '1rem',
-              marginBottom: theme.spacing(2)
+              marginBottom: 2
             }}
           >
             {subtitle}

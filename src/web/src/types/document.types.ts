@@ -32,6 +32,17 @@ export enum DocumentStatus {
 }
 
 /**
+ * Enumeration of document encryption states.
+ * Tracks the encryption status of documents.
+ */
+export enum EncryptionStatus {
+  UNENCRYPTED = 'UNENCRYPTED',
+  ENCRYPTING = 'ENCRYPTING',
+  ENCRYPTED = 'ENCRYPTED',
+  FAILED = 'FAILED'
+}
+
+/**
  * Comprehensive interface for document metadata including security and compliance information.
  * Implements PIPEDA compliance requirements for data handling.
  */

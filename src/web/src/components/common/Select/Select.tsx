@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { styled } from '@mui/material/styles';
 import { Select as MuiSelect, FormControl, InputLabel, FormHelperText } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import '../../styles/variables.css';
 
 // Interfaces
@@ -28,13 +27,13 @@ interface SelectProps {
 }
 
 // Styled Components
-const StyledFormControl = styled(FormControl)(({ theme, fullWidth }) => ({
+const StyledFormControl = styled(FormControl)(({ fullWidth }) => ({
   marginBottom: 'var(--spacing-md)',
   width: fullWidth ? '100%' : 'auto',
   minHeight: '80px', // Ensures consistent spacing even with error messages
 }));
 
-const StyledSelect = styled(MuiSelect)(({ theme, error }) => ({
+const StyledSelect = styled(MuiSelect)(() => ({
   fontFamily: 'var(--font-family-base)',
   fontSize: 'var(--font-size-large)',
   padding: '12px',
@@ -58,7 +57,7 @@ const StyledSelect = styled(MuiSelect)(({ theme, error }) => ({
   },
 }));
 
-const StyledLabel = styled(InputLabel)(({ theme }) => ({
+const StyledLabel = styled(InputLabel)(() => ({
   fontFamily: 'var(--font-family-base)',
   fontSize: 'var(--font-size-large)',
   color: 'var(--color-text)',
@@ -74,7 +73,7 @@ const StyledLabel = styled(InputLabel)(({ theme }) => ({
   },
 }));
 
-const StyledHelperText = styled(FormHelperText)(({ theme, error }) => ({
+const StyledHelperText = styled(FormHelperText)(({ error }) => ({
   fontSize: 'var(--font-size-base)',
   color: error ? 'var(--color-error)' : 'var(--color-text-secondary)',
   marginTop: '4px',
@@ -96,8 +95,6 @@ const Select: React.FC<SelectProps> = ({
   helpText,
   ariaLabel,
 }) => {
-  const theme = useTheme();
-
   // Handle keyboard navigation
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     switch (event.key) {

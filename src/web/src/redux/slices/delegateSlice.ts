@@ -56,8 +56,7 @@ export const fetchDelegates = createAsyncThunk(
   'delegates/fetchDelegates',
   async (_, { rejectWithValue }) => {
     try {
-      const delegateService = new DelegateService();
-      const delegates = await delegateService.getDelegates();
+      const delegates = await DelegateService.getDelegates();
       return delegates;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -78,8 +77,7 @@ export const createDelegate = createAsyncThunk(
   'delegates/createDelegate',
   async (delegateData: CreateDelegateDTO, { rejectWithValue }) => {
     try {
-      const delegateService = new DelegateService();
-      const newDelegate = await delegateService.createDelegate(delegateData);
+      const newDelegate = await DelegateService.createDelegate(delegateData);
       return newDelegate;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -95,8 +93,7 @@ export const updateDelegate = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const delegateService = new DelegateService();
-      const updatedDelegate = await delegateService.updateDelegate(id, data);
+      const updatedDelegate = await DelegateService.updateDelegate(id, data);
       return updatedDelegate;
     } catch (error) {
       return rejectWithValue((error as Error).message);
@@ -109,8 +106,7 @@ export const removeDelegate = createAsyncThunk(
   'delegates/removeDelegate',
   async (delegateId: string, { rejectWithValue }) => {
     try {
-      const delegateService = new DelegateService();
-      await delegateService.revokeDelegate(delegateId);
+      await DelegateService.revokeDelegate(delegateId);
       return delegateId;
     } catch (error) {
       return rejectWithValue((error as Error).message);

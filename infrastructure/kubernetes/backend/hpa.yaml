@@ -1,0 +1,72 @@
+# HorizontalPodAutoscaler configuration for Estate Kit backend services
+# Version: autoscaling/v2
+# Purpose: Defines scaling behavior for backend services based on CPU and memory metrics
+# Last Updated: ${TIMESTAMP}
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: estate-kit-backend-hpa
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    scaling-tier: production
+    criticality: high
+  annotations:
+    description: "HPA for Estate Kit backend services"
+    owner: "DevOps"
+    scaling-policy: "cpu-memory-based"
+    monitoring.estate-kit.io/scaling-alerts: "enabled"
+    scaling.estate-kit.io/last-updated: "${TIMESTAMP}"
+    documentation.estate-kit.io/scaling-policy: "https://wiki.estate-kit.io/scaling-policies"
+
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: estate-kit-backend
+  
+  # Replica bounds to ensure high availability while preventing over-provisioning
+  minReplicas: 3  # Minimum replicas for HA across availability zones
+  maxReplicas: 10 # Maximum replicas based on load testing and cost optimization
+  
+  # Scaling metrics based on resource utilization
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # Conservative threshold for stable scaling
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # Higher threshold as memory usage is more stable
+  
+  # Advanced scaling behavior configuration
+  behavior:
+    # Scale-up behavior
+    scaleUp:
+      stabilizationWindowSeconds: 60  # 1-minute window to prevent rapid scaling
+      policies:
+        - type: Pods
+          value: 2                    # Add max 2 pods at a time
+          periodSeconds: 60           # Within 60-second period
+      selectPolicy: Max              # Use the highest recommended change
+    
+    # Scale-down behavior
+    scaleDown:
+      stabilizationWindowSeconds: 300 # 5-minute window for scale-down stability
+      policies:
+        - type: Pods
+          value: 1                    # Remove max 1 pod at a time
+          periodSeconds: 120          # Within 2-minute period
+      selectPolicy: Min              # Use the most conservative scale-down option

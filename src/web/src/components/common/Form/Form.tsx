@@ -39,7 +39,6 @@ const ANALYTICS_EVENTS = {
 export interface FormProps {
   initialValues: Record<string, any>;
   onSubmit: (values: Record<string, any>, auth: Auth0ContextInterface) => void | Promise<void>;
-  validationSchema: object;
   children: React.ReactNode;
   submitLabel?: string;
   resetLabel?: string;
@@ -64,7 +63,6 @@ declare global {
 const Form: React.FC<FormProps> = React.memo(({
   initialValues,
   onSubmit,
-  validationSchema,
   children,
   submitLabel = 'Submit',
   resetLabel = 'Reset',
@@ -74,7 +72,8 @@ const Form: React.FC<FormProps> = React.memo(({
   testId
 }) => {
   // Auth0 integration
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const auth0Context = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently } = auth0Context;
 
   // Form state management
   const methods = useForm({
@@ -131,14 +130,12 @@ const Form: React.FC<FormProps> = React.memo(({
       }
 
       // Get Auth0 token for protected routes
-      let auth = {} as Auth0ContextInterface;
       if (isProtected) {
-        const token = await getAccessTokenSilently();
-        auth = { token } as Auth0ContextInterface;
+        await getAccessTokenSilently();
       }
 
       // Submit form data
-      await onSubmit(data, auth);
+      await onSubmit(data, auth0Context);
 
       // Handle success
       setSubmitSuccess(true);

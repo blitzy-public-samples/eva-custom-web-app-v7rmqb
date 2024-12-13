@@ -38,8 +38,8 @@ const Profile: React.FC = React.memo(() => {
   const initialProfileData: ProfileFormData | null = user ? {
     name: user.name,
     email: user.email,
-    phone: user.profile?.phoneNumber || '',
-    province: user.profile?.province || ''
+    phone: user.phoneNumber || '',
+    province: user.province || ''
   } : null;
 
   /**
@@ -192,7 +192,7 @@ const Profile: React.FC = React.memo(() => {
           >
             <ProfileForm
               onSubmit={handleProfileUpdate}
-              loading={isSubmitting}
+              isSubmitting={isSubmitting}
               initialData={initialProfileData}
             />
           </Box>

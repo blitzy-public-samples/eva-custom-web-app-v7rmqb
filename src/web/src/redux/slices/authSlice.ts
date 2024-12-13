@@ -10,7 +10,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import AuthService from '../../services/auth.service';
-import { AuthState, LoginPayload, RegisterPayload, AuthErrorType } from '../../types/auth.types';
+import { AuthState, LoginPayload, RegisterPayload } from '../../types/auth.types';
 
 // Initial state with comprehensive security tracking
 const initialState: AuthState = {
@@ -31,7 +31,7 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginPayload, { rejectWithValue }) => {
     try {
-      const authService = AuthService.getInstance();
+      const authService = new AuthService();
       const response = await authService.login(credentials);
       
       // Log successful authentication attempt for audit
@@ -62,7 +62,7 @@ export const register = createAsyncThunk(
   'auth/register',
   async (userData: RegisterPayload, { rejectWithValue }) => {
     try {
-      const authService = AuthService.getInstance();
+      const authService = new AuthService();
       await authService.register(userData);
 
       // Log successful registration for audit
@@ -85,7 +85,7 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const authService = AuthService.getInstance();
+      const authService = new AuthService();
       await authService.logout();
 
       // Log logout event
@@ -107,7 +107,7 @@ export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
   async (code: string, { rejectWithValue }) => {
     try {
-      const authService = AuthService.getInstance();
+      const authService = new AuthService();
       const response = await authService.verifyMFA(code);
 
       // Log successful MFA verification
@@ -129,7 +129,7 @@ export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
     try {
-      const authService = AuthService.getInstance();
+      const authService = new AuthService();
       const response = await authService.refreshToken();
 
       return response;
@@ -207,7 +207,7 @@ const authSlice = createSlice({
 
     // Logout reducers
     builder
-      .addCase(logout.fulfilled, (state) => {
+      .addCase(logout.fulfilled, () => {
         return { ...initialState, lastActivity: Date.now() };
       })
 
@@ -236,7 +236,7 @@ const authSlice = createSlice({
         state.sessionExpiry = action.payload.expiresAt;
         state.lastActivity = Date.now();
       })
-      .addCase(refreshToken.rejected, (state) => {
+      .addCase(refreshToken.rejected, () => {
         return { ...initialState, lastActivity: Date.now() };
       });
   }

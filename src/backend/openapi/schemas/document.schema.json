@@ -1,0 +1,219 @@
+{
+  "openapi": "3.0.3",
+  "components": {
+    "schemas": {
+      "DocumentMetadata": {
+        "type": "object",
+        "required": ["fileName", "fileSize", "mimeType", "retentionPeriod", "geographicLocation"],
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Original file name of the document",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "Size of the file in bytes",
+            "minimum": 0
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the document for content validation",
+            "pattern": "^[a-zA-Z0-9]+/[a-zA-Z0-9+.-]+$"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the document was initially uploaded"
+          },
+          "lastModified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the document was last modified"
+          },
+          "retentionPeriod": {
+            "type": "integer",
+            "description": "Document retention period in days",
+            "minimum": 1
+          },
+          "geographicLocation": {
+            "type": "string",
+            "description": "Geographic location where document is stored for data residency compliance",
+            "enum": ["ca-central-1", "us-east-1"]
+          }
+        }
+      },
+      "DocumentStorageDetails": {
+        "type": "object",
+        "required": ["bucket", "key", "version", "encryptionType", "kmsKeyId"],
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "AWS S3 bucket name where document is stored",
+            "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+          },
+          "key": {
+            "type": "string",
+            "description": "AWS S3 object key for the document",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "description": "AWS S3 object version ID for versioning support",
+            "pattern": "^[a-zA-Z0-9]+$"
+          },
+          "encryptionType": {
+            "type": "string",
+            "description": "Type of encryption used for document storage",
+            "enum": ["AES_256", "KMS_MANAGED"]
+          },
+          "kmsKeyId": {
+            "type": "string",
+            "description": "AWS KMS key ID used for encryption",
+            "pattern": "^arn:aws:kms:[a-z0-9-]+:[0-9]+:key/[a-zA-Z0-9-]+$"
+          }
+        }
+      },
+      "Document": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "title",
+          "type",
+          "status",
+          "metadata",
+          "storageDetails",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the document"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns the document"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the document",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of document",
+            "enum": ["MEDICAL", "FINANCIAL", "LEGAL", "PERSONAL"]
+          },
+          "status": {
+            "type": "string",
+            "description": "Current processing status of the document",
+            "enum": ["PENDING", "PROCESSING", "COMPLETED", "ERROR"]
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/DocumentMetadata"
+          },
+          "storageDetails": {
+            "$ref": "#/components/schemas/DocumentStorageDetails"
+          },
+          "lastAccessedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last document access"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Document expiration date based on retention period"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when document was created"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when document was last updated"
+          }
+        }
+      },
+      "CreateDocumentDTO": {
+        "type": "object",
+        "required": ["title", "type", "metadata"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the document",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of document",
+            "enum": ["MEDICAL", "FINANCIAL", "LEGAL", "PERSONAL"]
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["fileName", "fileSize", "mimeType", "retentionPeriod", "geographicLocation"],
+            "properties": {
+              "fileName": {
+                "type": "string",
+                "description": "Original file name of the document",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "fileSize": {
+                "type": "integer",
+                "description": "Size of the file in bytes",
+                "minimum": 0
+              },
+              "mimeType": {
+                "type": "string",
+                "description": "MIME type of the document",
+                "pattern": "^[a-zA-Z0-9]+/[a-zA-Z0-9+.-]+$"
+              },
+              "retentionPeriod": {
+                "type": "integer",
+                "description": "Document retention period in days",
+                "minimum": 1
+              },
+              "geographicLocation": {
+                "type": "string",
+                "description": "Geographic location for storage",
+                "enum": ["ca-central-1", "us-east-1"]
+              }
+            }
+          }
+        }
+      },
+      "UpdateDocumentDTO": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Updated title of the document",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "type": {
+            "type": "string",
+            "description": "Updated type of document",
+            "enum": ["MEDICAL", "FINANCIAL", "LEGAL", "PERSONAL"]
+          },
+          "retentionPeriod": {
+            "type": "integer",
+            "description": "Updated document retention period in days",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

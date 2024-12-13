@@ -1,0 +1,246 @@
+{
+  "components": {
+    "schemas": {
+      "SubscriptionPlan": {
+        "type": "string",
+        "enum": ["FREE", "BASIC", "PREMIUM"],
+        "description": "Available subscription plan types"
+      },
+      "SubscriptionStatus": {
+        "type": "string",
+        "enum": ["ACTIVE", "CANCELLED", "EXPIRED", "PENDING", "TRIAL", "PAST_DUE"],
+        "description": "Possible subscription status states"
+      },
+      "BillingCycle": {
+        "type": "string",
+        "enum": ["MONTHLY", "ANNUAL"],
+        "description": "Subscription billing cycle options"
+      },
+      "SubscriptionFeature": {
+        "type": "object",
+        "required": ["id", "name", "description", "included", "category"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the feature"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the subscription feature"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the feature"
+          },
+          "included": {
+            "type": "boolean",
+            "description": "Whether the feature is included in the plan"
+          },
+          "category": {
+            "type": "string",
+            "description": "Feature category for grouping and display"
+          },
+          "limit": {
+            "type": "number",
+            "nullable": true,
+            "description": "Optional usage limit for the feature"
+          }
+        }
+      },
+      "SubscriptionPlanDetails": {
+        "type": "object",
+        "required": ["id", "name", "description", "price", "billingCycle", "features", "shopifyProductId", "shopifyPriceId"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the plan"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the subscription plan"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of the plan"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "description": "Price of the subscription plan"
+          },
+          "compareAtPrice": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Original price for comparison (if discounted)"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/BillingCycle"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionFeature"
+            },
+            "description": "List of features included in the plan"
+          },
+          "shopifyProductId": {
+            "type": "string",
+            "description": "Associated Shopify product identifier"
+          },
+          "shopifyPriceId": {
+            "type": "string",
+            "description": "Associated Shopify price/variant identifier"
+          },
+          "trialDays": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 90,
+            "default": 0,
+            "description": "Number of trial days offered with the plan"
+          }
+        }
+      },
+      "Subscription": {
+        "type": "object",
+        "required": ["id", "userId", "plan", "status", "billingCycle", "startDate", "autoRenew", "shopifySubscriptionId", "shopifyCustomerId"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the subscription"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User identifier associated with the subscription"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/SubscriptionPlan"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/BillingCycle"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Subscription start date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Subscription end date if applicable"
+          },
+          "autoRenew": {
+            "type": "boolean",
+            "description": "Whether the subscription automatically renews"
+          },
+          "shopifySubscriptionId": {
+            "type": "string",
+            "description": "Associated Shopify subscription identifier"
+          },
+          "shopifyCustomerId": {
+            "type": "string",
+            "description": "Associated Shopify customer identifier"
+          },
+          "shopifyOrderIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of associated Shopify order identifiers"
+          },
+          "lastBillingDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date of last billing cycle"
+          },
+          "nextBillingDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date of next billing cycle"
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for subscription cancellation if applicable"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional subscription metadata for extensibility"
+          }
+        }
+      },
+      "SubscriptionCreateDTO": {
+        "type": "object",
+        "required": ["userId", "plan", "billingCycle", "autoRenew"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User identifier for the new subscription"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/SubscriptionPlan"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/BillingCycle"
+          },
+          "autoRenew": {
+            "type": "boolean",
+            "description": "Auto-renewal setting for the subscription"
+          }
+        }
+      },
+      "SubscriptionUpdateDTO": {
+        "type": "object",
+        "required": ["plan", "billingCycle", "autoRenew", "status"],
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/SubscriptionPlan"
+          },
+          "billingCycle": {
+            "$ref": "#/components/schemas/BillingCycle"
+          },
+          "autoRenew": {
+            "type": "boolean",
+            "description": "Updated auto-renewal setting"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubscriptionStatus"
+          }
+        }
+      },
+      "SubscriptionResponse": {
+        "type": "object",
+        "required": ["subscription", "planDetails", "usage"],
+        "properties": {
+          "subscription": {
+            "$ref": "#/components/schemas/Subscription"
+          },
+          "planDetails": {
+            "$ref": "#/components/schemas/SubscriptionPlanDetails"
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Current usage metrics for features with limits"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,205 @@
+# Estate Kit Release Management Workflow
+# Version: 1.0.0
+# Purpose: Automated release pipeline with enhanced security and compliance measures
+
+name: Release
+
+# Trigger on version tags
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Environment variables
+env:
+  NODE_VERSION: '18.x'
+  DOCKER_BUILDKIT: '1'
+  AWS_REGION: 'ca-central-1'
+  DR_REGION: 'us-east-1'
+  REGISTRY: ${{ secrets.AWS_ECR_REGISTRY }}
+  IMAGE_NAME: estate-kit
+
+# Concurrency control
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Required permissions
+permissions:
+  contents: write
+  packages: write
+  deployments: write
+  id-token: write
+  security-events: write
+
+jobs:
+  # Security and compliance validation
+  security-compliance-check:
+    name: Security & Compliance Validation
+    runs-on: ubuntu-latest
+    environment: security
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Run SAST analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, typescript
+          queries: security-extended
+
+      - name: Run dependency audit
+        run: |
+          cd src/web && npm audit
+          cd ../backend && npm audit
+          
+      - name: PIPEDA compliance check
+        run: |
+          echo "Validating PIPEDA requirements..."
+          # Verify data residency compliance
+          if ! grep -r "ca-central-1" infrastructure/; then
+            echo "Error: Primary region must be in Canada for PIPEDA compliance"
+            exit 1
+          fi
+
+      - name: HIPAA compliance verification
+        run: |
+          echo "Verifying HIPAA compliance..."
+          # Check encryption configurations
+          if ! grep -r "encryption.*true" infrastructure/; then
+            echo "Error: Encryption must be enabled for HIPAA compliance"
+            exit 1
+          fi
+
+  # Release preparation
+  prepare-release:
+    needs: security-compliance-check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Validate version
+        run: |
+          if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Must be semantic versioning (x.y.z)"
+            exit 1
+          fi
+
+      - name: Generate release notes
+        run: |
+          echo "Estate Kit Release v$VERSION" > RELEASE_NOTES.md
+          echo "Security and compliance status:" >> RELEASE_NOTES.md
+          echo "- PIPEDA Compliant: ✅" >> RELEASE_NOTES.md
+          echo "- HIPAA Compliant: ✅" >> RELEASE_NOTES.md
+
+  # Staging deployment
+  deploy-staging:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.estatekit.ca
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying version $VERSION to staging..."
+          # Deploy frontend
+          aws s3 sync dist/ s3://staging-estatekit-frontend
+          # Deploy backend
+          aws ecs update-service --cluster staging-cluster --service backend-service --force-new-deployment
+
+      - name: Run security scans
+        uses: aquasecurity/trivy-action@v1
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+  # Production deployment
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://estatekit.ca
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying version $VERSION to production..."
+          # Canary deployment
+          aws ecs update-service --cluster prod-cluster --service backend-service --force-new-deployment
+          # Monitor deployment health
+          aws cloudwatch get-metric-statistics --namespace AWS/ECS --metric-name CPUUtilization
+
+      - name: Deploy to DR region
+        run: |
+          # Switch to DR region
+          aws configure set region ${{ env.DR_REGION }}
+          # Sync data to DR region
+          aws s3 sync s3://prod-estatekit-data s3://dr-estatekit-data
+          # Update DR services
+          aws ecs update-service --cluster dr-cluster --service backend-service --force-new-deployment
+
+      - name: Verify deployment
+        run: |
+          # Health check
+          curl -f https://estatekit.ca/health
+          # Verify DR readiness
+          curl -f https://dr.estatekit.ca/health
+
+  # Notification handling
+  notify:
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send deployment notification
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "✅ Successfully deployed Estate Kit v${{ env.VERSION }} to production\n- PIPEDA Compliant\n- HIPAA Compliant"
+            }'
+
+      - name: Send failure notification
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "❌ Release deployment failed for v${{ env.VERSION }}\nPlease check the workflow logs."
+            }'

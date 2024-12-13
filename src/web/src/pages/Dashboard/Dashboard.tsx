@@ -16,11 +16,10 @@ import {
   Typography, 
   Box, 
   Button, 
-  CircularProgress, 
-  Skeleton,
+  CircularProgress,
   Alert
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // Internal component imports
 import { MainLayout } from '../../components/layout/MainLayout/MainLayout';
@@ -28,6 +27,8 @@ import { DocumentCard } from '../../components/documents/DocumentCard/DocumentCa
 import { DelegateCard } from '../../components/delegates/DelegateCard/DelegateCard';
 import { SubscriptionCard } from '../../components/subscription/SubscriptionCard/SubscriptionCard';
 import { useAuth } from '../../hooks/useAuth';
+import { Document } from '../../types/document.types';
+import { Delegate, ISubscription } from '../../types/auth.types';
 
 // Interface for component props
 interface DashboardProps {
@@ -42,7 +43,6 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
   // Hooks initialization
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Local state management
   const [loading, setLoading] = useState(true);
@@ -58,15 +58,13 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       setError(null);
 
       // Simulated API calls - replace with actual API service calls
-      const [documentsData, delegatesData, subscriptionData] = await Promise.all([
-        // DocumentService.getInstance().getRecentDocuments(),
-        // DelegateService.getInstance().getActiveDelegates(),
-        // SubscriptionService.getInstance().getCurrentSubscription()
-      ]);
+      const documentsData: Document[] = [];
+      const delegatesData: Delegate[] = [];
+      const subscriptionData: ISubscription | null = null;
 
-      setDocuments(documentsData || []);
-      setDelegates(delegatesData || []);
-      setSubscription(subscriptionData || null);
+      setDocuments(documentsData);
+      setDelegates(delegatesData);
+      setSubscription(subscriptionData);
 
     } catch (err) {
       const errorMessage = 'Failed to load dashboard data. Please try again.';
@@ -193,7 +191,6 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
                   key={doc.id}
                   document={doc}
                   className="dashboard-card"
-                  sx={{ mb: 2 }}
                 />
               ))
             ) : (
@@ -235,7 +232,6 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
                   key={delegate.id}
                   delegate={delegate}
                   className="dashboard-card"
-                  sx={{ mb: 2 }}
                 />
               ))
             ) : (

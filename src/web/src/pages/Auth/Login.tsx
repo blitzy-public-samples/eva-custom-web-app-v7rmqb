@@ -10,7 +10,6 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import Form from '../../components/common/Form/Form';
 import type { LoginPayload } from '../../types/auth.types';
-import type { Auth0Context } from '../../types/auth.types';
 
 // Constants for accessibility and analytics
 const ARIA_LABELS = {
@@ -56,9 +55,8 @@ const Login: React.FC = React.memo(() => {
   /**
    * Handles form submission with enhanced security and error handling
    * @param values - Form values
-   * @param auth - Auth0 context
    */
-  const handleSubmit = async (values: Record<string, any>, auth: Auth0Context) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
       // Log login attempt (sanitized)
       console.info('Login attempt:', {
@@ -118,7 +116,7 @@ const Login: React.FC = React.memo(() => {
             role="alert"
             aria-label={ARIA_LABELS.ERROR_MESSAGE}
           >
-            {error}
+            {error.toString()}
           </Alert>
         )}
 

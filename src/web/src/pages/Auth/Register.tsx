@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { RegisterPayload, Province } from '../../types/auth.types';
 import Input from '../../components/common/Input/Input';
-import Button from '../../components/common/Button/Button';
+import { Button } from '../../components/common/Button/Button';
 import Form from '../../components/common/Form/Form';
 import Select from '../../components/common/Select/Select';
 import { styled } from '@mui/material/styles';
 import { Box, Typography, Alert, Link } from '@mui/material';
 
-// Styled components for enhanced visual hierarchy
-const RegisterContainer = styled(Box)(({ theme }) => ({
+const RegisterContainer = styled(Box)(() => ({
   maxWidth: '600px',
   margin: '0 auto',
   padding: 'var(--spacing-xl)',
@@ -19,7 +18,7 @@ const RegisterContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const RegisterHeading = styled(Typography)(({ theme }) => ({
+const RegisterHeading = styled(Typography)(() => ({
   fontSize: 'calc(var(--font-size-base) * 1.5)',
   fontFamily: 'var(--font-family-heading)',
   color: 'var(--color-text)',
@@ -27,48 +26,47 @@ const RegisterHeading = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
 }));
 
-// Province options for Canadian users
 const provinceOptions = [
   { value: Province.ALBERTA, label: 'Alberta' },
   { value: Province.BRITISH_COLUMBIA, label: 'British Columbia' },
   { value: Province.ONTARIO, label: 'Ontario' },
 ];
 
-// Initial form state
 const initialFormState: RegisterPayload = {
   email: '',
   password: '',
   name: '',
-  province: '',
+  province: Province.ONTARIO,
   acceptedTerms: false,
   mfaPreference: true,
 };
 
-/**
- * Senior-friendly registration page component with comprehensive security
- * and accessibility features.
- */
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | undefined>(null);
 
-  // Handle form submission with validation and error handling
-  const handleSubmit = useCallback(async (formData: RegisterPayload) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
-      setFormError(null);
+      setFormError(undefined);
 
-      // Log registration attempt (sanitized)
       console.info('Registration attempt:', {
         timestamp: new Date().toISOString(),
-        email: formData.email.replace(/[^@\w.-]/g, ''),
+        email: values.email.replace(/[^@\w.-]/g, ''),
       });
 
-      // Register user
+      const formData: RegisterPayload = {
+        email: values.email,
+        password: values.password,
+        name: values.name,
+        province: values.province,
+        acceptedTerms: values.acceptedTerms,
+        mfaPreference: values.mfaPreference,
+      };
+
       await register(formData);
 
-      // Navigate to welcome page on success
       navigate('/welcome', {
         state: { message: 'Registration successful! Welcome to Estate Kit.' }
       });
@@ -76,7 +74,6 @@ const Register: React.FC = () => {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       setFormError(errorMessage);
       
-      // Log registration failure (sanitized)
       console.error('Registration failed:', {
         timestamp: new Date().toISOString(),
         error: errorMessage,
@@ -84,18 +81,12 @@ const Register: React.FC = () => {
     }
   }, [register, navigate]);
 
-  // Toggle password visibility
-  const togglePasswordVisibility = useCallback(() => {
-    setShowPassword(prev => !prev);
-  }, []);
-
   return (
     <RegisterContainer>
-      <RegisterHeading variant="h1" component="h1">
+      <RegisterHeading>
         Create Your Estate Kit Account
       </RegisterHeading>
 
-      {/* Accessibility announcement for screen readers */}
       <Typography
         className="sr-only"
         aria-live="polite"
@@ -111,7 +102,6 @@ const Register: React.FC = () => {
         testId="register-form"
         analyticsEvent="register"
       >
-        {/* Name Input */}
         <Input
           id="name"
           label="Full Name"
@@ -123,7 +113,6 @@ const Register: React.FC = () => {
           aria-label="Enter your full name"
         />
 
-        {/* Email Input */}
         <Input
           id="email"
           label="Email Address"
@@ -135,7 +124,6 @@ const Register: React.FC = () => {
           aria-label="Enter your email address"
         />
 
-        {/* Password Input with Toggle */}
         <Input
           id="password"
           label="Password"
@@ -147,7 +135,6 @@ const Register: React.FC = () => {
           aria-label="Create a secure password"
         />
 
-        {/* Province Selection */}
         <Select
           name="province"
           label="Province"
@@ -156,9 +143,11 @@ const Register: React.FC = () => {
           fullWidth
           helpText="Select your province for jurisdiction-specific features"
           aria-label="Select your province"
+          value={initialFormState.province}
+          onChange={() => {}}
+          onBlur={() => {}}
         />
 
-        {/* Terms and Conditions */}
         <Box sx={{ marginY: 'var(--spacing-md)' }}>
           <Typography variant="body2" color="textSecondary">
             By creating an account, you agree to our{' '}
@@ -182,7 +171,6 @@ const Register: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Error Display */}
         {error && (
           <Alert 
             severity="error"
@@ -193,7 +181,6 @@ const Register: React.FC = () => {
           </Alert>
         )}
 
-        {/* Submit Button */}
         <Button
           type="submit"
           variant="primary"
@@ -206,7 +193,6 @@ const Register: React.FC = () => {
           Create Account
         </Button>
 
-        {/* Login Link */}
         <Box sx={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
           <Typography variant="body2">
             Already have an account?{' '}

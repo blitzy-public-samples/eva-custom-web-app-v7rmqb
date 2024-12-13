@@ -1,0 +1,51 @@
+# Estate Kit Robots.txt
+# Version: 1.0
+# Last Updated: 2024
+# Purpose: Control search engine crawler access to protect user privacy while allowing indexing of public content
+
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /sitemap.xml
+Allow: /help
+Allow: /faq
+Allow: /blog
+
+# Protect sensitive estate planning data and authenticated areas
+Disallow: /dashboard/
+Disallow: /documents/
+Disallow: /delegates/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /subscription/
+Disallow: /api/
+Disallow: /vault/
+Disallow: /2fa/
+Disallow: /account/
+Disallow: /upload/
+Disallow: /download/
+
+# Prevent crawling of dynamic routes and sensitive patterns
+Disallow: /*?*
+Disallow: /*/edit
+Disallow: /*/delete
+Disallow: /*/share
+Disallow: /*/manage
+Disallow: /*/invite
+Disallow: /*/permissions
+
+# Rate limiting
+Crawl-delay: 10
+
+# Specify canonical domain
+Host: estatekit.ca
+
+# Reference sitemap
+Sitemap: https://estatekit.ca/sitemap.xml

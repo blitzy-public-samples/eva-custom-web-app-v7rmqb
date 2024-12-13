@@ -1,0 +1,126 @@
+# Estate Kit Frontend CI Pipeline
+# Version: 1.0.0
+# Implements comprehensive build, test, and validation pipeline with enhanced security measures
+# and performance optimizations for the Estate Kit frontend application.
+
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/web/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/web/**'
+
+env:
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: 'src/web'
+  COVERAGE_THRESHOLD: '80'
+  MAX_WARNINGS: '0'
+  HUSKY: '0' # Disable Husky hooks in CI
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3 # v3.5.3
+        with:
+          fetch-depth: 0 # Full history for better change detection
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # v3.7.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'src/web/package-lock.json'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3 # v3.3.1
+        with:
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Type checking
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run typecheck
+
+      - name: Lint check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run lint -- --max-warnings=${{ env.MAX_WARNINGS }}
+
+      - name: Security audit
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run security
+        continue-on-error: false
+
+      - name: Run tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm run test -- --coverage \
+            --ci \
+            --maxWorkers=2 \
+            --coverageThreshold=${{ env.COVERAGE_THRESHOLD }} \
+            --coverageReporters="text" "lcov" \
+            --detectOpenHandles
+        env:
+          CI: true
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: ${{ env.WORKING_DIRECTORY }}/coverage
+          retention-days: 14
+
+      - name: Build application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm run build
+        env:
+          CI: true
+          NODE_ENV: production
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 14
+
+      - name: Bundle size analysis
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run analyze
+        if: github.event_name == 'pull_request'
+
+  # Workflow summary
+  workflow-summary:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check workflow status
+        run: |
+          if [[ "${{ needs.build-and-test.result }}" == "success" ]]; then
+            echo "✅ Frontend CI pipeline completed successfully"
+            exit 0
+          else
+            echo "❌ Frontend CI pipeline failed"
+            exit 1
+          fi

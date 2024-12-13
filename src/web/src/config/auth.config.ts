@@ -39,7 +39,7 @@ export const AUTH0_TOKEN_REFRESH_INTERVAL = 3600000; // 1 hour in milliseconds
 
 // Advanced security options for Auth0 configuration
 const advancedOptions = {
-  timeoutInSeconds: 60,
+  httpTimeoutInSeconds: 60,
   allowedConnections: ['Username-Password-Authentication'],
   passwordlessMethod: 'code',
   mfa: {
@@ -63,7 +63,6 @@ export const auth0Config: Auth0Config = {
   clientId: AUTH0_CLIENT_ID,
   audience: AUTH0_AUDIENCE,
   redirectUri: AUTH0_REDIRECT_URI,
-  advancedOptions,
 };
 
 /**
@@ -85,15 +84,12 @@ export const createAuth0Client = async (): Promise<Auth0Client> => {
       // Enhanced security configuration
       useRefreshTokens: true,
       cacheLocation: 'memory',
-      timeoutInSeconds: advancedOptions.timeoutInSeconds,
-      sessionCheckExpiryDays: advancedOptions.sessionCheckExpiryDays,
-      httpTimeoutMs: advancedOptions.httpTimeoutMs,
+      httpTimeoutInSeconds: advancedOptions.httpTimeoutInSeconds,
       // CSRF protection
       useCookiesForTransactions: true,
       // Advanced security features
       advancedOptions: {
         defaultScope: AUTH0_SCOPE,
-        ...advancedOptions,
       },
     });
 
@@ -136,7 +132,9 @@ export const handleAuth0Error = (error: Error): void => {
   if (error.message.includes('invalid_grant')) {
     // Force re-authentication on token issues
     auth0Client.logout({
-      returnTo: window.location.origin,
+      logoutParams: {
+        returnTo: window.location.origin
+      }
     });
   }
 };

@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
   ariaLabel = 'Main navigation',
 }) => {
   // Hooks and state management
-  const { isAuthenticated, user, logout, mfaRequired } = useAuth();
+  const { isAuthenticated, user, logout, requiresMFA } = useAuth();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [menuState, dispatch] = useReducer(menuReducer, {
     anchorEl: null,
@@ -108,10 +108,10 @@ export const Header: React.FC<HeaderProps> = ({
       console.info('Header mounted for authenticated user:', {
         timestamp: new Date().toISOString(),
         userId: user?.id,
-        mfaStatus: mfaRequired ? 'required' : 'verified',
+        mfaStatus: requiresMFA ? 'required' : 'verified',
       });
     }
-  }, [isAuthenticated, user, mfaRequired]);
+  }, [isAuthenticated, user, requiresMFA]);
 
   // Enhanced menu handlers with security logging
   const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -203,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Badge
                   color="secondary"
                   variant="dot"
-                  invisible={!mfaRequired}
+                  invisible={!requiresMFA}
                 >
                   <AccountCircle />
                 </Badge>
@@ -230,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {user?.name}
                   </Typography>
                 </MenuItem>
-                {mfaRequired && (
+                {requiresMFA && (
                   <MenuItem onClick={handleMenuClose}>
                     <SecurityIcon sx={{ mr: 1 }} />
                     <Typography variant="body2">

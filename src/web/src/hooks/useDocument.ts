@@ -69,7 +69,7 @@ export const useDocument = (type?: DocumentType) => {
 
       const fetchWithRetry = async (): Promise<void> => {
         try {
-          await dispatch(fetchDocuments(type));
+          await dispatch(fetchDocuments({ type, rejectWithValue: null }));
           
           // Performance monitoring
           const duration = Date.now() - operationStartTime.current;
@@ -103,13 +103,27 @@ export const useDocument = (type?: DocumentType) => {
 
       const uploadWithRetry = async (): Promise<Document> => {
         try {
-          const document = await dispatch(uploadDocument(request)).unwrap();
-
+          const result = await dispatch(uploadDocument(request)).unwrap();
+          
           // Performance monitoring
           const duration = Date.now() - operationStartTime.current;
           if (duration > PERFORMANCE_THRESHOLDS.UPLOAD_WARNING_MS) {
             console.warn(`Document upload exceeded performance threshold: ${duration}ms`);
           }
+
+          // Ensure the returned document matches the Document type interface
+          const document: Document = {
+            id: result.id,
+            userId: result.userId,
+            title: result.title,
+            type: result.type,
+            size: result.size,
+            mimeType: result.mimeType,
+            status: result.status,
+            createdAt: result.createdAt,
+            updatedAt: result.updatedAt,
+            metadata: result.metadata
+          };
 
           return document;
         } catch (error) {

@@ -21,6 +21,11 @@ export interface Auth0Config {
     clientId: string;        // Application client ID
     audience: string;        // API identifier
     redirectUri: string;     // Post-authentication redirect URI
+    advancedOptions: {       // Advanced configuration options
+        defaultScope?: string;
+        customDomain?: string;
+        allowedConnections?: string[];
+    };
 }
 
 /**
@@ -56,6 +61,9 @@ export interface AuthState {
     error: string | null;        // Authentication error message
     mfaPending: boolean;         // MFA verification pending
     mfaVerified: boolean;        // MFA verification complete
+    mfaRequired: boolean;        // MFA requirement flag
+    sessionExpiry: number | null; // Session expiration timestamp
+    lastActivity: number;        // Last user activity timestamp
 }
 
 /**
@@ -122,4 +130,25 @@ export enum AuthErrorType {
     SESSION_EXPIRED = 'SESSION_EXPIRED',
     ACCOUNT_LOCKED = 'ACCOUNT_LOCKED',
     NETWORK_ERROR = 'NETWORK_ERROR'
+}
+
+/**
+ * Authentication error interface.
+ * Provides structured error information for authentication failures.
+ */
+export interface AuthError {
+    type: AuthErrorType;
+    message: string;
+    code?: string;
+    details?: Record<string, unknown>;
+}
+
+/**
+ * User role enum for authorization.
+ * Defines available user roles and permissions.
+ */
+export enum UserRole {
+    ADMIN = 'ADMIN',
+    USER = 'USER',
+    DELEGATE = 'DELEGATE'
 }

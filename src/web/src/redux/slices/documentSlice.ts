@@ -13,8 +13,7 @@ import {
   Document,
   DocumentType,
   DocumentStatus,
-  DocumentUploadRequest,
-  DocumentMetadata
+  DocumentUploadRequest
 } from '../../types/document.types';
 import DocumentService from '../../services/document.service';
 
@@ -62,14 +61,14 @@ const initialState: DocumentState = {
 // Async thunks with enhanced security and monitoring
 export const fetchDocuments = createAsyncThunk(
   'documents/fetchDocuments',
-  async (type?: DocumentType, { rejectWithValue }) => {
+  async ({ rejectWithValue, type }: { rejectWithValue: any; type?: DocumentType }) => {
     try {
       const startTime = Date.now();
       const documents = await DocumentService.getInstance().listDocuments(type);
       
       // Verify encryption status for each document
       const documentsWithEncryption = await Promise.all(
-        documents.map(async (doc) => {
+        documents.map(async (doc: Document) => {
           const isEncrypted = await DocumentService.getInstance().verifyEncryption(doc.id);
           return { ...doc, encryptionVerified: isEncrypted };
         })
@@ -105,7 +104,7 @@ export const uploadDocument = createAsyncThunk(
       // Upload with progress monitoring
       const document = await documentService.uploadDocument(
         request,
-        (progress) => {
+        (progress: number) => {
           dispatch(documentSlice.actions.setUploadProgress({
             id: uploadId,
             progress

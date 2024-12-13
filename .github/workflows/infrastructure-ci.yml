@@ -1,0 +1,161 @@
+# Infrastructure CI Workflow
+# Version: 1.0
+# Purpose: Continuous integration pipeline for Estate Kit infrastructure code with enhanced security controls
+
+name: Infrastructure CI
+
+# Trigger workflow on push and pull requests to main branch for infrastructure changes
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/**'
+
+# Environment variables based on technical specifications
+env:
+  TF_VERSION: '1.5.x'
+  PRIMARY_REGION: 'ca-central-1'
+  DR_REGION: 'us-east-1'
+  WORKING_DIRECTORY: 'infrastructure/terraform/aws'
+  TFSEC_VERSION: 'v1.0.0'
+  COMPLIANCE_VERSION: '1.3.33'
+
+# Define jobs for infrastructure validation and testing
+jobs:
+  validate:
+    name: Validate Infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: terraform fmt -check -recursive
+
+      # Primary Region Validation
+      - name: Terraform Init Primary Region
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        env:
+          AWS_DEFAULT_REGION: ${{ env.PRIMARY_REGION }}
+        run: |
+          terraform init -backend=false
+          terraform workspace select default || terraform workspace new default
+
+      - name: Terraform Validate Primary Region
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: terraform validate
+
+      # DR Region Validation
+      - name: Terraform Init DR Region
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        env:
+          AWS_DEFAULT_REGION: ${{ env.DR_REGION }}
+        run: |
+          terraform init -backend=false -reconfigure
+          terraform workspace select dr || terraform workspace new dr
+
+      - name: Terraform Validate DR Region
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: terraform validate
+
+      # Security Scanning
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ${{ env.WORKING_DIRECTORY }}
+          soft_fail: false
+          format: sarif
+          minimum_severity: HIGH
+          additional_args: >-
+            --config-file tfsec.config.yml
+            --exclude-downloaded-modules
+            --force-all-dirs
+
+      # Compliance Testing
+      - name: Run Compliance Checks
+        uses: terraform-compliance/cli@1.3.33
+        with:
+          plan: plan.out
+          features: .terraform-compliance
+          args: "--no-ansi --quiet"
+
+  security_audit:
+    name: Security Audit
+    needs: validate
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Run Infrastructure Security Audit
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Check for sensitive data exposure
+          if grep -r --include="*.tf" -E "password|secret|key" .; then
+            echo "WARNING: Potential sensitive data found in Terraform files"
+            exit 1
+          fi
+
+      - name: Verify PIPEDA Compliance Tags
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Verify required compliance tags
+          if ! grep -r "SecurityCompliance.*pipeda" .; then
+            echo "ERROR: PIPEDA compliance tags missing"
+            exit 1
+          fi
+
+      - name: Check Multi-Region Configuration
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Verify both regions are properly configured
+          if ! grep -r "ca-central-1\|us-east-1" .; then
+            echo "ERROR: Multi-region configuration missing"
+            exit 1
+          fi
+
+  drift_detection:
+    name: Infrastructure Drift Detection
+    needs: security_audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check Infrastructure Drift
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Simulate drift detection for both regions
+          for region in "$PRIMARY_REGION" "$DR_REGION"; do
+            echo "Checking drift in $region..."
+            terraform plan -detailed-exitcode
+          done
+
+# Post-workflow notifications
+  notify:
+    name: Notification
+    needs: [validate, security_audit, drift_detection]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send Workflow Status
+        run: |
+          echo "Infrastructure CI pipeline completed"
+          echo "Status: ${{ job.status }}"

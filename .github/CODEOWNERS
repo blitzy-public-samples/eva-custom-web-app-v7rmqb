@@ -1,0 +1,29 @@
+# This file defines code ownership and required reviewers for different parts of the codebase
+# Format: pattern  owner1 owner2 ...
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo (required as a fallback)
+*                                               @estate-kit/maintainers
+
+# Frontend application ownership
+src/web/**                                      @estate-kit/frontend-team
+src/web/src/components/auth/**                  @estate-kit/security-team @estate-kit/frontend-team
+
+# Backend application ownership
+src/backend/**                                  @estate-kit/backend-team
+src/backend/src/services/auth.service.ts        @estate-kit/security-team @estate-kit/backend-team
+src/backend/src/services/encryption.service.ts  @estate-kit/security-team @estate-kit/backend-team
+src/backend/src/services/document.service.ts    @estate-kit/security-team @estate-kit/backend-team
+src/backend/src/middleware/security/**          @estate-kit/security-team
+src/backend/config/**                          @estate-kit/security-team @estate-kit/devops-team
+
+# Infrastructure and deployment ownership
+infrastructure/**                               @estate-kit/devops-team
+*.tf                                           @estate-kit/devops-team
+*.yaml                                         @estate-kit/devops-team
+
+# GitHub workflows and configurations
+.github/**                                      @estate-kit/maintainers
+
+# Package dependencies (requires security review)
+package*.json                                   @estate-kit/maintainers @estate-kit/security-team

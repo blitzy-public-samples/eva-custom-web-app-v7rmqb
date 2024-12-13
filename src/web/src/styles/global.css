@@ -1,0 +1,241 @@
+/**
+ * Estate Kit Global Styles
+ * 
+ * Core stylesheet implementing base styles, resets, and foundational styling rules
+ * optimized for senior users and WCAG 2.1 Level AA compliance.
+ * 
+ * @requires normalize.css v8.0.1
+ * @requires ./variables.css
+ * @requires ./typography.css
+ * @requires ./animations.css
+ */
+
+/* Import external reset and internal design system */
+@import 'normalize.css';
+@import './variables.css';
+@import './typography.css';
+@import './animations.css';
+
+/* Base Reset & Box Model
+ * Consistent box model and baseline reset
+ * ------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Root Element Configuration
+ * Enable responsive font sizing and smooth rendering
+ * ----------------------------------------------- */
+html {
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+  /* Ensure proper height for full-page layouts */
+  height: 100%;
+}
+
+/* Body Base Styles
+ * Set foundational styles for the document body
+ * ------------------------------------------- */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  min-height: 100vh;
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
+  /* Prevent content shift on scrollbar appearance */
+  overflow-y: scroll;
+  /* Improve touch behavior */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Main Content Container
+ * Responsive width constraints and layout optimization
+ * ------------------------------------------------- */
+.container {
+  max-width: var(--breakpoint-desktop);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  /* Optimize rendering performance */
+  contain: content;
+  content-visibility: auto;
+  /* Ensure proper spacing on mobile */
+  width: 100%;
+  padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+  padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+}
+
+/* Accessibility Utilities
+ * Screen reader and keyboard navigation enhancements
+ * ----------------------------------------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Enhanced Focus Styles
+ * High contrast focus indicators for keyboard navigation
+ * --------------------------------------------------- */
+.focus-visible,
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--color-background);
+  border-radius: 2px;
+  /* Ensure focus styles appear above other content */
+  position: relative;
+  z-index: 1;
+}
+
+/* Touch Target Sizing
+ * Implement senior-friendly minimum touch target sizes
+ * ------------------------------------------------- */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 12px;
+  cursor: pointer;
+  /* Improve touch feedback */
+  touch-action: manipulation;
+}
+
+/* Form Element Base Styles
+ * Consistent form styling with senior-friendly enhancements
+ * ------------------------------------------------------ */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  /* Ensure minimum touch target size */
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  /* Improve visibility of form elements */
+  background-color: var(--color-background);
+  border: 2px solid var(--color-neutral);
+  border-radius: var(--border-radius-sm);
+}
+
+/* Interactive Element States
+ * Enhanced state styling for better user feedback
+ * -------------------------------------------- */
+button:hover,
+a:hover {
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+button:active,
+a:active {
+  opacity: 0.7;
+}
+
+/* Media Handling
+ * Responsive media sizing and optimization
+ * ------------------------------------- */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* List Reset
+ * Clean list styling with proper spacing
+ * ------------------------------------ */
+ul[class],
+ol[class] {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Table Accessibility
+ * Enhanced table styling for better readability
+ * ------------------------------------------ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+}
+
+th {
+  text-align: left;
+  padding: var(--spacing-md);
+  background-color: var(--color-background-paper);
+}
+
+td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-neutral);
+}
+
+/* Print Styles
+ * Optimize layout for printed pages
+ * ------------------------------- */
+@media print {
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+
+  body {
+    background: none;
+    color: #000;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+}
+
+/* High Contrast Mode Support
+ * Ensure visibility in forced colors mode
+ * ------------------------------------ */
+@media (forced-colors: active) {
+  :root {
+    --color-primary: CanvasText;
+    --color-text: CanvasText;
+    --color-background: Canvas;
+  }
+}
+
+/* Reduced Motion
+ * Respect user motion preferences
+ * ---------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Mobile Optimizations
+ * Enhanced styling for mobile devices
+ * -------------------------------- */
+@media screen and (max-width: var(--breakpoint-mobile)) {
+  html {
+    /* Increase base font size for better readability */
+    font-size: 112.5%;
+  }
+
+  .container {
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+  }
+}

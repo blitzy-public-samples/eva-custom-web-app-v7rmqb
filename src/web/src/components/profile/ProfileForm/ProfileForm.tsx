@@ -5,7 +5,7 @@ import Form from '../../common/Form/Form';
 import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
-import { Auth0Context } from '../../../types/auth.types';
+import { User } from '../../../types/auth.types';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -101,14 +101,14 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   const defaultValues: ProfileFormData = {
     name: initialData?.name || user?.name || '',
     email: initialData?.email || user?.email || '',
-    phone: initialData?.phone || user?.profile?.phoneNumber || '',
-    province: initialData?.province || user?.profile?.province || ''
+    phone: initialData?.phone || '',
+    province: initialData?.province || ''
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: Record<string, any>, auth: Auth0Context) => {
+  const handleSubmit = async (values: ProfileFormData) => {
     try {
-      await onSubmit(values as ProfileFormData);
+      await onSubmit(values);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -116,7 +116,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   return (
-    <Form
+    <Form<ProfileFormData>
       initialValues={defaultValues}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -127,53 +127,49 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       analyticsEvent="profile_update"
       testId="profile-form"
     >
-      {({ values, handleChange, handleBlur }) => (
+      {(formProps) => (
         <Stack spacing={3} width="100%">
           <Input
-            id={FORM_FIELDS.NAME}
+            name={FORM_FIELDS.NAME}
             label="Full Name"
             type="text"
             required
             autoComplete="name"
             placeholder="Enter your full name"
-            value={values.name}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.name}
+            onChange={formProps.handleChange}
           />
 
           <Input
-            id={FORM_FIELDS.EMAIL}
+            name={FORM_FIELDS.EMAIL}
             label="Email Address"
             type="email"
             required
             autoComplete="email"
             placeholder="Enter your email address"
-            value={values.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.email}
+            onChange={formProps.handleChange}
           />
 
           <Input
-            id={FORM_FIELDS.PHONE}
+            name={FORM_FIELDS.PHONE}
             label="Phone Number"
             type="tel"
             required
             autoComplete="tel"
             placeholder="Enter your phone number (e.g., 123-456-7890)"
-            value={values.phone}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.phone}
+            onChange={formProps.handleChange}
           />
 
           <Select
-            id={FORM_FIELDS.PROVINCE}
+            name={FORM_FIELDS.PROVINCE}
             label="Province"
             required
             autoComplete="address-level1"
             placeholder="Select your province"
-            value={values.province}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.province}
+            onChange={formProps.handleChange}
             options={PROVINCES.map(province => ({
               value: province,
               label: province

@@ -1,0 +1,199 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Estate Kit Delegate Schema",
+  "description": "OpenAPI schema definitions for delegate management with enhanced security and audit capabilities",
+  "definitions": {
+    "DelegateBase": {
+      "type": "object",
+      "required": ["email", "role", "permissions", "purpose"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address of the delegate with strict format validation",
+          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["EXECUTOR", "HEALTHCARE_PROXY", "FINANCIAL_ADVISOR", "LEGAL_ADVISOR"],
+          "description": "Role assigned to the delegate with associated permission matrix"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Mandatory expiration date of delegate access"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "Documented reason for delegate access for audit purposes"
+        },
+        "permissions": {
+          "type": "array",
+          "maxItems": 10,
+          "description": "List of specific resource permissions granted to the delegate",
+          "items": {
+            "type": "object",
+            "required": ["resourceType", "accessLevel"],
+            "properties": {
+              "resourceType": {
+                "type": "string",
+                "enum": ["PERSONAL_INFO", "FINANCIAL_DATA", "MEDICAL_DATA", "LEGAL_DOCS"],
+                "description": "Type of resource to grant access to"
+              },
+              "accessLevel": {
+                "type": "string",
+                "enum": ["READ", "WRITE", "NONE"],
+                "description": "Level of access granted"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DelegateResponse": {
+      "type": "object",
+      "required": ["id", "ownerId", "delegateId", "role", "status", "permissions", "auditTrail"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the delegate relationship"
+        },
+        "ownerId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the estate owner"
+        },
+        "delegateId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of the delegate user"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["EXECUTOR", "HEALTHCARE_PROXY", "FINANCIAL_ADVISOR", "LEGAL_ADVISOR"],
+          "description": "Role assigned to the delegate"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "PENDING", "EXPIRED", "REVOKED", "SUSPENDED"],
+          "description": "Current status of delegate access with enhanced tracking"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Expiration date of delegate access"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500,
+          "description": "Documented reason for delegate access"
+        },
+        "permissions": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["resourceType", "accessLevel"],
+            "properties": {
+              "resourceType": {
+                "type": "string",
+                "enum": ["PERSONAL_INFO", "FINANCIAL_DATA", "MEDICAL_DATA", "LEGAL_DOCS"],
+                "description": "Type of resource delegate has access to"
+              },
+              "accessLevel": {
+                "type": "string",
+                "enum": ["READ", "WRITE", "NONE"],
+                "description": "Level of access granted"
+              }
+            }
+          }
+        },
+        "auditTrail": {
+          "type": "object",
+          "required": ["createdAt", "updatedAt", "createdBy", "lastModifiedBy", "statusHistory"],
+          "properties": {
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Timestamp when delegate relationship was created"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Timestamp when delegate relationship was last updated"
+            },
+            "createdBy": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of user who created the delegate relationship"
+            },
+            "lastModifiedBy": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of user who last modified the delegate relationship"
+            },
+            "statusHistory": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["status", "timestamp", "changedBy", "reason"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ACTIVE", "PENDING", "EXPIRED", "REVOKED", "SUSPENDED"],
+                    "description": "Status value"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When status changed"
+                  },
+                  "changedBy": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of user who changed status"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Reason for status change"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "delegateId": {
+        "name": "delegateId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Unique identifier of the delegate relationship"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token for delegate access authentication"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

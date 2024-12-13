@@ -1,0 +1,157 @@
+/**
+ * Estate Kit Animation System
+ * 
+ * Core animation and transition styles implementing WCAG 2.1 Level AA compliant
+ * motion design optimized for senior users. Features:
+ * - Performance-optimized transforms and opacity transitions
+ * - Comprehensive reduced motion support
+ * - Extended durations and gentle movements for senior comfort
+ * - Minimal vestibular trigger risk
+ */
+
+/* Import design system tokens */
+@import './variables.css';
+
+/* Base Keyframe Animations
+ * Using transform and opacity for optimal performance
+ * Implementing will-change for rendering optimization
+ */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    will-change: opacity;
+  }
+  to { 
+    opacity: 1;
+    will-change: auto;
+  }
+}
+
+@keyframes slideInUp {
+  from { 
+    transform: translateY(var(--spacing-unit));
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+    will-change: auto;
+  }
+}
+
+@keyframes slideInDown {
+  from { 
+    transform: translateY(calc(var(--spacing-unit) * -1));
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+    will-change: auto;
+  }
+}
+
+@keyframes pulse {
+  0% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.02);
+  }
+  100% { 
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from { 
+    transform: rotate(0deg);
+  }
+  to { 
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation Classes
+ * Extended durations and gentle easing for senior users
+ * Implementing will-change for performance optimization
+ */
+.fade-in {
+  animation: fadeIn var(--animation-timing-slow) var(--animation-easing-gentle) forwards;
+  will-change: opacity;
+}
+
+.slide-up {
+  animation: slideInUp 0.4s var(--animation-easing-gentle) forwards;
+  will-change: transform, opacity;
+}
+
+.slide-down {
+  animation: slideInDown 0.4s var(--animation-easing-gentle) forwards;
+  will-change: transform, opacity;
+}
+
+.pulse {
+  animation: pulse 2s var(--animation-easing-gentle) infinite;
+  will-change: transform;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  will-change: transform;
+}
+
+/* Universal Transition Class
+ * Gentle easing for property changes
+ */
+.transition-all {
+  transition: all 0.3s var(--animation-easing-gentle);
+}
+
+/* Reduced Motion Support
+ * Comprehensive implementation respecting user preferences
+ * Maintains functionality while minimizing motion
+ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Ensure critical animations maintain functionality */
+  .spin {
+    animation: none !important;
+    /* Fallback for loading indicators */
+    opacity: 0.7;
+  }
+
+  .pulse {
+    animation: none !important;
+    /* Fallback for attention indicators */
+    opacity: 0.85;
+  }
+}
+
+/* Performance Optimization
+ * Automatic cleanup of will-change property
+ * Prevents unnecessary memory consumption
+ */
+.fade-in,
+.slide-up,
+.slide-down,
+.pulse,
+.spin {
+  /* Reset will-change after animation completes */
+  animation-fill-mode: forwards;
+}
+
+/* Animation completion states */
+.fade-in:not(:active),
+.slide-up:not(:active),
+.slide-down:not(:active) {
+  will-change: auto;
+}

@@ -19,6 +19,7 @@ import {
   selectDelegateIds,
   selectDelegateStatus,
   selectDelegateError,
+  selectDelegateById,
   addAuditLogEntry
 } from '../redux/slices/delegateSlice';
 import {
@@ -27,6 +28,7 @@ import {
   DelegateRole,
   AccessLevel
 } from '../types/delegate.types';
+import { EntityId } from '@reduxjs/toolkit';
 
 // Cache status type for tracking cache state
 type CacheStatus = 'valid' | 'stale' | 'invalid';
@@ -54,10 +56,10 @@ export const useDelegate = () => {
    * Validates delegate permissions against security matrix
    */
   const validatePermissions = useCallback(async (
-    delegateId: string,
+    delegateId: EntityId,
     action: string
   ): Promise<boolean> => {
-    const delegate = delegateIds.find((d: string) => d === delegateId);
+    const delegate = useSelector((state) => selectDelegateById(state, delegateId));
     if (!delegate) return false;
 
     // Permission matrix based on role
@@ -86,16 +88,15 @@ export const useDelegate = () => {
       }
     };
 
-    const delegateRole = delegate.role as DelegateRole;
-    return !!permissionMatrix[delegateRole]?.[action];
-  }, [delegateIds]);
+    return !!permissionMatrix[delegate.role]?.[action];
+  }, []);
 
   /**
    * Adds audit log entry for delegate operations
    */
   const logAuditEvent = useCallback((
     action: string,
-    delegateId: string,
+    delegateId: EntityId,
     details?: Record<string, any>
   ) => {
     dispatch(addAuditLogEntry({
@@ -161,7 +162,7 @@ export const useDelegate = () => {
    * Enhanced update delegate with permission validation
    */
   const updateDelegateEnhanced = useCallback(async (
-    id: string,
+    id: EntityId,
     data: UpdateDelegateDTO
   ) => {
     try {
@@ -184,7 +185,7 @@ export const useDelegate = () => {
    * Enhanced remove delegate with security checks
    */
   const removeDelegateEnhanced = useCallback(async (
-    id: string
+    id: EntityId
   ) => {
     try {
       // Validate permissions for removal

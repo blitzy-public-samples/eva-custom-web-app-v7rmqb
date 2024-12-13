@@ -1,0 +1,50 @@
+# Estate Kit Frontend Service Configuration
+# Version: 1.0.0
+# Provides load balanced access to the frontend React application with TLS termination
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: frontend
+    managed-by: terraform
+    environment: production
+    tier: frontend
+  annotations:
+    description: "Estate Kit frontend web application service with TLS termination"
+    owner: "DevOps"
+    # AWS NLB Configuration
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${ACM_CERTIFICATE_ARN}"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
+    # Access Logging Configuration
+    service.beta.kubernetes.io/aws-load-balancer-access-log-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-access-log-s3-bucket-name: "estate-kit-lb-logs"
+    # Monitoring Configuration
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: estate-kit
+    component: frontend
+  sessionAffinity: None
+  externalTrafficPolicy: Local
+  healthCheckNodePort: 32000
+  loadBalancerSourceRanges:
+    - "0.0.0.0/0"

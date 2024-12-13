@@ -140,6 +140,23 @@ export const refreshToken = createAsyncThunk(
 );
 
 /**
+ * Async thunk for session refresh
+ */
+export const refreshSession = createAsyncThunk(
+  'auth/refreshSession',
+  async (_, { rejectWithValue }) => {
+    try {
+      const authService = new AuthService();
+      const response = await authService.refreshToken();
+      
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+/**
  * Authentication slice with comprehensive security features
  */
 const authSlice = createSlice({
@@ -237,6 +254,16 @@ const authSlice = createSlice({
         state.lastActivity = Date.now();
       })
       .addCase(refreshToken.rejected, () => {
+        return { ...initialState, lastActivity: Date.now() };
+      })
+
+    // Session refresh reducers
+    builder
+      .addCase(refreshSession.fulfilled, (state, action) => {
+        state.sessionExpiry = action.payload.expiresAt;
+        state.lastActivity = Date.now();
+      })
+      .addCase(refreshSession.rejected, () => {
         return { ...initialState, lastActivity: Date.now() };
       });
   }

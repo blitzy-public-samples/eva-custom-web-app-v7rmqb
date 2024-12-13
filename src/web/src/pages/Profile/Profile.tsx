@@ -13,7 +13,7 @@
 import React, { useCallback, useState } from 'react';
 import { Container, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import MainLayout from '../../components/layout/MainLayout/MainLayout';
+import { MainLayout } from '../../components/layout/MainLayout/MainLayout';
 import ProfileForm, { ProfileFormData } from '../../components/profile/ProfileForm/ProfileForm';
 import { useAuth } from '../../hooks/useAuth';
 

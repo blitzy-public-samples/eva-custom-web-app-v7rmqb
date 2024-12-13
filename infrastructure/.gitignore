@@ -1,0 +1,82 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Kubernetes
+**/kubeconfig
+*.kubeconfig
+**/secrets/
+**/sealed-secrets/
+kustomize-generated/
+
+# AWS
+*.pem
+aws.credentials
+.aws/
+aws.json
+aws.yaml
+
+# Environment
+.env
+.env.*
+.envrc
+*.env
+
+# Certificates
+*.key
+*.crt
+*.csr
+*.pem
+*.p12
+*.pfx
+*.cer
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.recommended
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build and temp
+*.bak
+*.tmp
+tmp/
+temp/
+build/
+dist/
+
+# Local development overrides
+**/local-*
+**/dev-*
+**/*.local.*
+**/*.dev.*
+
+# Sensitive data
+**/credentials/
+**/private/
+**/*secret*
+**/*password*
+**/*key*
+!**/public-key*

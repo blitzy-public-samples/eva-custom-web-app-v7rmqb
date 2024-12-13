@@ -6,6 +6,7 @@ import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/materia
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { UserRole } from '../../../../../backend/src/types/user.types';
+import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -44,7 +45,7 @@ interface DelegatePermission {
 declare global {
   interface Window {
     analytics?: {
-      track: (event: string, properties?: Record<string, unknown>) => void;
+      track: (event: string, properties?: Record<string, any>) => void;
     };
   }
 }
@@ -122,7 +123,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: typeof INITIAL_VALUES, auth: any) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -130,7 +131,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
       const payload = {
         ...values,
-        permissions: ROLE_PERMISSIONS[values.role]
+        permissions: ROLE_PERMISSIONS[values.role as UserRole]
       };
 
       const response = await fetch('/api/delegates', {
@@ -145,7 +146,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         throw new Error(t('delegate.form.errors.submit'));
       }
 
-      queryClient.invalidateQueries('delegates');
+      await queryClient.invalidateQueries(['delegates']);
 
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUCCESS, {
         delegateRole: values.role
@@ -186,7 +187,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Typography>
 
         <Input
-          name="email"
+          inputProps={{ name: "email" }}
           id="email"
           label={t('delegate.form.email')}
           type="email"
@@ -195,7 +196,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         />
 
         <Input
-          name="name"
+          inputProps={{ name: "name" }}
           id="name"
           label={t('delegate.form.name')}
           required
@@ -224,7 +225,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Box>
 
         <Input
-          name="expiresAt"
+          inputProps={{ name: "expiresAt" }}
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
           type="text"
@@ -232,7 +233,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         />
 
         <Input
-          name="notes"
+          inputProps={{ name: "notes" }}
           id="notes"
           label={t('delegate.form.notes')}
           type="text"

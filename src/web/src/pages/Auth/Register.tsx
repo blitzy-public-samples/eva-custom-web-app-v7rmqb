@@ -8,6 +8,7 @@ import Form from '../../components/common/Form/Form';
 import Select from '../../components/common/Select/Select';
 import { styled } from '@mui/material/styles';
 import { Box, Typography, Alert, Link } from '@mui/material';
+import * as Yup from 'yup';
 
 const RegisterContainer = styled(Box)(() => ({
   maxWidth: '600px',
@@ -41,11 +42,19 @@ const initialFormState: RegisterPayload = {
   mfaPreference: true,
 };
 
+const validationSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email address').required('Email is required'),
+  password: Yup.string().required('Password is required').min(8, 'Password must be at least 8 characters'),
+  name: Yup.string().required('Name is required'),
+  province: Yup.string().required('Province is required'),
+  acceptedTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
+});
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [formError, setFormError] = useState<string | undefined>(null);
+  const [formError, setFormError] = useState<string | undefined>(undefined);
 
   const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
@@ -81,6 +90,10 @@ const Register: React.FC = () => {
     }
   }, [register, navigate]);
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
+
   return (
     <RegisterContainer>
       <RegisterHeading>
@@ -101,109 +114,123 @@ const Register: React.FC = () => {
         submitLabel="Create Account"
         testId="register-form"
         analyticsEvent="register"
+        validationSchema={validationSchema}
       >
-        <Input
-          id="name"
-          label="Full Name"
-          type="text"
-          required
-          autoComplete="name"
-          placeholder="Enter your full name"
-          error={formError}
-          aria-label="Enter your full name"
-        />
+        {({ values, handleChange, handleBlur }) => (
+          <>
+            <Input
+              id="name"
+              label="Full Name"
+              type="text"
+              required
+              autoComplete="name"
+              placeholder="Enter your full name"
+              error={formError}
+              aria-label="Enter your full name"
+              value={values.name}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
 
-        <Input
-          id="email"
-          label="Email Address"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="Enter your email address"
-          error={formError}
-          aria-label="Enter your email address"
-        />
+            <Input
+              id="email"
+              label="Email Address"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="Enter your email address"
+              error={formError}
+              aria-label="Enter your email address"
+              value={values.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
 
-        <Input
-          id="password"
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          required
-          autoComplete="new-password"
-          placeholder="Create a secure password"
-          error={formError}
-          aria-label="Create a secure password"
-        />
+            <Input
+              id="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              placeholder="Create a secure password"
+              error={formError}
+              aria-label="Create a secure password"
+              value={values.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
 
-        <Select
-          name="province"
-          label="Province"
-          options={provinceOptions}
-          required
-          fullWidth
-          helpText="Select your province for jurisdiction-specific features"
-          aria-label="Select your province"
-          value={initialFormState.province}
-          onChange={() => {}}
-          onBlur={() => {}}
-        />
+            <Select
+              name="province"
+              label="Province"
+              options={provinceOptions}
+              required
+              fullWidth
+              helpText="Select your province for jurisdiction-specific features"
+              aria-label="Select your province"
+              value={values.province}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
 
-        <Box sx={{ marginY: 'var(--spacing-md)' }}>
-          <Typography variant="body2" color="textSecondary">
-            By creating an account, you agree to our{' '}
-            <Link
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Terms of Service (opens in new window)"
+            <Box sx={{ marginY: 'var(--spacing-md)' }}>
+              <Typography variant="body2" color="textSecondary">
+                By creating an account, you agree to our{' '}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Terms of Service (opens in new window)"
+                >
+                  Terms of Service
+                </Link>
+                {' '}and{' '}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Privacy Policy (opens in new window)"
+                >
+                  Privacy Policy
+                </Link>
+              </Typography>
+            </Box>
+
+            {error && (
+              <Alert 
+                severity="error"
+                sx={{ marginY: 'var(--spacing-md)' }}
+                role="alert"
+              >
+                {error.toString()}
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="large"
+              fullWidth
+              loading={loading}
+              disabled={loading}
+              aria-label="Create your account"
             >
-              Terms of Service
-            </Link>
-            {' '}and{' '}
-            <Link
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Privacy Policy (opens in new window)"
-            >
-              Privacy Policy
-            </Link>
-          </Typography>
-        </Box>
+              Create Account
+            </Button>
 
-        {error && (
-          <Alert 
-            severity="error"
-            sx={{ marginY: 'var(--spacing-md)' }}
-            role="alert"
-          >
-            {error}
-          </Alert>
+            <Box sx={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
+              <Typography variant="body2">
+                Already have an account?{' '}
+                <Link
+                  href="/login"
+                  aria-label="Sign in to your existing account"
+                >
+                  Sign In
+                </Link>
+              </Typography>
+            </Box>
+          </>
         )}
-
-        <Button
-          type="submit"
-          variant="primary"
-          size="large"
-          fullWidth
-          loading={loading}
-          disabled={loading}
-          aria-label="Create your account"
-        >
-          Create Account
-        </Button>
-
-        <Box sx={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
-          <Typography variant="body2">
-            Already have an account?{' '}
-            <Link
-              href="/login"
-              aria-label="Sign in to your existing account"
-            >
-              Sign In
-            </Link>
-          </Typography>
-        </Box>
       </Form>
     </RegisterContainer>
   );

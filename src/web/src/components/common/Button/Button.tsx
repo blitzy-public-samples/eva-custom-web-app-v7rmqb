@@ -25,7 +25,7 @@ interface CustomButtonProps {
 const StyledButton = styled(ButtonBase, {
   shouldForwardProp: (prop) => 
     !['variant', 'size', 'loading', 'prefersReducedMotion'].includes(String(prop)),
-})<CustomButtonProps>(({ theme, variant, size, disabled, loading, fullWidth, prefersReducedMotion }) => ({
+})<CustomButtonProps>(({ variant, size, disabled, loading, fullWidth, prefersReducedMotion }) => ({
   fontFamily: 'var(--font-family-base)',
   borderRadius: 'var(--border-radius-md)',
   transition: prefersReducedMotion ? 'none' : 'all 0.2s ease-in-out',

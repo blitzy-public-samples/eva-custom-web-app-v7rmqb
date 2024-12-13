@@ -1,0 +1,179 @@
+# Kubernetes Deployment Configuration for Estate Kit Backend Services
+# Version: apps/v1
+# Purpose: Defines container specifications, resource limits, health checks, and scaling parameters
+# for the API gateway and microservices
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estate-kit-backend
+  namespace: estate-kit
+  labels:
+    app: estate-kit
+    component: backend
+    environment: ${ENV}
+    managed-by: terraform
+    version: ${IMAGE_TAG}
+    tier: application
+  annotations:
+    description: "Estate Kit backend API services"
+    owner: "DevOps"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+    checksum/config: ${CONFIG_CHECKSUM}
+    security.policy/version: "v1.0"
+    backup.policy/retention: "30d"
+
+spec:
+  # High availability with 3 replicas
+  replicas: 3
+  
+  # Zero-downtime deployment strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  # Pod selector for the deployment
+  selector:
+    matchLabels:
+      app: estate-kit
+      component: backend
+  
+  template:
+    metadata:
+      labels:
+        app: estate-kit
+        component: backend
+        version: ${IMAGE_TAG}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    
+    spec:
+      # Container specifications
+      containers:
+      - name: api-gateway
+        image: ${ECR_REGISTRY}/estate-kit-backend:${IMAGE_TAG}
+        imagePullPolicy: Always
+        
+        # Container ports
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        
+        # Resource allocation
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            httpHeaders:
+            - name: X-Health-Check
+              value: "true"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            httpHeaders:
+            - name: X-Health-Check
+              value: "true"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 30
+        
+        # Configuration injection
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - configMapRef:
+            name: feature-flags
+        - configMapRef:
+            name: service-endpoints
+        
+        # Container security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Volume mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /cache
+      
+      # Pod volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      
+      # Pod security context
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Pod distribution strategy
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: estate-kit
+                  component: backend
+              topologyKey: kubernetes.io/hostname
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: estate-kit
+                  component: backend
+              topologyKey: topology.kubernetes.io/zone
+      
+      # Graceful shutdown period
+      terminationGracePeriodSeconds: 60
+      
+      # Image pull secrets for ECR access
+      imagePullSecrets:
+      - name: ecr-registry

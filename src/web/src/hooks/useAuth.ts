@@ -13,8 +13,9 @@ import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   login, 
-  verifyMFA, 
-  refreshSession 
+  verifyMFA,
+  refreshSession,
+  register as registerAction
 } from '../redux/slices/authSlice';
 import type { 
   AuthState, 
@@ -105,6 +106,36 @@ export const useAuth = () => {
     } catch (error) {
       // Log login failure (sanitized)
       console.error('Login failed:', {
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
+  }, [dispatch]);
+
+  /**
+   * Registration handler with security logging
+   */
+  const handleRegister = useCallback(async (userData: { email: string; password: string; name: string }) => {
+    try {
+      // Log registration attempt (sanitized)
+      console.info('Registration attempt:', {
+        timestamp: new Date().toISOString(),
+        email: userData.email.replace(/[^@\w.-]/g, '')
+      });
+
+      // Dispatch registration action
+      const result = await dispatch(registerAction(userData)).unwrap();
+
+      // Log successful registration
+      console.info('Registration successful:', {
+        timestamp: new Date().toISOString()
+      });
+
+      return result;
+    } catch (error) {
+      // Log registration failure
+      console.error('Registration failed:', {
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -218,10 +249,12 @@ export const useAuth = () => {
     error: authState.error as AuthError | null,
     requiresMFA: authState.requiresMFA,
     isMFAVerified: authState.isMFAVerified,
+    isSessionValid: authState.isAuthenticated && !!authState.token,
     token: authState.token,
 
     // Authentication operations
     login: handleLogin,
+    register: handleRegister,
     verifyMfa: handleMfaVerification,
     refreshSession: handleSessionRefresh,
     logout: handleLogout

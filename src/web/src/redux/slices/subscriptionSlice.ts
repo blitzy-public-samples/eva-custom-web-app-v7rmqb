@@ -65,9 +65,9 @@ const CACHE_DURATION = 30 * 60 * 1000;
  */
 export const fetchCurrentSubscription = createAsyncThunk(
   'subscription/fetchCurrent',
-  async (_, { rejectWithValue, getState }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const service = SubscriptionService.getInstance();
+      const service = new SubscriptionService();
       const subscription = await service.getCurrentSubscription();
       return subscription;
     } catch (error: any) {
@@ -85,9 +85,9 @@ export const fetchCurrentSubscription = createAsyncThunk(
  */
 export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
-  async (_, { rejectWithValue, getState }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const service = SubscriptionService.getInstance();
+      const service = new SubscriptionService();
       const plans = await service.getSubscriptionPlans();
       return plans;
     } catch (error: any) {
@@ -111,7 +111,7 @@ export const updateSubscription = createAsyncThunk(
     autoRenew: boolean;
   }, { rejectWithValue }) => {
     try {
-      const service = SubscriptionService.getInstance();
+      const service = new SubscriptionService();
       const updatedSubscription = await service.updateSubscription(
         updateData.plan,
         updateData.billingCycle,
@@ -136,7 +136,7 @@ export const cancelSubscription = createAsyncThunk(
   'subscription/cancel',
   async (subscriptionId: string, { rejectWithValue }) => {
     try {
-      const service = SubscriptionService.getInstance();
+      const service = new SubscriptionService();
       const result = await service.cancelSubscription(subscriptionId);
       return result;
     } catch (error: any) {
@@ -198,7 +198,7 @@ const subscriptionSlice = createSlice({
       })
       .addCase(fetchSubscriptionPlans.fulfilled, (state, action) => {
         state.availablePlans = action.payload;
-        state.cache.plans = action.payload.reduce((acc, plan) => ({
+        state.cache.plans = action.payload.reduce((acc: Record<string, ISubscriptionPlanDetails>, plan: ISubscriptionPlanDetails) => ({
           ...acc,
           [plan.id]: plan
         }), {});
@@ -230,7 +230,7 @@ const subscriptionSlice = createSlice({
       .addCase(cancelSubscription.pending, (state) => {
         state.loading['cancel'] = true;
       })
-      .addCase(cancelSubscription.fulfilled, (state, action) => {
+      .addCase(cancelSubscription.fulfilled, (state) => {
         if (state.currentSubscription) {
           state.currentSubscription.status = SubscriptionStatus.CANCELLED;
         }

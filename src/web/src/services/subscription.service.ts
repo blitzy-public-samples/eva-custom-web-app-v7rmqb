@@ -5,10 +5,10 @@
  * Manages user subscriptions and integrates with Shopify e-commerce platform
  * for the Estate Kit application.
  * 
- * @package @shopify/buy-sdk ^2.0.0
+ * @package shopify-buy ^2.0.0
  */
 
-import { Client as ShopifyBuy } from '@shopify/buy-sdk';
+import { Client as ShopifyBuy } from 'shopify-buy';
 import { apiService } from './api.service';
 import { 
   ISubscription, 

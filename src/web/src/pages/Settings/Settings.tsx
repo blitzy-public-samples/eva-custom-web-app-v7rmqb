@@ -46,13 +46,13 @@ interface ProfileFormData {
 const Settings: React.FC = () => {
   // Hooks
   const { user } = useAuth();
-  const analytics = Analytics.getInstance();
+  const analytics = new Analytics();
   
   // State management
   const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>({
-    twoFactorEnabled: user?.profile?.mfaEnabled || false,
-    emailNotifications: user?.profile?.emailNotifications || false,
-    smsNotifications: user?.profile?.smsNotifications || false,
+    twoFactorEnabled: user?.twoFactorEnabled || false,
+    emailNotifications: user?.emailNotifications || false,
+    smsNotifications: user?.smsNotifications || false,
     lastUpdated: new Date(),
     updatedBy: user?.email || ''
   });
@@ -202,12 +202,11 @@ const Settings: React.FC = () => {
       >
         <ProfileForm
           onSubmit={handleProfileSubmit}
-          loading={loading}
           initialData={{
             name: user?.name || '',
             email: user?.email || '',
-            phone: user?.profile?.phoneNumber || '',
-            province: user?.profile?.province || ''
+            phone: user?.phoneNumber || '',
+            province: user?.province || ''
           }}
         />
       </Card>

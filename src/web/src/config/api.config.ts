@@ -10,6 +10,7 @@ interface ApiConfig extends AxiosRequestConfig {
   rateLimitConfig: RateLimitConfig;
   circuitBreakerConfig: CircuitBreakerConfig;
   validationConfig: ValidationConfig;
+  retryConfig: RetryConfig;
 }
 
 interface RetryConfig {

@@ -53,6 +53,7 @@ export interface ProfileFormData {
 export interface ProfileFormProps {
   onSubmit: (values: ProfileFormData) => void | Promise<void>;
   initialData?: ProfileFormData | null;
+  isSubmitting: boolean;
 }
 
 // Enhanced validation schema with Canadian-specific rules
@@ -91,7 +92,8 @@ const validationSchema = yup.object().shape({
  */
 const ProfileForm: React.FC<ProfileFormProps> = React.memo(({ 
   onSubmit, 
-  initialData = null 
+  initialData = null,
+  isSubmitting 
 }) => {
   // Get current user data from auth context
   const { user } = useAuth();
@@ -130,6 +132,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       isProtected
       analyticsEvent="profile_update"
       testId="profile-form"
+      isSubmitting={isSubmitting}
     >
       <Stack spacing={3} width="100%">
         <Input

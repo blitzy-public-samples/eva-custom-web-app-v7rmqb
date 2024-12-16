@@ -41,8 +41,6 @@ const Delegates: React.FC = React.memo(() => {
 
   // Custom hook for delegate management
   const {
-    delegateIds,
-    delegates,
     status,
     error: delegateError,
     fetchDelegates,
@@ -220,7 +218,7 @@ const Delegates: React.FC = React.memo(() => {
           </Typography>
 
           <DelegateForm
-            delegate={selectedDelegateId ? delegates?.find(d => d.id === selectedDelegateId) : undefined}
+            delegate={selectedDelegateId}
             onSuccess={handleSuccess}
             onCancel={handleDialogClose}
             onError={handleError}

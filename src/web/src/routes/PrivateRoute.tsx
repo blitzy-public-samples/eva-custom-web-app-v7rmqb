@@ -34,9 +34,8 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
     isAuthenticated,
     loading,
     user,
-    isMFAVerified,
+    isMfaVerified,
     isSessionValid,
-    token,
     refreshSession
   } = useAuth();
 
@@ -46,11 +45,11 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
       timestamp: new Date().toISOString(),
       path: location.pathname,
       authenticated: isAuthenticated,
-      mfaVerified: isMFAVerified,
+      mfaVerified: isMfaVerified,
       sessionValid: isSessionValid,
       userRole: user?.role
     });
-  }, [location.pathname, isAuthenticated, isMFAVerified, isSessionValid, user]);
+  }, [location.pathname, isAuthenticated, isMfaVerified, isSessionValid, user]);
 
   // Show loading state while performing security checks
   if (loading) {
@@ -100,7 +99,7 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
   }
 
   // MFA verification check
-  if (requireMFA && !isMFAVerified) {
+  if (requireMFA && !isMfaVerified) {
     console.warn('MFA verification required:', {
       timestamp: new Date().toISOString(),
       path: location.pathname

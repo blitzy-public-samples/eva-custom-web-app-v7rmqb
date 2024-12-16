@@ -112,7 +112,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             checksumSHA256: await calculateChecksum(file),
             encryptionStatus: true,
             storageLocation: 'S3',
-            retentionPeriod: '7-YEARS'
+            retentionPeriod: 2555 // Changed to number: 7 years in days
           },
           accessControl: {
             delegateIds: [],

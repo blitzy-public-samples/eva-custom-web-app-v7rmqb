@@ -47,11 +47,9 @@ interface PaginatedResponse<T> {
  */
 class DelegateService {
   private static _instance: DelegateService | null = null;
-  private readonly auth0: Auth0Client;
   private readonly api: typeof apiService;
 
   private constructor() {
-    this.auth0 = auth0Client;
     this.api = apiService;
   }
 

@@ -39,7 +39,7 @@ const initialFormState: RegisterPayload = {
   name: '',
   province: Province.ONTARIO,
   acceptedTerms: false,
-  mfaPreference: '',
+  mfaPreference: false,
 };
 
 const validationSchema = Yup.object().shape({
@@ -50,15 +50,13 @@ const validationSchema = Yup.object().shape({
   acceptedTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
-interface FormValues extends RegisterPayload {}
-
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
 
-  const handleSubmit = useCallback(async (values: Record<string, any>) => {
+  const handleSubmit = useCallback(async (values: RegisterPayload) => {
     try {
       setFormError(undefined);
 
@@ -73,7 +71,7 @@ const Register: React.FC = () => {
         name: values.name,
         province: values.province,
         acceptedTerms: values.acceptedTerms,
-        mfaPreference: '',
+        mfaPreference: false,
       };
 
       await register(formData);
@@ -106,7 +104,7 @@ const Register: React.FC = () => {
         Registration form for Estate Kit. All fields are required unless marked optional.
       </Typography>
 
-      <Form
+      <Form<RegisterPayload>
         initialValues={initialFormState}
         onSubmit={handleSubmit}
         submitLabel="Create Account"
@@ -114,7 +112,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {({ values, handleChange }) => (
+        {({ values, handleChange }: { values: RegisterPayload; handleChange: (e: any) => void }) => (
           <>
             <Input
               id="name"

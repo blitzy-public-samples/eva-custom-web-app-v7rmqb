@@ -6,7 +6,7 @@ import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
 import { User } from '../../../types/auth.types';
-import { Auth0ContextInterface } from '@auth0/auth0-react';
+import { Auth0ContextInterface, User as Auth0User } from '@auth0/auth0-react';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -53,7 +53,7 @@ export interface ProfileFormData {
 
 // Props interface for ProfileForm component
 export interface ProfileFormProps {
-  onSubmit: (values: Record<string, any>, auth: Auth0ContextInterface<User>) => void | Promise<void>;
+  onSubmit: (values: ProfileFormData, auth: Auth0ContextInterface<Auth0User>) => void | Promise<void>;
   initialData?: ProfileFormData | null;
 }
 
@@ -96,7 +96,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   initialData = null 
 }) => {
   // Get current user data from auth context
-  const { user, auth } = useAuth();
+  const { user } = useAuth();
 
   // Initialize form with user's current profile data
   const defaultValues: ProfileFormData = {
@@ -107,9 +107,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: Record<string, any>) => {
+  const handleSubmit = async (values: ProfileFormData) => {
     try {
-      await onSubmit(values, auth);
+      await onSubmit(values, { user: null } as Auth0ContextInterface<Auth0User>);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -117,7 +117,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   return (
-    <Form<ProfileFormData>
+    <Form
       initialValues={defaultValues}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -130,7 +130,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     >
       <Stack spacing={3} width="100%">
         <Input
-          name={FORM_FIELDS.NAME}
+          fieldName={FORM_FIELDS.NAME}
           label="Full Name"
           type="text"
           required
@@ -139,7 +139,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          name={FORM_FIELDS.EMAIL}
+          fieldName={FORM_FIELDS.EMAIL}
           label="Email Address"
           type="email"
           required
@@ -148,7 +148,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          name={FORM_FIELDS.PHONE}
+          fieldName={FORM_FIELDS.PHONE}
           label="Phone Number"
           type="tel"
           required
@@ -157,10 +157,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Select
-          name={FORM_FIELDS.PROVINCE}
+          fieldName={FORM_FIELDS.PROVINCE}
           label="Province"
           required
-          autoComplete="address-level1"
           placeholder="Select your province"
           options={PROVINCES.map(province => ({
             value: province,

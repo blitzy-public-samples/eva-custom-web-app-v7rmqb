@@ -12,7 +12,6 @@ import { Grid, Typography, CircularProgress, Alert, Box } from '@mui/material';
 import DelegateCard from '../DelegateCard/DelegateCard';
 import { useDelegate } from '../../../hooks/useDelegate';
 import { DelegateStatus, Delegate } from '../../../types/delegate.types';
-import { EntityId } from '../../../types/common.types';
 
 // Interface for component props with enhanced accessibility options
 export interface DelegateListProps {
@@ -39,10 +38,10 @@ export const DelegateList: React.FC<DelegateListProps> = ({
   // Enhanced delegate management hook with security features
   const {
     delegateIds,
+    delegatesById,
     status,
     error,
-    fetchDelegates,
-    getDelegateById
+    fetchDelegates
   } = useDelegate();
 
   // Initial data fetch with security validation
@@ -61,10 +60,10 @@ export const DelegateList: React.FC<DelegateListProps> = ({
 
   // Memoized delegate grouping by status
   const groupedDelegates = useMemo(() => {
-    if (!delegateIds) return {} as Record<DelegateStatus, Delegate[]>;
+    if (!delegateIds || !delegatesById) return {} as Record<DelegateStatus, Delegate[]>;
     
-    return delegateIds.reduce<Record<DelegateStatus, Delegate[]>>((acc, id) => {
-      const delegate = getDelegateById(id);
+    return delegateIds.reduce((acc: Record<DelegateStatus, Delegate[]>, id: string) => {
+      const delegate = delegatesById[id];
       if (!delegate) return acc;
       
       const status = delegate.status as DelegateStatus;
@@ -74,7 +73,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
       acc[status].push(delegate);
       return acc;
     }, {} as Record<DelegateStatus, Delegate[]>);
-  }, [delegateIds, getDelegateById]);
+  }, [delegateIds, delegatesById]);
 
   // Loading state with accessibility
   if (status === 'loading') {
@@ -164,7 +163,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
             Active Delegates
           </Typography>
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {groupedDelegates[DelegateStatus.ACTIVE].map((delegate: Delegate) => (
+            {groupedDelegates[DelegateStatus.ACTIVE].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 
@@ -197,7 +196,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
             Pending Invitations
           </Typography>
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {groupedDelegates[DelegateStatus.PENDING].map((delegate: Delegate) => (
+            {groupedDelegates[DelegateStatus.PENDING].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 
@@ -230,9 +229,9 @@ export const DelegateList: React.FC<DelegateListProps> = ({
             Inactive Delegates
           </Typography>
           <Grid container spacing={3}>
-            {[...(groupedDelegates[DelegateStatus.EXPIRED] || []), 
-               ...(groupedDelegates[DelegateStatus.REVOKED] || [])
-            ].map((delegate: Delegate) => (
+            {[...groupedDelegates[DelegateStatus.EXPIRED] || [], 
+               ...groupedDelegates[DelegateStatus.REVOKED] || []
+            ].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 

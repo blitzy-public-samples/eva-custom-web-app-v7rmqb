@@ -6,7 +6,6 @@ import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/materia
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { UserRole } from '../../../../../backend/src/types/user.types';
-import { Auth0ContextInterface } from '@auth0/auth0-react';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {

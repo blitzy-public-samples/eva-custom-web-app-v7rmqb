@@ -29,20 +29,12 @@ import { SubscriptionCard } from '../../components/subscription/SubscriptionCard
 import { useAuth } from '../../hooks/useAuth';
 import { Document } from '../../types/document.types';
 import { Delegate } from '../../types/delegate.types';
+import { ISubscription } from '../../types/auth.types';
 
 // Interface for component props
 interface DashboardProps {
   onError?: (error: Error) => void;
 }
-
-// Temporary type definition until auth types are updated
-type Subscription = {
-  id: string;
-  status: string;
-  type: string;
-  expiresAt?: string;
-  [key: string]: any;
-};
 
 /**
  * Enhanced dashboard component with comprehensive estate planning overview
@@ -58,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [delegates, setDelegates] = useState<Delegate[]>([]);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscription, setSubscription] = useState<ISubscription | null>(null);
 
   // Fetch dashboard data with error handling
   const fetchDashboardData = useCallback(async () => {
@@ -69,7 +61,17 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       // Simulated API calls - replace with actual API service calls
       const documentsData: Document[] = [];
       const delegatesData: Delegate[] = [];
-      const subscriptionData: Subscription | null = null;
+      const subscriptionData: ISubscription = {
+        userId: user?.id || '',
+        plan: 'premium',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'active',
+        autoRenew: true,
+        paymentMethod: 'credit_card',
+        lastPaymentDate: new Date().toISOString(),
+        nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
 
       setDocuments(documentsData);
       setDelegates(delegatesData);
@@ -82,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [onError, user]);
 
   // Initial data load
   useEffect(() => {

@@ -39,7 +39,7 @@ const initialFormState: RegisterPayload = {
   name: '',
   province: Province.ONTARIO,
   acceptedTerms: false,
-  mfaPreference: false,
+  mfaPreference: '',
 };
 
 const validationSchema = Yup.object().shape({
@@ -58,7 +58,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
 
-  const handleSubmit = useCallback(async (values: FormValues) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
       setFormError(undefined);
 
@@ -73,7 +73,7 @@ const Register: React.FC = () => {
         name: values.name,
         province: values.province,
         acceptedTerms: values.acceptedTerms,
-        mfaPreference: values.mfaPreference,
+        mfaPreference: '',
       };
 
       await register(formData);
@@ -91,10 +91,6 @@ const Register: React.FC = () => {
       });
     }
   }, [register, navigate]);
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(prev => !prev);
-  };
 
   return (
     <RegisterContainer>
@@ -118,7 +114,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {({ values, handleChange, handleBlur }: { values: FormValues; handleChange: (e: React.ChangeEvent<any>) => void; handleBlur: (e: React.FocusEvent<any>) => void }) => (
+        {({ values, handleChange }) => (
           <>
             <Input
               id="name"
@@ -131,7 +127,6 @@ const Register: React.FC = () => {
               aria-label="Enter your full name"
               value={values.name}
               onChange={handleChange}
-              onBlur={handleBlur}
             />
 
             <Input
@@ -145,7 +140,6 @@ const Register: React.FC = () => {
               aria-label="Enter your email address"
               value={values.email}
               onChange={handleChange}
-              onBlur={handleBlur}
             />
 
             <Input
@@ -159,7 +153,6 @@ const Register: React.FC = () => {
               aria-label="Create a secure password"
               value={values.password}
               onChange={handleChange}
-              onBlur={handleBlur}
             />
 
             <Select
@@ -171,8 +164,8 @@ const Register: React.FC = () => {
               helpText="Select your province for jurisdiction-specific features"
               aria-label="Select your province"
               value={values.province}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              onChange={(value) => handleChange({ target: { name: 'province', value } })}
+              onBlur={() => {}}
             />
 
             <Box sx={{ marginY: 'var(--spacing-md)' }}>

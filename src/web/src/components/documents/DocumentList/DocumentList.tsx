@@ -60,16 +60,15 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await DocumentService.getDocuments({
-        type,
-        userRole,
-        encryptionRequired,
-      });
+      // Pass type as a string parameter instead of an object
+      const response = await DocumentService.getDocuments(type ? type.toString() : '');
 
-      // Verify document encryption status
-      const verifiedDocuments = response.filter((doc: Document) => 
-        !encryptionRequired || doc.metadata.encryptionStatus
-      );
+      // Verify document encryption status and apply additional filters in memory
+      const verifiedDocuments = response.filter((doc: Document) => {
+        const hasRequiredRole = doc.metadata.allowedRoles?.includes(userRole) ?? true;
+        const meetsEncryptionRequirement = !encryptionRequired || doc.metadata.encryptionStatus;
+        return hasRequiredRole && meetsEncryptionRequirement;
+      });
 
       setDocuments(verifiedDocuments);
     } catch (error) {

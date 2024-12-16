@@ -42,28 +42,24 @@ interface PaginatedResponse<T> {
 }
 
 /**
- * Singleton service implementing secure delegate access management
+ * Service implementing secure delegate access management
  * with comprehensive audit logging and Auth0 integration
  */
-export class DelegateService {
-  private static instance: DelegateService;
-  private auth0Client: Auth0Client;
+class DelegateService {
+  private static _instance: DelegateService | null = null;
+  private readonly auth0: Auth0Client;
+  private readonly api: typeof apiService;
 
-  /**
-   * Private constructor initializing API service and Auth0 client
-   */
   private constructor() {
-    this.auth0Client = auth0Client;
+    this.auth0 = auth0Client;
+    this.api = apiService;
   }
 
-  /**
-   * Gets singleton instance of DelegateService
-   */
   public static getInstance(): DelegateService {
-    if (!DelegateService.instance) {
-      DelegateService.instance = new DelegateService();
+    if (!DelegateService._instance) {
+      DelegateService._instance = new DelegateService();
     }
-    return DelegateService.instance;
+    return DelegateService._instance;
   }
 
   /**
@@ -82,7 +78,7 @@ export class DelegateService {
         ...(filter.search && { search: filter.search })
       });
 
-      return await apiService.get<PaginatedResponse<Delegate>>(
+      return await this.api.get<PaginatedResponse<Delegate>>(
         `/delegates?${queryParams.toString()}`
       );
     } catch (error) {
@@ -100,7 +96,7 @@ export class DelegateService {
       this.validateRolePermissions(delegateData.role, delegateData.permissions);
 
       // Create delegate with validated permissions
-      const delegate = await apiService.post<Delegate>('/delegates', {
+      const delegate = await this.api.post<Delegate>('/delegates', {
         ...delegateData,
         status: DelegateStatus.PENDING
       });
@@ -126,7 +122,7 @@ export class DelegateService {
       // Validate permissions based on role
       this.validateRolePermissions(updateData.role, updateData.permissions);
 
-      return await apiService.put<Delegate>(`/delegates/${id}`, updateData);
+      return await this.api.put<Delegate>(`/delegates/${id}`, updateData);
     } catch (error) {
       console.error('Failed to update delegate:', error);
       throw error;
@@ -138,12 +134,12 @@ export class DelegateService {
    */
   public async revokeDelegate(id: string): Promise<void> {
     try {
-      await apiService.put<Delegate>(`/delegates/${id}`, {
+      await this.api.put<Delegate>(`/delegates/${id}`, {
         status: DelegateStatus.REVOKED
       });
 
       // Revoke Auth0 access
-      const delegate = await apiService.get<Delegate>(`/delegates/${id}`);
+      const delegate = await this.api.get<Delegate>(`/delegates/${id}`);
       await this.revokeAuth0Access(delegate.delegateId);
     } catch (error) {
       console.error('Failed to revoke delegate access:', error);
@@ -200,7 +196,7 @@ export class DelegateService {
    */
   private async sendDelegateInvitation(delegate: Delegate): Promise<void> {
     try {
-      await apiService.post('/notifications/delegate-invitation', {
+      await this.api.post('/notifications/delegate-invitation', {
         delegateId: delegate.id,
         email: delegate.email,
         role: delegate.role
@@ -216,8 +212,7 @@ export class DelegateService {
    */
   private async revokeAuth0Access(delegateId: string): Promise<void> {
     try {
-      // Use token endpoint to revoke access
-      await apiService.post('/auth/revoke-access', {
+      await this.api.post('/auth/revoke-access', {
         delegateId
       });
     } catch (error) {

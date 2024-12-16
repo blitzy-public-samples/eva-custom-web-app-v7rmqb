@@ -79,6 +79,7 @@ export interface Delegate {
     expiresAt: Date;
     createdAt: Date;
     updatedAt: Date;
+    lastAccess: Date;
 }
 
 /**

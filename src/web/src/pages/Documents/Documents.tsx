@@ -19,7 +19,7 @@ import { DocumentUpload } from '../../components/documents/DocumentUpload/Docume
 import { useDocument } from '../../hooks/useDocument';
 
 // Types
-import { DocumentType, Document } from '../../types/document.types';
+import { Document } from '../../types/document.types';
 import { UserRole } from '../../types/auth.types';
 
 // Interface for tab panel props
@@ -68,7 +68,7 @@ export const Documents: React.FC = () => {
     loading,
     error,
     refreshDocuments,
-    verifyDocumentEncryption
+    checkDocumentEncryption
   } = useDocument();
 
   // Effect for error handling
@@ -98,8 +98,8 @@ export const Documents: React.FC = () => {
    * Handles successful document upload with security verification
    */
   const handleUploadComplete = (document: Document) => {
-    verifyDocumentEncryption(document.id)
-      .then(isEncrypted => {
+    checkDocumentEncryption(document.id)
+      .then((isEncrypted: boolean) => {
         if (!isEncrypted) {
           enqueueSnackbar('Document encryption verification failed', { variant: 'error' });
           return;
@@ -158,7 +158,7 @@ export const Documents: React.FC = () => {
           </Box>
         ) : (
           <DocumentList
-            userRole={UserRole.OWNER}
+            userRole={UserRole.PRIMARY_OWNER}
             encryptionRequired={true}
             className="document-list"
             testId="document-list"

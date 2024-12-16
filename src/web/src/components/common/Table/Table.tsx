@@ -149,7 +149,7 @@ const Table: React.FC<TableProps> = ({
     clip: 'rect(0, 0, 0, 0)',
     whiteSpace: 'nowrap',
     border: 0,
-  };
+  } as React.CSSProperties;
 
   const sortButtonStyles = {
     background: 'none',
@@ -163,14 +163,7 @@ const Table: React.FC<TableProps> = ({
     display: 'inline-flex',
     alignItems: 'center',
     textAlign: 'left',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-    '&:focus': {
-      outline: `2px solid ${theme.palette.primary.main}`,
-      outlineOffset: '2px',
-    },
-  };
+  } as React.CSSProperties;
 
   return (
     <div ref={tableRef}>
@@ -180,7 +173,7 @@ const Table: React.FC<TableProps> = ({
         ref={announceRef}
         aria-live="polite"
         aria-atomic="true"
-        sx={hiddenStyles}
+        style={hiddenStyles}
       />
 
       <TableContainer component={Paper}>
@@ -206,7 +199,14 @@ const Table: React.FC<TableProps> = ({
                   {column.sortable && sortable ? (
                     <button
                       onClick={() => handleSort(column.id)}
-                      sx={sortButtonStyles}
+                      style={{
+                        ...sortButtonStyles,
+                        ':hover': { textDecoration: 'underline' },
+                        ':focus': {
+                          outline: `2px solid ${theme.palette.primary.main}`,
+                          outlineOffset: '2px',
+                        },
+                      }}
                       aria-label={`Sort by ${column.label}`}
                     >
                       {column.label}

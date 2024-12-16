@@ -20,6 +20,7 @@ const initialState: AuthState = {
   error: null,
   mfaRequired: false,
   mfaVerified: false,
+  mfaPending: false,
   sessionExpiry: null,
   lastActivity: Date.now()
 };
@@ -31,8 +32,7 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginPayload, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      const response = await authService.login(credentials);
+      const response = await AuthService.login(credentials);
       
       // Log successful authentication attempt for audit
       console.info('Authentication attempt:', {
@@ -62,8 +62,7 @@ export const register = createAsyncThunk(
   'auth/register',
   async (userData: RegisterPayload, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      await authService.register(userData);
+      await AuthService.register(userData);
 
       // Log successful registration for audit
       console.info('Registration successful:', {
@@ -85,8 +84,7 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      await authService.logout();
+      await AuthService.logout();
 
       // Log logout event
       console.info('User logged out:', {
@@ -107,8 +105,7 @@ export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
   async (code: string, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      const response = await authService.verifyMFA(code);
+      const response = await AuthService.verifyMFA(code);
 
       // Log successful MFA verification
       console.info('MFA verification successful:', {
@@ -129,8 +126,7 @@ export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      const response = await authService.refreshToken();
+      const response = await AuthService.refreshToken();
 
       return response;
     } catch (error: any) {
@@ -146,8 +142,7 @@ export const refreshSession = createAsyncThunk(
   'auth/refreshSession',
   async (_, { rejectWithValue }) => {
     try {
-      const authService = new AuthService();
-      const response = await authService.refreshToken();
+      const response = await AuthService.refreshToken();
       
       return response;
     } catch (error: any) {

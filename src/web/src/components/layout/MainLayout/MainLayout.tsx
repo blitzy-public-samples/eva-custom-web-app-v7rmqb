@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Container, styled, useMediaQuery, useTheme } from '@mui/material';
+import { Box, styled, useMediaQuery, useTheme } from '@mui/material';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Header } from '../Header/Header';
 import Footer from '../Footer/Footer';
@@ -31,23 +31,26 @@ const LayoutContainer = styled(Box)({
   },
 });
 
-const MainContent = styled(Box)(({ theme }) => ({
+const MainContent = styled(Box)({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  padding: theme.spacing(3),
+  padding: '24px',
   marginTop: '64px', // Header height
-  marginLeft: { xs: 0, sm: '280px' }, // Sidebar width
+  marginLeft: '0px',
   transition: 'margin 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
   minHeight: 'calc(100vh - 128px)', // Account for header and footer
   position: 'relative',
   zIndex: 1,
-  // Enhanced spacing for better readability
-  [theme.breakpoints.down('sm')]: {
-    marginLeft: 0,
-    padding: theme.spacing(2),
+  '@media (min-width: 600px)': {
+    marginLeft: '280px',
+    padding: '24px',
   },
-}));
+  '@media (max-width: 600px)': {
+    marginLeft: 0,
+    padding: '16px',
+  },
+});
 
 // Interface definitions
 interface MainLayoutProps {
@@ -139,7 +142,6 @@ export const MainLayout: React.FC<MainLayoutProps> = React.memo(({
         )}
 
         <MainContent
-          maxWidth="lg"
           role="main"
           aria-label="Main content"
         >

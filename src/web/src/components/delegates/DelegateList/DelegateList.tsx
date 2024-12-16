@@ -11,13 +11,13 @@ import React, { useEffect, useCallback, useMemo } from 'react';
 import { Grid, Typography, CircularProgress, Alert, Box } from '@mui/material';
 import DelegateCard from '../DelegateCard/DelegateCard';
 import { useDelegate } from '../../../hooks/useDelegate';
-import { DelegateStatus } from '../../../types/delegate.types';
+import { DelegateStatus, Delegate } from '../../../types/delegate.types';
 
 // Interface for component props with enhanced accessibility options
 export interface DelegateListProps {
   className?: string;
-  onEdit: (delegateId: string, event: React.MouseEvent<Element>) => void;
-  onDelete: (delegateId: string, event: React.MouseEvent<Element>) => void;
+  onEdit: (delegateId: string) => void;
+  onDelete: (delegateId: string) => void;
   onRetry?: () => void;
   ariaLabel?: string;
   testId?: string;
@@ -37,7 +37,8 @@ export const DelegateList: React.FC<DelegateListProps> = ({
 }) => {
   // Enhanced delegate management hook with security features
   const {
-    delegates,
+    delegateIds,
+    delegatesById,
     status,
     error,
     fetchDelegates
@@ -49,31 +50,30 @@ export const DelegateList: React.FC<DelegateListProps> = ({
   }, [fetchDelegates]);
 
   // Secure event handlers with analytics tracking
-  const handleEdit = useCallback((delegateId: string, event: React.MouseEvent<Element>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onEdit(delegateId, event);
+  const handleEdit = useCallback((delegateId: string) => {
+    onEdit(delegateId);
   }, [onEdit]);
 
-  const handleDelete = useCallback((delegateId: string, event: React.MouseEvent<Element>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    onDelete(delegateId, event);
+  const handleDelete = useCallback((delegateId: string) => {
+    onDelete(delegateId);
   }, [onDelete]);
 
   // Memoized delegate grouping by status
   const groupedDelegates = useMemo(() => {
-    if (!Array.isArray(delegates)) return {} as Record<DelegateStatus, any[]>;
+    if (!delegateIds || !delegatesById) return {} as Record<DelegateStatus, Delegate[]>;
     
-    return delegates.reduce((acc: Record<DelegateStatus, any[]>, delegate: any) => {
-      const status = delegate.status;
+    return delegateIds.reduce((acc: Record<DelegateStatus, Delegate[]>, id: string) => {
+      const delegate = delegatesById[id];
+      if (!delegate) return acc;
+      
+      const status = delegate.status as DelegateStatus;
       if (!acc[status]) {
         acc[status] = [];
       }
       acc[status].push(delegate);
       return acc;
-    }, {} as Record<DelegateStatus, any[]>);
-  }, [delegates]);
+    }, {} as Record<DelegateStatus, Delegate[]>);
+  }, [delegateIds, delegatesById]);
 
   // Loading state with accessibility
   if (status === 'loading') {
@@ -125,7 +125,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
   }
 
   // Empty state with accessibility
-  if (!Array.isArray(delegates) || !delegates.length) {
+  if (!delegateIds || delegateIds.length === 0) {
     return (
       <Box
         p={3}
@@ -163,7 +163,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
             Active Delegates
           </Typography>
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {groupedDelegates[DelegateStatus.ACTIVE].map((delegate: any) => (
+            {groupedDelegates[DelegateStatus.ACTIVE].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 
@@ -174,8 +174,8 @@ export const DelegateList: React.FC<DelegateListProps> = ({
               >
                 <DelegateCard
                   delegate={delegate}
-                  onEdit={handleEdit.bind(null, delegate.id.toString())}
-                  onDelete={handleDelete.bind(null, delegate.id.toString())}
+                  onEdit={() => handleEdit(delegate.id.toString())}
+                  onDelete={() => handleDelete(delegate.id.toString())}
                   testId={`${testId}-card-${delegate.id}`}
                 />
               </Grid>
@@ -196,7 +196,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
             Pending Invitations
           </Typography>
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {groupedDelegates[DelegateStatus.PENDING].map((delegate: any) => (
+            {groupedDelegates[DelegateStatus.PENDING].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 
@@ -207,7 +207,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
               >
                 <DelegateCard
                   delegate={delegate}
-                  onDelete={handleDelete.bind(null, delegate.id.toString())}
+                  onDelete={() => handleDelete(delegate.id.toString())}
                   testId={`${testId}-card-${delegate.id}`}
                 />
               </Grid>
@@ -231,7 +231,7 @@ export const DelegateList: React.FC<DelegateListProps> = ({
           <Grid container spacing={3}>
             {[...groupedDelegates[DelegateStatus.EXPIRED] || [], 
                ...groupedDelegates[DelegateStatus.REVOKED] || []
-            ].map((delegate: any) => (
+            ].map((delegate) => (
               <Grid 
                 item 
                 xs={12} 

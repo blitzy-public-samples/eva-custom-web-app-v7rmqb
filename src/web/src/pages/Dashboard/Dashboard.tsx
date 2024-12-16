@@ -28,7 +28,8 @@ import { DelegateCard } from '../../components/delegates/DelegateCard/DelegateCa
 import { SubscriptionCard } from '../../components/subscription/SubscriptionCard/SubscriptionCard';
 import { useAuth } from '../../hooks/useAuth';
 import { Document } from '../../types/document.types';
-import { Delegate, ISubscription } from '../../types/auth.types';
+import { Delegate } from '../../types/delegate.types';
+import { ISubscription } from '../../types/auth.types';
 
 // Interface for component props
 interface DashboardProps {

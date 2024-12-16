@@ -12,7 +12,8 @@ import axios, {
   AxiosInstance, 
   AxiosError, 
   AxiosRequestConfig, 
-  AxiosResponse 
+  AxiosResponse,
+  InternalAxiosRequestConfig 
 } from 'axios';
 import { apiConfig } from '../config/api.config';
 import { auth0Client } from '../config/auth.config';
@@ -27,14 +28,18 @@ interface MetricsData {
   correlationId: string;
 }
 
+interface ErrorMetricsData extends MetricsData {
+  type: string;
+}
+
 interface CircuitBreakerState {
   failures: number;
   lastFailure: number;
   isOpen: boolean;
 }
 
-// Extend AxiosRequestConfig to include custom properties
-interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+// Extend InternalAxiosRequestConfig to include custom properties
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   startTime?: number;
 }
 
@@ -52,7 +57,7 @@ class ApiService {
     isOpen: false
   };
 
-  private metricsBuffer: MetricsData[] = [];
+  private metricsBuffer: (MetricsData | ErrorMetricsData)[] = [];
 
   constructor() {
     this.setupRequestInterceptors();
@@ -64,7 +69,7 @@ class ApiService {
    */
   private setupRequestInterceptors(): void {
     this.axiosInstance.interceptors.request.use(
-      async (config: ExtendedAxiosRequestConfig) => {
+      async (config: InternalAxiosRequestConfig) => {
         // Circuit breaker check
         if (this.isCircuitBreakerOpen()) {
           throw new Error('Circuit breaker is open');
@@ -85,7 +90,7 @@ class ApiService {
         await this.validateMFAStatus();
 
         // Add request timestamp for performance monitoring
-        config.startTime = Date.now();
+        (config as ExtendedAxiosRequestConfig).startTime = Date.now();
 
         return config;
       },
@@ -294,14 +299,16 @@ class ApiService {
   }
 
   private recordErrorMetrics(errorContext: Record<string, any>): void {
-    // Implementation for error metrics recording
-    const errorMetric = {
+    const errorMetric: ErrorMetricsData = {
       timestamp: Date.now(),
-      type: 'error',
-      ...errorContext
+      duration: 0,
+      status: errorContext.status || 500,
+      endpoint: errorContext.url || '',
+      correlationId: errorContext.correlationId || '',
+      type: 'error'
     };
     
-    this.metricsBuffer.push(errorMetric as MetricsData);
+    this.metricsBuffer.push(errorMetric);
     this.flushMetricsIfNeeded();
   }
 

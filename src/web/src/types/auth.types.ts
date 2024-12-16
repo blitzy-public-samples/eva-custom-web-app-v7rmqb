@@ -10,6 +10,7 @@ export interface User {
     name: string;
     province: Province;
     mfaEnabled: boolean;
+    profile?: Record<string, unknown>;
 }
 
 /**
@@ -21,11 +22,6 @@ export interface Auth0Config {
     clientId: string;        // Application client ID
     audience: string;        // API identifier
     redirectUri: string;     // Post-authentication redirect URI
-    advancedOptions: {       // Advanced configuration options
-        defaultScope?: string;
-        customDomain?: string;
-        allowedConnections?: string[];
-    };
 }
 
 /**
@@ -151,4 +147,16 @@ export enum UserRole {
     ADMIN = 'ADMIN',
     USER = 'USER',
     DELEGATE = 'DELEGATE'
+}
+
+/**
+ * Auth0 context interface for React context usage
+ */
+export interface Auth0Context {
+    isAuthenticated: boolean;
+    user: User | null;
+    loading: boolean;
+    error: AuthError | null;
+    loginWithRedirect: () => Promise<void>;
+    logout: () => void;
 }

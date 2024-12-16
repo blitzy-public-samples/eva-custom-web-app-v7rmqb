@@ -85,7 +85,7 @@ export const CustomDialog: React.FC<CustomDialogProps> = ({
   }, [open]);
 
   // Handle dialog close
-  const handleClose = useCallback((_: {}, reason: "backdropClick" | "escapeKeyDown") => {
+  const handleClose = useCallback(() => {
     playSound('close');
     onClose();
     

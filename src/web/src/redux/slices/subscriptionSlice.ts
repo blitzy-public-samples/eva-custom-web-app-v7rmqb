@@ -67,8 +67,7 @@ export const fetchCurrentSubscription = createAsyncThunk(
   'subscription/fetchCurrent',
   async (_, { rejectWithValue }) => {
     try {
-      const service = new SubscriptionService();
-      const subscription = await service.getCurrentSubscription();
+      const subscription = await SubscriptionService.getCurrentSubscription();
       return subscription;
     } catch (error: any) {
       return rejectWithValue({
@@ -87,8 +86,7 @@ export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
   async (_, { rejectWithValue }) => {
     try {
-      const service = new SubscriptionService();
-      const plans = await service.getSubscriptionPlans();
+      const plans = await SubscriptionService.getSubscriptionPlans();
       return plans;
     } catch (error: any) {
       return rejectWithValue({
@@ -111,8 +109,7 @@ export const updateSubscription = createAsyncThunk(
     autoRenew: boolean;
   }, { rejectWithValue }) => {
     try {
-      const service = new SubscriptionService();
-      const updatedSubscription = await service.updateSubscription(
+      const updatedSubscription = await SubscriptionService.updateSubscription(
         updateData.plan,
         updateData.billingCycle,
         updateData.autoRenew
@@ -136,8 +133,7 @@ export const cancelSubscription = createAsyncThunk(
   'subscription/cancel',
   async (subscriptionId: string, { rejectWithValue }) => {
     try {
-      const service = new SubscriptionService();
-      const result = await service.cancelSubscription(subscriptionId);
+      const result = await SubscriptionService.cancelSubscription(subscriptionId);
       return result;
     } catch (error: any) {
       return rejectWithValue({

@@ -205,14 +205,16 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({
             }}
           />
           
-          <Tooltip title="Last access time" arrow enterDelay={1500}>
-            <Box display="flex" alignItems="center">
-              <AccessTime sx={{ mr: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                {format(new Date(delegate.lastAccess), 'MMM d, yyyy h:mm a')}
-              </Typography>
-            </Box>
-          </Tooltip>
+          {(delegate as any).lastAccess && (
+            <Tooltip title="Last access time" arrow enterDelay={1500}>
+              <Box display="flex" alignItems="center">
+                <AccessTime sx={{ mr: 1 }} />
+                <Typography variant="body2" color="text.secondary">
+                  {format(new Date((delegate as any).lastAccess), 'MMM d, yyyy h:mm a')}
+                </Typography>
+              </Box>
+            </Tooltip>
+          )}
         </Box>
 
         <Typography

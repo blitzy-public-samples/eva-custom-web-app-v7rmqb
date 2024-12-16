@@ -37,8 +37,8 @@ export const AUTH0_SCOPE = 'openid profile email offline_access mfa';
 export const AUTH0_MFA_ENABLED = true;
 export const AUTH0_TOKEN_REFRESH_INTERVAL = 3600000; // 1 hour in milliseconds
 
-// Advanced security options for Auth0 configuration
-const advancedOptions = {
+// Security configuration options
+const securityOptions = {
   httpTimeoutInSeconds: 60,
   allowedConnections: ['Username-Password-Authentication'],
   passwordlessMethod: 'code',
@@ -81,16 +81,10 @@ export const createAuth0Client = async (): Promise<Auth0Client> => {
         redirect_uri: auth0Config.redirectUri,
         scope: AUTH0_SCOPE,
       },
-      // Enhanced security configuration
       useRefreshTokens: true,
       cacheLocation: 'memory',
-      httpTimeoutInSeconds: advancedOptions.httpTimeoutInSeconds,
-      // CSRF protection
+      httpTimeoutInSeconds: securityOptions.httpTimeoutInSeconds,
       useCookiesForTransactions: true,
-      // Advanced security features
-      advancedOptions: {
-        defaultScope: AUTH0_SCOPE,
-      },
     });
 
     // Configure automatic token refresh

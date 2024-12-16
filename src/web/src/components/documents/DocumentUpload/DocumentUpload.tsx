@@ -110,7 +110,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             fileSize: file.size,
             mimeType: file.type,
             checksumSHA256: await calculateChecksum(file),
-            encryptionStatus: 'ENCRYPTED',
+            encryptionStatus: true,
             storageLocation: 'S3',
             retentionPeriod: '7-YEARS'
           },
@@ -168,6 +168,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
+  const handleFileUploadComplete = useCallback((document: Document) => {
+    handleUpload(document as unknown as File);
+  }, [handleUpload]);
+
   return (
     <UploadContainer role="region" aria-label="Document Upload">
       <Typography variant="h5" component="h2" gutterBottom>
@@ -199,7 +203,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         acceptedFileTypes={allowedFileTypes}
         ariaLabel="Upload document"
         helpText="Click here or drag and drop your files to upload"
-        onUploadComplete={handleUpload}
+        onUploadComplete={handleFileUploadComplete}
         onUploadError={(error) => {
           setError(error);
           onUploadError(error);

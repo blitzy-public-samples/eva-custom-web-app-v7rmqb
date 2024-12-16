@@ -21,6 +21,7 @@ import {
   selectSubscriptionLoading,
   selectSubscriptionError 
 } from '../redux/slices/subscriptionSlice';
+import { AppDispatch } from '../redux/store';
 
 // Constants for automatic refresh and retry logic
 const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -32,7 +33,7 @@ const RETRY_DELAY = 2000; // 2 seconds
  * Provides comprehensive subscription management with enhanced error handling
  */
 export const useSubscription = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Local state for operation-specific loading and error states
   const [loading, setLoading] = useState({

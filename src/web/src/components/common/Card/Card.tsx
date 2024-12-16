@@ -35,7 +35,9 @@ export interface CardProps {
 /**
  * Styled Card component with enhanced visual feedback and accessibility features
  */
-const StyledCard = styled(MuiCard)<CardProps>`
+const StyledCard = styled(MuiCard, {
+  shouldForwardProp: (prop) => prop !== 'interactive'
+})<Omit<CardProps, 'title' | 'subtitle' | 'children' | 'actions'>>`
   border-radius: ${({ theme }) => theme.spacing(2)};
   transition: all 0.3s ease-in-out;
   min-height: 100px;

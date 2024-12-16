@@ -6,7 +6,7 @@ import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/materia
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { UserRole } from '../../../../../backend/src/types/user.types';
-import { Auth0ContextInterface, User } from '@auth0/auth0-react';
+import { User } from '@auth0/auth0-react';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -123,7 +123,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -172,7 +172,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
-      validationSchema={validationSchema}
+      schema={validationSchema}
       submitLabel={t(delegate ? 'delegate.form.update' : 'delegate.form.create')}
       showReset
       resetLabel={t('common.cancel')}
@@ -187,7 +187,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Typography>
 
         <Input
-          inputProps={{ name: "email" }}
+          name="email"
           id="email"
           label={t('delegate.form.email')}
           type="email"
@@ -196,7 +196,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         />
 
         <Input
-          inputProps={{ name: "name" }}
+          name="name"
           id="name"
           label={t('delegate.form.name')}
           required
@@ -225,7 +225,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Box>
 
         <Input
-          inputProps={{ name: "expiresAt" }}
+          name="expiresAt"
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
           type="text"
@@ -233,7 +233,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         />
 
         <Input
-          inputProps={{ name: "notes" }}
+          name="notes"
           id="notes"
           label={t('delegate.form.notes')}
           type="text"

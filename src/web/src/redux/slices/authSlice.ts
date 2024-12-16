@@ -189,7 +189,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.user = action.payload;
         state.sessionExpiry = action.payload.expiresAt;
         state.loading = false;
         state.error = null;

@@ -25,6 +25,12 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 // Types for upload progress tracking
 type UploadProgressCallback = (progress: number) => void;
 
+interface GetDocumentsParams {
+  type?: string;
+  userRole?: string;
+  encryptionRequired?: boolean;
+}
+
 /**
  * Enhanced encryption monitoring interface for document security
  */
@@ -66,29 +72,25 @@ export class DocumentService {
   /**
    * Retrieves documents based on specified criteria
    */
-  public async getDocuments(
-    type?: string,
-    userRole?: string,
-    encryptionRequired?: boolean
-  ): Promise<Document[]> {
+  public async getDocuments(params: GetDocumentsParams): Promise<Document[]> {
     try {
-      const params = new URLSearchParams();
-      if (type) params.append('type', type);
-      if (userRole) params.append('userRole', userRole);
-      if (encryptionRequired !== undefined) {
-        params.append('encryptionRequired', encryptionRequired.toString());
+      const queryParams = new URLSearchParams();
+      if (params.type) queryParams.append('type', params.type);
+      if (params.userRole) queryParams.append('userRole', params.userRole);
+      if (params.encryptionRequired !== undefined) {
+        queryParams.append('encryptionRequired', params.encryptionRequired.toString());
       }
 
       const response = await apiService.get<Document[]>(
-        `${API_BASE_PATH}?${params.toString()}`
+        `${API_BASE_PATH}?${queryParams.toString()}`
       );
 
       return response;
     } catch (error: unknown) {
       this.logSecurityEvent('GET_DOCUMENTS_FAILURE', {
         error: error instanceof Error ? error.message : 'Unknown error occurred',
-        type,
-        userRole
+        type: params.type,
+        userRole: params.userRole
       });
       throw error;
     }

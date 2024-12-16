@@ -65,9 +65,9 @@ const CACHE_DURATION = 30 * 60 * 1000;
  */
 export const fetchCurrentSubscription = createAsyncThunk(
   'subscription/fetchCurrent',
-  async (_, { rejectWithValue }) => {
+  async (subscriptionId: string, { rejectWithValue }) => {
     try {
-      const subscription = await SubscriptionService.getCurrentSubscription();
+      const subscription = await SubscriptionService.getSubscription(subscriptionId);
       return subscription;
     } catch (error: any) {
       return rejectWithValue({
@@ -84,10 +84,10 @@ export const fetchCurrentSubscription = createAsyncThunk(
  */
 export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
-  async (_, { rejectWithValue }) => {
+  async (plan: SubscriptionPlan, { rejectWithValue }) => {
     try {
-      const plans = await SubscriptionService.getSubscriptionPlans();
-      return plans;
+      const planDetails = await SubscriptionService.getSubscriptionPlan(plan);
+      return [planDetails]; // Return as array to maintain compatibility
     } catch (error: any) {
       return rejectWithValue({
         code: error.code || 'FETCH_PLANS_ERROR',
@@ -106,13 +106,11 @@ export const updateSubscription = createAsyncThunk(
   async (updateData: {
     plan: SubscriptionPlan;
     billingCycle: BillingCycle;
-    autoRenew: boolean;
   }, { rejectWithValue }) => {
     try {
       const updatedSubscription = await SubscriptionService.updateSubscription(
         updateData.plan,
-        updateData.billingCycle,
-        updateData.autoRenew
+        updateData.billingCycle
       );
       return updatedSubscription;
     } catch (error: any) {

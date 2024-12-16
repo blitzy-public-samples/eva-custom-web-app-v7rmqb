@@ -95,6 +95,39 @@ class AuthService {
   }
 
   /**
+   * Verifies MFA code during authentication process
+   */
+  public async verifyMFA(email: string, mfaCode: string): Promise<boolean> {
+    try {
+      // Validate MFA code format
+      if (!this.validateMFACode(mfaCode)) {
+        throw new Error('Invalid MFA code format');
+      }
+
+      // Verify MFA with Auth0
+      const response = await auth0Client.validateMfaToken({
+        mfaToken: mfaCode
+      });
+
+      // Log MFA verification attempt
+      this.logAuthEvent('mfa_verification', email);
+
+      return response.valid === true;
+    } catch (error) {
+      this.handleAuthError(error, email);
+      throw error;
+    }
+  }
+
+  /**
+   * Validates MFA code format
+   */
+  private validateMFACode(code: string): boolean {
+    // MFA code should be 6 digits
+    return /^\d{6}$/.test(code);
+  }
+
+  /**
    * Registers new user with enhanced security measures
    */
   public async register(userData: RegisterPayload): Promise<void> {

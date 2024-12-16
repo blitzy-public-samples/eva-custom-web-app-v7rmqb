@@ -45,7 +45,8 @@ const Delegates: React.FC = React.memo(() => {
     error: delegateError,
     fetchDelegates,
     removeDelegate,
-    refreshCache
+    refreshCache,
+    getDelegateById
   } = useDelegate();
 
   // Track page view for analytics
@@ -138,6 +139,9 @@ const Delegates: React.FC = React.memo(() => {
     );
   }
 
+  // Get delegate data for the form
+  const selectedDelegate = selectedDelegateId ? getDelegateById(selectedDelegateId) : undefined;
+
   return (
     <Box
       ref={mainContentRef}
@@ -218,7 +222,7 @@ const Delegates: React.FC = React.memo(() => {
           </Typography>
 
           <DelegateForm
-            delegate={selectedDelegateId}
+            delegate={selectedDelegate}
             onSuccess={handleSuccess}
             onCancel={handleDialogClose}
             onError={handleError}

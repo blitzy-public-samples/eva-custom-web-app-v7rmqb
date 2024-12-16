@@ -19,7 +19,8 @@ import {
 } from '../redux/slices/authSlice';
 import type { 
   AuthState, 
-  AuthError 
+  AuthError,
+  Province
 } from '../types/auth.types';
 import { auth0Client } from '../config/auth.config';
 import { AppDispatch } from '../redux/store';
@@ -46,8 +47,8 @@ export const useAuth = () => {
     const checkAndRefreshSession = async () => {
       try {
         // Check if session is active and needs refresh
-        if (authState.isAuthenticated && authState.token?.expiresAt) {
-          const timeUntilExpiry = new Date(authState.token.expiresAt).getTime() - Date.now();
+        if (authState.isAuthenticated && authState.sessionToken?.expiresAt) {
+          const timeUntilExpiry = new Date(authState.sessionToken.expiresAt).getTime() - Date.now();
           
           if (timeUntilExpiry <= SESSION_EXPIRY_BUFFER) {
             await handleSessionRefresh();
@@ -77,7 +78,7 @@ export const useAuth = () => {
         clearInterval(sessionCheckInterval);
       }
     };
-  }, [authState.isAuthenticated, authState.token?.expiresAt]);
+  }, [authState.isAuthenticated, authState.sessionToken?.expiresAt]);
 
   /**
    * Enhanced login handler with MFA support and security logging
@@ -94,7 +95,7 @@ export const useAuth = () => {
       const result = await dispatch(login(credentials)).unwrap();
 
       // Handle MFA requirement
-      if (result.mfaRequired && !result.isMfaVerified) {
+      if (result.requiresMFA && !result.isMFAVerified) {
         console.info('MFA required for:', {
           timestamp: new Date().toISOString(),
           email: credentials.email.replace(/[^@\w.-]/g, '')
@@ -120,7 +121,7 @@ export const useAuth = () => {
     email: string; 
     password: string; 
     name: string;
-    province: string;
+    province: Province;
     acceptedTerms: boolean;
     mfaPreference: string;
   }) => {
@@ -255,9 +256,11 @@ export const useAuth = () => {
     loading: authState.loading,
     error: authState.error as AuthError | null,
     mfaRequired: authState.mfaRequired,
-    isMfaVerified: authState.isMfaVerified,
-    isSessionValid: authState.isAuthenticated && !!authState.token,
-    token: authState.token,
+    isMFAVerified: authState.mfaVerified, // Updated to match expected casing
+    requiresMFA: authState.mfaRequired && !authState.mfaVerified, // Added requiresMFA property
+    isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
+    sessionToken: authState.sessionToken,
+    role: authState.user?.role, // Added role property
 
     // Authentication operations
     login: handleLogin,

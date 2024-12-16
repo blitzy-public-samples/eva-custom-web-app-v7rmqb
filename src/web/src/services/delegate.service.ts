@@ -8,8 +8,6 @@
  * @package @auth0/auth0-spa-js ^2.1.0
  */
 
-import { Auth0Client } from '@auth0/auth0-spa-js';
-import { auth0Client } from '../config/auth.config';
 import { apiService } from '../services/api.service';
 import {
   Delegate,

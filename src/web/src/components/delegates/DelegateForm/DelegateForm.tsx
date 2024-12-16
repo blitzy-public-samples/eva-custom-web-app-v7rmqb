@@ -23,7 +23,7 @@ interface DelegateData {
   role: UserRole;
   permissions: DelegatePermission[];
   expiresAt: Date | null;
-  notes: string;
+  notes?: string;
 }
 
 // Interface for delegate form props

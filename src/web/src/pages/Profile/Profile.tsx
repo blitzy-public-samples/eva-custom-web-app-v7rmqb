@@ -38,7 +38,7 @@ const Profile: React.FC = React.memo(() => {
   const initialProfileData: ProfileFormData | null = user ? {
     name: user.name,
     email: user.email,
-    phone: user.phoneNumber || '',
+    phone: user.phone || '',
     province: user.province || ''
   } : null;
 

@@ -46,8 +46,8 @@ export const useAuth = () => {
     const checkAndRefreshSession = async () => {
       try {
         // Check if session is active and needs refresh
-        if (authState.isAuthenticated && authState.sessionToken?.expiresAt) {
-          const timeUntilExpiry = new Date(authState.sessionToken.expiresAt).getTime() - Date.now();
+        if (authState.isAuthenticated && authState.token?.expiresAt) {
+          const timeUntilExpiry = new Date(authState.token.expiresAt).getTime() - Date.now();
           
           if (timeUntilExpiry <= SESSION_EXPIRY_BUFFER) {
             await handleSessionRefresh();
@@ -77,7 +77,7 @@ export const useAuth = () => {
         clearInterval(sessionCheckInterval);
       }
     };
-  }, [authState.isAuthenticated, authState.sessionToken?.expiresAt]);
+  }, [authState.isAuthenticated, authState.token?.expiresAt]);
 
   /**
    * Enhanced login handler with MFA support and security logging
@@ -94,7 +94,7 @@ export const useAuth = () => {
       const result = await dispatch(login(credentials)).unwrap();
 
       // Handle MFA requirement
-      if (result.requiresMFA && !result.mfaVerified) {
+      if (result.mfaRequired && !result.isMfaVerified) {
         console.info('MFA required for:', {
           timestamp: new Date().toISOString(),
           email: credentials.email.replace(/[^@\w.-]/g, '')
@@ -254,10 +254,10 @@ export const useAuth = () => {
     user: authState.user,
     loading: authState.loading,
     error: authState.error as AuthError | null,
-    requiresMFA: authState.requiresMFA,
-    mfaVerified: authState.mfaVerified,
-    isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
-    sessionToken: authState.sessionToken,
+    mfaRequired: authState.mfaRequired,
+    isMfaVerified: authState.isMfaVerified,
+    isSessionValid: authState.isAuthenticated && !!authState.token,
+    token: authState.token,
 
     // Authentication operations
     login: handleLogin,

@@ -160,3 +160,19 @@ export interface Auth0Context {
     loginWithRedirect: () => Promise<void>;
     logout: () => void;
 }
+
+/**
+ * Subscription interface for managing user subscriptions
+ */
+export interface ISubscription {
+    id: string;
+    userId: string;
+    planType: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    autoRenew: boolean;
+    features: string[];
+    price: number;
+    billingCycle: string;
+}

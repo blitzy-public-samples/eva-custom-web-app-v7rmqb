@@ -46,7 +46,7 @@ interface ProfileFormData {
 const Settings: React.FC = () => {
   // Hooks
   const { user } = useAuth();
-  const analytics = new Analytics();
+  const analytics = Analytics.load({ writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || '' });
   
   // State management
   const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>({

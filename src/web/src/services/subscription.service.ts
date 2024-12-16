@@ -28,6 +28,11 @@ const SHOPIFY_CONFIG = {
   apiVersion: '2024-01' // Latest stable API version
 };
 
+interface ShopifySubscriptionResponse {
+  id: string;
+  [key: string]: any;
+}
+
 /**
  * Service class for managing subscriptions and Shopify integration
  */
@@ -70,7 +75,7 @@ export class SubscriptionService {
         customerId: shopifyCustomer.id,
         planId: await this.getShopifyPlanId(data.plan),
         billingCycle: data.billingCycle
-      });
+      }) as ShopifySubscriptionResponse;
 
       // Create subscription in our backend
       const subscription = await apiService.post<ISubscription>('/api/v1/subscriptions', {
@@ -209,7 +214,7 @@ export class SubscriptionService {
     customerId: string;
     planId: string;
     billingCycle: BillingCycle;
-  }): Promise<any> {
+  }): Promise<ShopifySubscriptionResponse> {
     return await this.shopifyClient.createSubscription({
       customerId: params.customerId,
       productId: params.planId,

@@ -39,7 +39,7 @@ const initialFormState: RegisterPayload = {
   name: '',
   province: Province.ONTARIO,
   acceptedTerms: false,
-  mfaPreference: true,
+  mfaPreference: false,
 };
 
 const validationSchema = Yup.object().shape({
@@ -50,13 +50,15 @@ const validationSchema = Yup.object().shape({
   acceptedTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
+interface FormValues extends RegisterPayload {}
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
 
-  const handleSubmit = useCallback(async (values: Record<string, any>) => {
+  const handleSubmit = useCallback(async (values: FormValues) => {
     try {
       setFormError(undefined);
 
@@ -116,7 +118,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {({ values, handleChange, handleBlur }) => (
+        {({ values, handleChange, handleBlur }: { values: FormValues; handleChange: (e: React.ChangeEvent<any>) => void; handleBlur: (e: React.FocusEvent<any>) => void }) => (
           <>
             <Input
               id="name"

@@ -8,8 +8,6 @@
  * @package @auth0/auth0-spa-js ^2.1.0
  */
 
-import { Auth0Client } from '@auth0/auth0-spa-js';
-import { auth0Client } from '../config/auth.config';
 import { apiService } from '../services/api.service';
 import {
   Delegate,
@@ -47,11 +45,9 @@ interface PaginatedResponse<T> {
  */
 class DelegateService {
   private static _instance: DelegateService | null = null;
-  private readonly auth0: Auth0Client;
   private readonly api: typeof apiService;
 
   private constructor() {
-    this.auth0 = auth0Client;
     this.api = apiService;
   }
 

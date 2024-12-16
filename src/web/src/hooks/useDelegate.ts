@@ -20,7 +20,8 @@ import {
   selectDelegateStatus,
   selectDelegateError,
   selectDelegateById,
-  addAuditLogEntry
+  addAuditLogEntry,
+  selectAllDelegates
 } from '../redux/slices/delegateSlice';
 import {
   CreateDelegateDTO,
@@ -42,6 +43,7 @@ export const useDelegate = () => {
 
   // Redux state selectors
   const delegateIds = useSelector(selectDelegateIds);
+  const delegates = useSelector(selectAllDelegates);
   const status = useSelector(selectDelegateStatus);
   const error = useSelector(selectDelegateError);
 
@@ -53,13 +55,20 @@ export const useDelegate = () => {
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   /**
+   * Get delegate by ID
+   */
+  const getDelegateById = useCallback((id: EntityId) => {
+    return useSelector((state) => selectDelegateById(state, id));
+  }, []);
+
+  /**
    * Validates delegate permissions against security matrix
    */
   const validatePermissions = useCallback(async (
     delegateId: EntityId,
     action: string
   ): Promise<boolean> => {
-    const delegate = useSelector((state) => selectDelegateById(state, delegateId));
+    const delegate = getDelegateById(delegateId);
     if (!delegate) return false;
 
     // Permission matrix based on role
@@ -89,7 +98,7 @@ export const useDelegate = () => {
     };
 
     return !!permissionMatrix[delegate.role]?.[action];
-  }, []);
+  }, [getDelegateById]);
 
   /**
    * Adds audit log entry for delegate operations
@@ -226,9 +235,11 @@ export const useDelegate = () => {
   // Memoized return value
   return useMemo(() => ({
     delegateIds,
+    delegates,
     status,
     error,
     cacheStatus,
+    getDelegateById,
     fetchDelegates: fetchDelegatesEnhanced,
     createDelegate: createDelegateEnhanced,
     updateDelegate: updateDelegateEnhanced,
@@ -237,9 +248,11 @@ export const useDelegate = () => {
     refreshCache
   }), [
     delegateIds,
+    delegates,
     status,
     error,
     cacheStatus,
+    getDelegateById,
     fetchDelegatesEnhanced,
     createDelegateEnhanced,
     updateDelegateEnhanced,

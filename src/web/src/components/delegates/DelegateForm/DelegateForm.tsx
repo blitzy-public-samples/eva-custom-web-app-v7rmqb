@@ -6,7 +6,7 @@ import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/materia
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { UserRole } from '../../../../../backend/src/types/user.types';
-import { Auth0ContextInterface, User } from '@auth0/auth0-react';
+import { Auth0ContextInterface } from '@auth0/auth0-react';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -123,7 +123,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -187,20 +187,20 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Typography>
 
         <Input
-          inputProps={{ name: "email" }}
           id="email"
           label={t('delegate.form.email')}
           type="email"
           required
           autoComplete="email"
+          inputProps={{ name: "email" }}
         />
 
         <Input
-          inputProps={{ name: "name" }}
           id="name"
           label={t('delegate.form.name')}
           required
           autoComplete="name"
+          inputProps={{ name: "name" }}
         />
 
         <Box>
@@ -225,19 +225,19 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         </Box>
 
         <Input
-          inputProps={{ name: "expiresAt" }}
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
           type="text"
           InputLabelProps={{ shrink: true }}
+          inputProps={{ name: "expiresAt" }}
         />
 
         <Input
-          inputProps={{ name: "notes" }}
           id="notes"
           label={t('delegate.form.notes')}
           type="text"
           rows={4}
+          inputProps={{ name: "notes" }}
         />
       </Stack>
     </Form>

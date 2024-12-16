@@ -61,7 +61,17 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       // Simulated API calls - replace with actual API service calls
       const documentsData: Document[] = [];
       const delegatesData: Delegate[] = [];
-      const subscriptionData: ISubscription | null = null;
+      const subscriptionData: ISubscription = {
+        userId: user?.id || '',
+        plan: 'premium',
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'active',
+        autoRenew: true,
+        paymentMethod: 'credit_card',
+        lastPaymentDate: new Date().toISOString(),
+        nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
 
       setDocuments(documentsData);
       setDelegates(delegatesData);
@@ -74,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [onError, user]);
 
   // Initial data load
   useEffect(() => {

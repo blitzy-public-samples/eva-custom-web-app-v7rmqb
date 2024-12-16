@@ -20,24 +20,6 @@ const ARIA_LABELS = {
   ERROR_MESSAGE: 'Login error message'
 } as const;
 
-// Form validation schema
-const LOGIN_VALIDATION_SCHEMA = {
-  email: {
-    required: 'Email is required',
-    pattern: {
-      value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-      message: 'Please enter a valid email address'
-    }
-  },
-  password: {
-    required: 'Password is required',
-    minLength: {
-      value: 8,
-      message: 'Password must be at least 8 characters'
-    }
-  }
-};
-
 // Initial form values
 const INITIAL_VALUES: LoginPayload = {
   email: '',
@@ -124,7 +106,6 @@ const Login: React.FC = React.memo(() => {
         <Form
           initialValues={INITIAL_VALUES}
           onSubmit={handleSubmit}
-          validationSchema={LOGIN_VALIDATION_SCHEMA}
           submitLabel={ARIA_LABELS.SUBMIT_BUTTON}
           analyticsEvent="login"
           testId="login-form"

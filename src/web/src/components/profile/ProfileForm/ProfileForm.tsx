@@ -6,6 +6,7 @@ import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
 import { User } from '../../../types/auth.types';
+import { Auth0ContextInterface } from '@auth0/auth0-react';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -52,7 +53,7 @@ export interface ProfileFormData {
 
 // Props interface for ProfileForm component
 export interface ProfileFormProps {
-  onSubmit: (values: ProfileFormData) => Promise<void>;
+  onSubmit: (values: Record<string, any>, auth: Auth0ContextInterface<User>) => void | Promise<void>;
   initialData?: ProfileFormData | null;
 }
 
@@ -95,7 +96,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   initialData = null 
 }) => {
   // Get current user data from auth context
-  const { user } = useAuth();
+  const { user, auth } = useAuth();
 
   // Initialize form with user's current profile data
   const defaultValues: ProfileFormData = {
@@ -106,9 +107,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: Record<string, any>) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values, auth);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -127,56 +128,46 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       analyticsEvent="profile_update"
       testId="profile-form"
     >
-      {(formProps) => (
-        <Stack spacing={3} width="100%">
-          <Input
-            name={FORM_FIELDS.NAME}
-            label="Full Name"
-            type="text"
-            required
-            autoComplete="name"
-            placeholder="Enter your full name"
-            value={formProps.values.name}
-            onChange={formProps.handleChange}
-          />
+      <Stack spacing={3} width="100%">
+        <Input
+          name={FORM_FIELDS.NAME}
+          label="Full Name"
+          type="text"
+          required
+          autoComplete="name"
+          placeholder="Enter your full name"
+        />
 
-          <Input
-            name={FORM_FIELDS.EMAIL}
-            label="Email Address"
-            type="email"
-            required
-            autoComplete="email"
-            placeholder="Enter your email address"
-            value={formProps.values.email}
-            onChange={formProps.handleChange}
-          />
+        <Input
+          name={FORM_FIELDS.EMAIL}
+          label="Email Address"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="Enter your email address"
+        />
 
-          <Input
-            name={FORM_FIELDS.PHONE}
-            label="Phone Number"
-            type="tel"
-            required
-            autoComplete="tel"
-            placeholder="Enter your phone number (e.g., 123-456-7890)"
-            value={formProps.values.phone}
-            onChange={formProps.handleChange}
-          />
+        <Input
+          name={FORM_FIELDS.PHONE}
+          label="Phone Number"
+          type="tel"
+          required
+          autoComplete="tel"
+          placeholder="Enter your phone number (e.g., 123-456-7890)"
+        />
 
-          <Select
-            name={FORM_FIELDS.PROVINCE}
-            label="Province"
-            required
-            autoComplete="address-level1"
-            placeholder="Select your province"
-            value={formProps.values.province}
-            onChange={formProps.handleChange}
-            options={PROVINCES.map(province => ({
-              value: province,
-              label: province
-            }))}
-          />
-        </Stack>
-      )}
+        <Select
+          name={FORM_FIELDS.PROVINCE}
+          label="Province"
+          required
+          autoComplete="address-level1"
+          placeholder="Select your province"
+          options={PROVINCES.map(province => ({
+            value: province,
+            label: province
+          }))}
+        />
+      </Stack>
     </Form>
   );
 });

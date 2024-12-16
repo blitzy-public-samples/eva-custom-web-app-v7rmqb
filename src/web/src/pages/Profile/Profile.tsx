@@ -38,8 +38,8 @@ const Profile: React.FC = React.memo(() => {
   const initialProfileData: ProfileFormData | null = user ? {
     name: user.name,
     email: user.email,
-    phone: (user as any).phoneNumber || '',
-    province: (user as any).province || ''
+    phone: user.phoneNumber || '',
+    province: user.province || ''
   } : null;
 
   /**
@@ -65,7 +65,7 @@ const Profile: React.FC = React.memo(() => {
 
       // Phone number validation for Canadian format
       const phoneRegex = /^(\+?1-?)?(\([0-9]{3}\)|[0-9]{3})[-. ]?[0-9]{3}[-. ]?[0-9]{4}$/;
-      if (!formData.phone && !phoneRegex.test(formData.phone)) {
+      if (!phoneRegex.test(formData.phone)) {
         throw new Error('Please enter a valid Canadian phone number');
       }
 
@@ -192,6 +192,7 @@ const Profile: React.FC = React.memo(() => {
           >
             <ProfileForm
               onSubmit={handleProfileUpdate}
+              isSubmitting={isSubmitting}
               initialData={initialProfileData}
             />
           </Box>

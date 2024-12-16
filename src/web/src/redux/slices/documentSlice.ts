@@ -64,13 +64,12 @@ export const fetchDocuments = createAsyncThunk(
   async ({ rejectWithValue, type }: { rejectWithValue: any; type?: DocumentType }) => {
     try {
       const startTime = Date.now();
-      const documentService = new DocumentService();
-      const documents = await documentService.listDocuments(type);
+      const documents = await DocumentService.getInstanceStatic().listDocuments(type);
       
       // Verify encryption status for each document
       const documentsWithEncryption = await Promise.all(
         documents.map(async (doc: Document) => {
-          const isEncrypted = await documentService.verifyEncryption(doc.id);
+          const isEncrypted = await DocumentService.getInstanceStatic().verifyEncryption(doc.id);
           return { ...doc, encryptionVerified: isEncrypted };
         })
       );
@@ -95,7 +94,7 @@ export const uploadDocument = createAsyncThunk(
   'documents/uploadDocument',
   async (request: DocumentUploadRequest, { dispatch, rejectWithValue }) => {
     try {
-      const documentService = new DocumentService();
+      const documentService = DocumentService.getInstanceStatic();
       const startTime = Date.now();
 
       // Initialize upload tracking
@@ -139,9 +138,8 @@ export const deleteDocument = createAsyncThunk(
   'documents/deleteDocument',
   async (documentId: string, { dispatch, rejectWithValue }) => {
     try {
-      const documentService = new DocumentService();
       const startTime = Date.now();
-      await documentService.secureDeleteDocument(documentId);
+      await DocumentService.getInstanceStatic().secureDeleteDocument(documentId);
 
       // Record audit log
       dispatch(documentSlice.actions.logSecurityEvent({

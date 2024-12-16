@@ -163,6 +163,8 @@ const Table: React.FC<TableProps> = ({
     display: 'inline-flex',
     alignItems: 'center',
     textAlign: 'left',
+    textDecoration: 'none',
+    outline: 'none',
   } as React.CSSProperties;
 
   return (
@@ -199,13 +201,20 @@ const Table: React.FC<TableProps> = ({
                   {column.sortable && sortable ? (
                     <button
                       onClick={() => handleSort(column.id)}
-                      style={{
-                        ...sortButtonStyles,
-                        ':hover': { textDecoration: 'underline' },
-                        ':focus': {
-                          outline: `2px solid ${theme.palette.primary.main}`,
-                          outlineOffset: '2px',
-                        },
+                      style={sortButtonStyles}
+                      onMouseOver={(e) => {
+                        (e.target as HTMLButtonElement).style.textDecoration = 'underline';
+                      }}
+                      onMouseOut={(e) => {
+                        (e.target as HTMLButtonElement).style.textDecoration = 'none';
+                      }}
+                      onFocus={(e) => {
+                        (e.target as HTMLButtonElement).style.outline = `2px solid ${theme.palette.primary.main}`;
+                        (e.target as HTMLButtonElement).style.outlineOffset = '2px';
+                      }}
+                      onBlur={(e) => {
+                        (e.target as HTMLButtonElement).style.outline = 'none';
+                        (e.target as HTMLButtonElement).style.outlineOffset = '0';
                       }}
                       aria-label={`Sort by ${column.label}`}
                     >

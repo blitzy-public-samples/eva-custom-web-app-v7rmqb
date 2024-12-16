@@ -29,12 +29,20 @@ import { SubscriptionCard } from '../../components/subscription/SubscriptionCard
 import { useAuth } from '../../hooks/useAuth';
 import { Document } from '../../types/document.types';
 import { Delegate } from '../../types/delegate.types';
-import { ISubscription } from '../../types/auth.types';
 
 // Interface for component props
 interface DashboardProps {
   onError?: (error: Error) => void;
 }
+
+// Temporary type definition until auth types are updated
+type Subscription = {
+  id: string;
+  status: string;
+  type: string;
+  expiresAt?: string;
+  [key: string]: any;
+};
 
 /**
  * Enhanced dashboard component with comprehensive estate planning overview
@@ -50,7 +58,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [delegates, setDelegates] = useState<Delegate[]>([]);
-  const [subscription, setSubscription] = useState<ISubscription | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   // Fetch dashboard data with error handling
   const fetchDashboardData = useCallback(async () => {
@@ -61,7 +69,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       // Simulated API calls - replace with actual API service calls
       const documentsData: Document[] = [];
       const delegatesData: Delegate[] = [];
-      const subscriptionData: ISubscription | null = null;
+      const subscriptionData: Subscription | null = null;
 
       setDocuments(documentsData);
       setDelegates(delegatesData);

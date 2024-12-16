@@ -61,6 +61,26 @@ class AuthService {
   }
 
   /**
+   * Verifies Multi-Factor Authentication code
+   */
+  public async verifyMFA(mfaCode: string): Promise<boolean> {
+    try {
+      // Verify MFA code with Auth0
+      await auth0Client.validateMfaToken({
+        mfaToken: mfaCode
+      });
+
+      // Log successful MFA verification
+      this.logAuthEvent('mfa_verification_success');
+
+      return true;
+    } catch (error) {
+      this.handleAuthError(error);
+      return false;
+    }
+  }
+
+  /**
    * Authenticates user with enhanced security including MFA verification
    */
   public async login(credentials: LoginPayload): Promise<AuthToken> {

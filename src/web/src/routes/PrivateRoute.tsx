@@ -34,9 +34,9 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
     isAuthenticated,
     loading,
     user,
-    isMFAVerified,
+    mfaVerified,
     isSessionValid,
-    token,
+    sessionToken,
     refreshSession
   } = useAuth();
 
@@ -46,11 +46,11 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
       timestamp: new Date().toISOString(),
       path: location.pathname,
       authenticated: isAuthenticated,
-      mfaVerified: isMFAVerified,
+      mfaVerified: mfaVerified,
       sessionValid: isSessionValid,
-      userRole: user?.role
+      userRole: user?.roles?.[0]
     });
-  }, [location.pathname, isAuthenticated, isMFAVerified, isSessionValid, user]);
+  }, [location.pathname, isAuthenticated, mfaVerified, isSessionValid, user]);
 
   // Show loading state while performing security checks
   if (loading) {
@@ -100,7 +100,7 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
   }
 
   // MFA verification check
-  if (requireMFA && !isMFAVerified) {
+  if (requireMFA && !mfaVerified) {
     console.warn('MFA verification required:', {
       timestamp: new Date().toISOString(),
       path: location.pathname
@@ -120,14 +120,14 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
 
   // Role-based access control
   if (requiredRoles.length > 0 && user) {
-    const hasRequiredRole = requiredRoles.includes(user.role);
+    const hasRequiredRole = requiredRoles.some(role => user.roles?.includes(role));
 
     if (!hasRequiredRole) {
       console.warn('Insufficient permissions:', {
         timestamp: new Date().toISOString(),
         path: location.pathname,
         requiredRoles,
-        userRole: user.role
+        userRole: user.roles?.[0]
       });
 
       return (
@@ -147,7 +147,7 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
   console.info('Route access granted:', {
     timestamp: new Date().toISOString(),
     path: location.pathname,
-    userRole: user?.role
+    userRole: user?.roles?.[0]
   });
 
   // Render protected route content

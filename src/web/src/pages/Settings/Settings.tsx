@@ -1,9 +1,10 @@
 import React from 'react';
 import { Stack, Switch, Typography } from '@mui/material';
-import { Analytics } from '@segment/analytics-next'; // v1.51+
+import { AnalyticsBrowser } from '@segment/analytics-next'; // v1.51+
 import ProfileForm from '../../components/profile/ProfileForm/ProfileForm';
 import Card from '../../components/common/Card/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
 // Constants for analytics events
 const ANALYTICS_EVENTS = {
@@ -46,13 +47,15 @@ interface ProfileFormData {
 const Settings: React.FC = () => {
   // Hooks
   const { user } = useAuth();
-  const analytics = Analytics.load({ writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || '' });
+  const analytics = new AnalyticsBrowser({
+    writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || ''
+  });
   
   // State management
   const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>({
-    twoFactorEnabled: user?.twoFactorEnabled || false,
-    emailNotifications: user?.emailNotifications || false,
-    smsNotifications: user?.smsNotifications || false,
+    twoFactorEnabled: false,
+    emailNotifications: false,
+    smsNotifications: false,
     lastUpdated: new Date(),
     updatedBy: user?.email || ''
   });
@@ -65,7 +68,7 @@ const Settings: React.FC = () => {
   /**
    * Enhanced profile form submission handler with security validation
    */
-  const handleProfileSubmit = async (formData: ProfileFormData) => {
+  const handleProfileSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
       setLoading(true);
       setError(null);
@@ -74,6 +77,13 @@ const Settings: React.FC = () => {
       if (isRateLimited()) {
         throw new Error('Too many update attempts. Please try again later.');
       }
+
+      const formData = {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        province: values.province
+      };
 
       // Update user profile through API service instead of hook
       await fetch('/api/users/profile', {
@@ -205,7 +215,7 @@ const Settings: React.FC = () => {
           initialData={{
             name: user?.name || '',
             email: user?.email || '',
-            phone: user?.phoneNumber || '',
+            phone: user?.phone || '',
             province: user?.province || ''
           }}
         />

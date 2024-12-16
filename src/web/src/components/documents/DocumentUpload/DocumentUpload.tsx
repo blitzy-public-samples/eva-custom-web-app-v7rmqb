@@ -198,7 +198,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       </StyledFormControl>
 
       <FileUpload
-        documentType={selectedType as DocumentType}
+        documentType={selectedType as any}
         maxFileSize={maxFileSize}
         acceptedFileTypes={allowedFileTypes}
         ariaLabel="Upload document"

@@ -6,7 +6,6 @@ import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
 import { User } from '../../../types/auth.types';
-import { Auth0ContextInterface, User as Auth0User } from '@auth0/auth0-react';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -53,7 +52,7 @@ export interface ProfileFormData {
 
 // Props interface for ProfileForm component
 export interface ProfileFormProps {
-  onSubmit: (values: ProfileFormData, auth: Auth0ContextInterface<Auth0User>) => void | Promise<void>;
+  onSubmit: (values: ProfileFormData) => void | Promise<void>;
   initialData?: ProfileFormData | null;
 }
 
@@ -109,7 +108,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   // Handle form submission with validation
   const handleSubmit = async (values: ProfileFormData) => {
     try {
-      await onSubmit(values, { user: null } as Auth0ContextInterface<Auth0User>);
+      await onSubmit(values);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;

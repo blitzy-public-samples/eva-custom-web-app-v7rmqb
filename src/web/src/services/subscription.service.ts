@@ -28,6 +28,11 @@ const SHOPIFY_CONFIG = {
   apiVersion: '2024-01' // Latest stable API version
 };
 
+interface ShopifySubscriptionResponse {
+  id: string;
+  [key: string]: any;
+}
+
 /**
  * Service class for managing subscriptions and Shopify integration
  */
@@ -65,13 +70,12 @@ export class SubscriptionService {
       // Create or get Shopify customer
       const shopifyCustomer = await this.getOrCreateShopifyCustomer(data.userId);
 
-      // Create Shopify subscription through API service since Shopify Buy SDK doesn't support it directly
-      const shopifySubscription = await apiService.post('/api/v1/shopify/subscriptions', {
+      // Create Shopify subscription
+      const shopifySubscription = await this.createShopifySubscription({
         customerId: shopifyCustomer.id,
         planId: await this.getShopifyPlanId(data.plan),
-        billingCycle: data.billingCycle,
-        autoRenew: true
-      });
+        billingCycle: data.billingCycle
+      }) as ShopifySubscriptionResponse;
 
       // Create subscription in our backend
       const subscription = await apiService.post<ISubscription>('/api/v1/subscriptions', {
@@ -98,7 +102,7 @@ export class SubscriptionService {
     try {
       // Update Shopify subscription if plan or billing cycle changed
       if (updates.plan || updates.autoRenew !== undefined) {
-        await this.updateShopifySubscriptionViaAPI(subscriptionId, updates);
+        await this.updateShopifySubscription(subscriptionId, updates);
       }
 
       // Update subscription in our backend
@@ -123,8 +127,8 @@ export class SubscriptionService {
         `/api/v1/subscriptions/${subscriptionId}`
       );
 
-      // Cancel Shopify subscription through API service
-      await apiService.post(`/api/v1/shopify/subscriptions/${subscription.shopifySubscriptionId}/cancel`);
+      // Cancel Shopify subscription
+      await this.shopifyClient.cancelSubscription(subscription.shopifySubscriptionId);
 
       // Update subscription status in our backend
       return await this.updateSubscription(subscriptionId, {
@@ -187,13 +191,13 @@ export class SubscriptionService {
       const customer = await apiService.get(`/api/v1/users/${userId}/shopify-customer`);
       return customer;
     } catch (error) {
-      // Create new Shopify customer through API service
+      // Create new Shopify customer if not exists
       const userData = await apiService.get<{
         email: string;
         name: string;
       }>(`/api/v1/users/${userId}`);
       
-      return await apiService.post('/api/v1/shopify/customers', {
+      return await this.shopifyClient.createCustomer({
         email: userData.email,
         firstName: userData.name.split(' ')[0],
         lastName: userData.name.split(' ').slice(1).join(' ')
@@ -206,14 +210,27 @@ export class SubscriptionService {
     return planDetails.shopifyProductId;
   }
 
-  private async updateShopifySubscriptionViaAPI(
+  private async createShopifySubscription(params: {
+    customerId: string;
+    planId: string;
+    billingCycle: BillingCycle;
+  }): Promise<ShopifySubscriptionResponse> {
+    return await this.shopifyClient.createSubscription({
+      customerId: params.customerId,
+      productId: params.planId,
+      billingCycle: params.billingCycle.toLowerCase(),
+      autoRenew: true
+    });
+  }
+
+  private async updateShopifySubscription(
     subscriptionId: string,
     updates: Partial<ISubscription>
   ): Promise<any> {
     const subscription = await this.getSubscription(subscriptionId);
     
-    return await apiService.put(
-      `/api/v1/shopify/subscriptions/${subscription.shopifySubscriptionId}`,
+    return await this.shopifyClient.updateSubscription(
+      subscription.shopifySubscriptionId,
       {
         productId: updates.plan ? 
           await this.getShopifyPlanId(updates.plan) : 

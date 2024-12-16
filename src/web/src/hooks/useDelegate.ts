@@ -88,7 +88,7 @@ export const useDelegate = () => {
       }
     };
 
-    return !!permissionMatrix[delegate.role]?.[action];
+    return !!permissionMatrix[delegate.role as keyof typeof permissionMatrix]?.[action];
   }, []);
 
   /**
@@ -96,7 +96,7 @@ export const useDelegate = () => {
    */
   const logAuditEvent = useCallback((
     action: string,
-    delegateId: EntityId,
+    delegateId: EntityId | 'system',
     details?: Record<string, any>
   ) => {
     dispatch(addAuditLogEntry({
@@ -172,7 +172,7 @@ export const useDelegate = () => {
         throw new Error('Insufficient permissions to update delegate');
       }
 
-      const result = await dispatch(updateDelegate({ id, data }) as any);
+      const result = await dispatch(updateDelegate({ id: String(id), data }) as any);
       logAuditEvent('UPDATE_DELEGATE', id, { data });
       setCacheStatus('stale');
       return result;
@@ -189,12 +189,12 @@ export const useDelegate = () => {
   ) => {
     try {
       // Validate permissions for removal
-      const hasPermission = await validatePermissions(id, 'delete.delegate');
+      const hasPermission = await validatePermissions(id, 'write.delegate');
       if (!hasPermission) {
         throw new Error('Insufficient permissions to remove delegate');
       }
 
-      const result = await dispatch(removeDelegate(id) as any);
+      const result = await dispatch(removeDelegate(String(id)) as any);
       logAuditEvent('REMOVE_DELEGATE', id);
       setCacheStatus('stale');
       return result;

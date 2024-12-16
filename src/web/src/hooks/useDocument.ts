@@ -111,19 +111,8 @@ export const useDocument = (type?: DocumentType) => {
             console.warn(`Document upload exceeded performance threshold: ${duration}ms`);
           }
 
-          // Ensure the returned document matches the Document type interface
-          const document: Document = {
-            id: result.id,
-            userId: result.userId,
-            title: result.title,
-            type: result.type,
-            size: result.size,
-            mimeType: result.mimeType,
-            status: result.status,
-            createdAt: result.createdAt,
-            updatedAt: result.updatedAt,
-            metadata: result.metadata
-          };
+          // Extract document from the upload response
+          const document: Document = result.document;
 
           return document;
         } catch (error) {

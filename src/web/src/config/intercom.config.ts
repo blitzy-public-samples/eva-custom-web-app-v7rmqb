@@ -1,3 +1,10 @@
+// Declare global Intercom type
+declare global {
+  interface Window {
+    Intercom: any;
+  }
+}
+
 // Temporary type definition until @types/intercom-web is properly installed
 type IntercomSettings = {
   app_id: string;

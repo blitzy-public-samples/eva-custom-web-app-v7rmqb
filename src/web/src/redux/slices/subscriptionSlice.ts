@@ -67,7 +67,7 @@ export const fetchCurrentSubscription = createAsyncThunk(
   'subscription/fetchCurrent',
   async (_, { rejectWithValue }) => {
     try {
-      const subscription = await SubscriptionService.getCurrentSubscription();
+      const subscription = await SubscriptionService.getSubscription('current');
       return subscription;
     } catch (error: any) {
       return rejectWithValue({
@@ -86,7 +86,11 @@ export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
   async (_, { rejectWithValue }) => {
     try {
-      const plans = await SubscriptionService.getSubscriptionPlans();
+      const plans = await Promise.all(
+        Object.values(SubscriptionPlan).map(plan => 
+          SubscriptionService.getSubscriptionPlan(plan)
+        )
+      );
       return plans;
     } catch (error: any) {
       return rejectWithValue({
@@ -111,8 +115,7 @@ export const updateSubscription = createAsyncThunk(
     try {
       const updatedSubscription = await SubscriptionService.updateSubscription(
         updateData.plan,
-        updateData.billingCycle,
-        updateData.autoRenew
+        updateData.billingCycle
       );
       return updatedSubscription;
     } catch (error: any) {

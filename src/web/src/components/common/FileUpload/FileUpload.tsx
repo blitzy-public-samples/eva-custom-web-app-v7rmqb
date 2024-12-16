@@ -14,31 +14,7 @@ import {
   useTheme
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-
-// Define the required types that were previously imported
-export enum DocumentType {
-  IDENTIFICATION = 'IDENTIFICATION',
-  PROOF_OF_ADDRESS = 'PROOF_OF_ADDRESS',
-  FINANCIAL = 'FINANCIAL',
-  OTHER = 'OTHER'
-}
-
-export enum DocumentStatus {
-  PENDING = 'PENDING',
-  UPLOADING = 'UPLOADING',
-  COMPLETED = 'COMPLETED',
-  ERROR = 'ERROR'
-}
-
-export interface DocumentUploadState {
-  documentId: string;
-  fileName: string;
-  progress: number;
-  status: DocumentStatus;
-  error: string | null;
-  retryCount: number;
-  encryptionProgress: number;
-}
+import { DocumentType, DocumentUploadState, DocumentStatus } from '../../types/document.types';
 
 // Styled components for enhanced accessibility and visual feedback
 const UploadContainer = styled(Box)(({ theme }) => ({

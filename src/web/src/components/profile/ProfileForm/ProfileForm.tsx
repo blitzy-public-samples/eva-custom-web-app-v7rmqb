@@ -5,7 +5,6 @@ import Form from '../../common/Form/Form';
 import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
-import { User } from '../../../types/auth.types';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -116,7 +115,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   return (
-    <Form<ProfileFormData>
+    <Form
       initialValues={defaultValues}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -127,10 +126,10 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       analyticsEvent="profile_update"
       testId="profile-form"
     >
-      {(formProps) => (
+      {(formProps: { values: ProfileFormData; handleChange: (e: React.ChangeEvent<any>) => void }) => (
         <Stack spacing={3} width="100%">
           <Input
-            name={FORM_FIELDS.NAME}
+            fieldName={FORM_FIELDS.NAME}
             label="Full Name"
             type="text"
             required
@@ -141,7 +140,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
           />
 
           <Input
-            name={FORM_FIELDS.EMAIL}
+            fieldName={FORM_FIELDS.EMAIL}
             label="Email Address"
             type="email"
             required
@@ -152,7 +151,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
           />
 
           <Input
-            name={FORM_FIELDS.PHONE}
+            fieldName={FORM_FIELDS.PHONE}
             label="Phone Number"
             type="tel"
             required
@@ -163,10 +162,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
           />
 
           <Select
-            name={FORM_FIELDS.PROVINCE}
+            fieldName={FORM_FIELDS.PROVINCE}
             label="Province"
             required
-            autoComplete="address-level1"
             placeholder="Select your province"
             value={formProps.values.province}
             onChange={formProps.handleChange}

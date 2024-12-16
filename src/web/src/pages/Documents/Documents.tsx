@@ -68,7 +68,7 @@ export const Documents: React.FC = () => {
     loading,
     error,
     refreshDocuments,
-    encryptionStatus
+    checkDocumentEncryption
   } = useDocument();
 
   // Effect for error handling
@@ -98,12 +98,18 @@ export const Documents: React.FC = () => {
    * Handles successful document upload with security verification
    */
   const handleUploadComplete = (document: Document) => {
-    if (!encryptionStatus[document.id]) {
-      enqueueSnackbar('Document encryption verification failed', { variant: 'error' });
-      return;
-    }
-    enqueueSnackbar('Document uploaded successfully', { variant: 'success' });
-    refreshDocuments();
+    checkDocumentEncryption(document.id)
+      .then((isEncrypted: boolean) => {
+        if (!isEncrypted) {
+          enqueueSnackbar('Document encryption verification failed', { variant: 'error' });
+          return;
+        }
+        enqueueSnackbar('Document uploaded successfully', { variant: 'success' });
+        refreshDocuments();
+      })
+      .catch(() => {
+        enqueueSnackbar('Error verifying document security', { variant: 'error' });
+      });
   };
 
   return (
@@ -152,7 +158,7 @@ export const Documents: React.FC = () => {
           </Box>
         ) : (
           <DocumentList
-            userRole={UserRole.OWNER}
+            userRole={UserRole.PRIMARY_OWNER}
             encryptionRequired={true}
             className="document-list"
             testId="document-list"

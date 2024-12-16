@@ -95,7 +95,7 @@ export const useAuth = () => {
       const result = await dispatch(login(credentials)).unwrap();
 
       // Handle MFA requirement
-      if (result.requiresMfa && !result.mfaVerified) {
+      if (result.requiresMFA && !result.isMFAVerified) {
         console.info('MFA required for:', {
           timestamp: new Date().toISOString(),
           email: credentials.email.replace(/[^@\w.-]/g, '')
@@ -256,9 +256,11 @@ export const useAuth = () => {
     loading: authState.loading,
     error: authState.error as AuthError | null,
     mfaRequired: authState.mfaRequired,
-    mfaVerified: authState.mfaVerified,
+    isMFAVerified: authState.mfaVerified, // Updated to match expected casing
+    requiresMFA: authState.mfaRequired && !authState.mfaVerified, // Added requiresMFA property
     isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
     sessionToken: authState.sessionToken,
+    role: authState.user?.role, // Added role property
 
     // Authentication operations
     login: handleLogin,

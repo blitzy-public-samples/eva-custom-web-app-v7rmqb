@@ -39,14 +39,28 @@ interface ProfileFormData {
   province: string;
 }
 
+// Extended User interface to include required properties
+interface ExtendedUser {
+  name?: string;
+  email?: string;
+  twoFactorEnabled?: boolean;
+  emailNotifications?: boolean;
+  smsNotifications?: boolean;
+  phoneNumber?: string;
+  province?: string;
+}
+
 /**
  * Enhanced settings page component with senior-friendly design and comprehensive security features.
  * Implements WCAG 2.1 Level AA compliance and extensive error handling.
  */
 const Settings: React.FC = () => {
   // Hooks
-  const { user } = useAuth();
-  const analytics = new Analytics();
+  const { user } = useAuth() as { user: ExtendedUser };
+  const analytics = new Analytics({
+    writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || '',
+    host: 'https://api.segment.io'
+  });
   
   // State management
   const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>({

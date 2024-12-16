@@ -70,18 +70,10 @@ export class SubscriptionService {
       // Create or get Shopify customer
       const shopifyCustomer = await this.getOrCreateShopifyCustomer(data.userId);
 
-      // Create Shopify subscription
-      const shopifySubscription = await this.createShopifySubscription({
-        customerId: shopifyCustomer.id,
-        planId: await this.getShopifyPlanId(data.plan),
-        billingCycle: data.billingCycle
-      }) as ShopifySubscriptionResponse;
-
-      // Create subscription in our backend
+      // Create subscription through backend API which handles Shopify integration
       const subscription = await apiService.post<ISubscription>('/api/v1/subscriptions', {
         ...data,
         shopifyCustomerId: shopifyCustomer.id,
-        shopifySubscriptionId: shopifySubscription.id,
         status: SubscriptionStatus.ACTIVE
       });
 
@@ -100,12 +92,7 @@ export class SubscriptionService {
     updates: Partial<ISubscription>
   ): Promise<ISubscription> {
     try {
-      // Update Shopify subscription if plan or billing cycle changed
-      if (updates.plan || updates.autoRenew !== undefined) {
-        await this.updateShopifySubscription(subscriptionId, updates);
-      }
-
-      // Update subscription in our backend
+      // Update subscription through backend API
       const updatedSubscription = await apiService.put<ISubscription>(
         `/api/v1/subscriptions/${subscriptionId}`,
         updates
@@ -123,19 +110,12 @@ export class SubscriptionService {
    */
   public async cancelSubscription(subscriptionId: string): Promise<ISubscription> {
     try {
-      const subscription = await apiService.get<ISubscription>(
-        `/api/v1/subscriptions/${subscriptionId}`
+      // Cancel subscription through backend API
+      const cancelledSubscription = await apiService.post<ISubscription>(
+        `/api/v1/subscriptions/${subscriptionId}/cancel`
       );
 
-      // Cancel Shopify subscription
-      await this.shopifyClient.cancelSubscription(subscription.shopifySubscriptionId);
-
-      // Update subscription status in our backend
-      return await this.updateSubscription(subscriptionId, {
-        status: SubscriptionStatus.CANCELLED,
-        endDate: new Date(),
-        autoRenew: false
-      });
+      return cancelledSubscription;
     } catch (error) {
       console.error('Failed to cancel subscription:', error);
       throw error;
@@ -187,57 +167,14 @@ export class SubscriptionService {
 
   private async getOrCreateShopifyCustomer(userId: string): Promise<any> {
     try {
-      // Try to get existing customer
+      // Get customer through backend API
       const customer = await apiService.get(`/api/v1/users/${userId}/shopify-customer`);
       return customer;
     } catch (error) {
-      // Create new Shopify customer if not exists
-      const userData = await apiService.get<{
-        email: string;
-        name: string;
-      }>(`/api/v1/users/${userId}`);
-      
-      return await this.shopifyClient.createCustomer({
-        email: userData.email,
-        firstName: userData.name.split(' ')[0],
-        lastName: userData.name.split(' ').slice(1).join(' ')
-      });
+      // Create new customer through backend API
+      const customer = await apiService.post(`/api/v1/users/${userId}/shopify-customer`);
+      return customer;
     }
-  }
-
-  private async getShopifyPlanId(plan: SubscriptionPlan): Promise<string> {
-    const planDetails = await this.getSubscriptionPlan(plan);
-    return planDetails.shopifyProductId;
-  }
-
-  private async createShopifySubscription(params: {
-    customerId: string;
-    planId: string;
-    billingCycle: BillingCycle;
-  }): Promise<ShopifySubscriptionResponse> {
-    return await this.shopifyClient.createSubscription({
-      customerId: params.customerId,
-      productId: params.planId,
-      billingCycle: params.billingCycle.toLowerCase(),
-      autoRenew: true
-    });
-  }
-
-  private async updateShopifySubscription(
-    subscriptionId: string,
-    updates: Partial<ISubscription>
-  ): Promise<any> {
-    const subscription = await this.getSubscription(subscriptionId);
-    
-    return await this.shopifyClient.updateSubscription(
-      subscription.shopifySubscriptionId,
-      {
-        productId: updates.plan ? 
-          await this.getShopifyPlanId(updates.plan) : 
-          undefined,
-        autoRenew: updates.autoRenew
-      }
-    );
   }
 }
 

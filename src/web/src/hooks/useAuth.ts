@@ -19,7 +19,9 @@ import {
 } from '../redux/slices/authSlice';
 import type { 
   AuthState, 
-  AuthError 
+  AuthError,
+  AuthToken,
+  RegisterPayload
 } from '../types/auth.types';
 import { auth0Client } from '../config/auth.config';
 import { AppDispatch } from '../redux/store';
@@ -116,14 +118,7 @@ export const useAuth = () => {
   /**
    * Registration handler with security logging
    */
-  const handleRegister = useCallback(async (userData: { 
-    email: string; 
-    password: string; 
-    name: string;
-    province: string;
-    acceptedTerms: boolean;
-    mfaPreference: string;
-  }) => {
+  const handleRegister = useCallback(async (userData: RegisterPayload) => {
     try {
       // Log registration attempt (sanitized)
       console.info('Registration attempt:', {

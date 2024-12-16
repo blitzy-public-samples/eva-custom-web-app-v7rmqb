@@ -20,7 +20,7 @@ import {
   UpdateDelegateDTO, 
   DelegateRole, 
   DelegateAuditLog 
-} from '../types/delegate.types';
+} from '../../redux/types/delegate.types';
 import DelegateService from '../../services/delegate.service';
 
 // Entity adapter for normalized state management

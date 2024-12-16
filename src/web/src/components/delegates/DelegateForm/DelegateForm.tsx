@@ -123,7 +123,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -172,7 +172,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
-      validationSchema={validationSchema}
+      schema={validationSchema}
       submitLabel={t(delegate ? 'delegate.form.update' : 'delegate.form.create')}
       showReset
       resetLabel={t('common.cancel')}
@@ -192,7 +192,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           type="email"
           required
           autoComplete="email"
-          inputProps={{ name: "email" }}
+          name="email"
         />
 
         <Input
@@ -200,7 +200,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           label={t('delegate.form.name')}
           required
           autoComplete="name"
-          inputProps={{ name: "name" }}
+          name="name"
         />
 
         <Box>
@@ -228,16 +228,16 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
           type="text"
-          InputLabelProps={{ shrink: true }}
-          inputProps={{ name: "expiresAt" }}
+          name="expiresAt"
         />
 
         <Input
           id="notes"
           label={t('delegate.form.notes')}
           type="text"
-          rows={4}
-          inputProps={{ name: "notes" }}
+          multiline
+          maxRows={4}
+          name="notes"
         />
       </Stack>
     </Form>

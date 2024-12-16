@@ -65,11 +65,12 @@ export class SubscriptionService {
       // Create or get Shopify customer
       const shopifyCustomer = await this.getOrCreateShopifyCustomer(data.userId);
 
-      // Create Shopify subscription
-      const shopifySubscription = await this.createShopifySubscription({
+      // Create Shopify subscription through API service since Shopify Buy SDK doesn't support it directly
+      const shopifySubscription = await apiService.post('/api/v1/shopify/subscriptions', {
         customerId: shopifyCustomer.id,
         planId: await this.getShopifyPlanId(data.plan),
-        billingCycle: data.billingCycle
+        billingCycle: data.billingCycle,
+        autoRenew: true
       });
 
       // Create subscription in our backend
@@ -97,7 +98,7 @@ export class SubscriptionService {
     try {
       // Update Shopify subscription if plan or billing cycle changed
       if (updates.plan || updates.autoRenew !== undefined) {
-        await this.updateShopifySubscription(subscriptionId, updates);
+        await this.updateShopifySubscriptionViaAPI(subscriptionId, updates);
       }
 
       // Update subscription in our backend
@@ -122,8 +123,8 @@ export class SubscriptionService {
         `/api/v1/subscriptions/${subscriptionId}`
       );
 
-      // Cancel Shopify subscription
-      await this.shopifyClient.cancelSubscription(subscription.shopifySubscriptionId);
+      // Cancel Shopify subscription through API service
+      await apiService.post(`/api/v1/shopify/subscriptions/${subscription.shopifySubscriptionId}/cancel`);
 
       // Update subscription status in our backend
       return await this.updateSubscription(subscriptionId, {
@@ -186,13 +187,13 @@ export class SubscriptionService {
       const customer = await apiService.get(`/api/v1/users/${userId}/shopify-customer`);
       return customer;
     } catch (error) {
-      // Create new Shopify customer if not exists
+      // Create new Shopify customer through API service
       const userData = await apiService.get<{
         email: string;
         name: string;
       }>(`/api/v1/users/${userId}`);
       
-      return await this.shopifyClient.createCustomer({
+      return await apiService.post('/api/v1/shopify/customers', {
         email: userData.email,
         firstName: userData.name.split(' ')[0],
         lastName: userData.name.split(' ').slice(1).join(' ')
@@ -205,27 +206,14 @@ export class SubscriptionService {
     return planDetails.shopifyProductId;
   }
 
-  private async createShopifySubscription(params: {
-    customerId: string;
-    planId: string;
-    billingCycle: BillingCycle;
-  }): Promise<any> {
-    return await this.shopifyClient.createSubscription({
-      customerId: params.customerId,
-      productId: params.planId,
-      billingCycle: params.billingCycle.toLowerCase(),
-      autoRenew: true
-    });
-  }
-
-  private async updateShopifySubscription(
+  private async updateShopifySubscriptionViaAPI(
     subscriptionId: string,
     updates: Partial<ISubscription>
   ): Promise<any> {
     const subscription = await this.getSubscription(subscriptionId);
     
-    return await this.shopifyClient.updateSubscription(
-      subscription.shopifySubscriptionId,
+    return await apiService.put(
+      `/api/v1/shopify/subscriptions/${subscription.shopifySubscriptionId}`,
       {
         productId: updates.plan ? 
           await this.getShopifyPlanId(updates.plan) : 

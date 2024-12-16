@@ -9,6 +9,7 @@ export interface User {
     email: string;
     name: string;
     province: Province;
+    phone: string;
     mfaEnabled: boolean;
     profile?: Record<string, unknown>;
 }
@@ -146,7 +147,8 @@ export interface AuthError {
 export enum UserRole {
     ADMIN = 'ADMIN',
     USER = 'USER',
-    DELEGATE = 'DELEGATE'
+    DELEGATE = 'DELEGATE',
+    OWNER = 'OWNER'
 }
 
 /**
@@ -175,4 +177,15 @@ export interface ISubscription {
     features: string[];
     price: number;
     billingCycle: string;
+}
+
+/**
+ * Document types enum for document management
+ */
+export enum DocumentType {
+    MEDICAL = 'MEDICAL',
+    LEGAL = 'LEGAL',
+    FINANCIAL = 'FINANCIAL',
+    PERSONAL = 'PERSONAL',
+    OTHER = 'OTHER'
 }

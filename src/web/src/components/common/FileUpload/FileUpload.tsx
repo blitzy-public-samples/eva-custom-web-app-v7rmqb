@@ -14,15 +14,9 @@ import {
   useTheme
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { DocumentType } from '../../../types/auth.types';
 
-// Define the required types inline since the external type file is not available
-export enum DocumentType {
-  IDENTIFICATION = 'IDENTIFICATION',
-  PROOF_OF_ADDRESS = 'PROOF_OF_ADDRESS',
-  FINANCIAL = 'FINANCIAL',
-  OTHER = 'OTHER'
-}
-
+// Define status enum locally since it's specific to this component
 export enum DocumentStatus {
   PENDING = 'PENDING',
   UPLOADING = 'UPLOADING',

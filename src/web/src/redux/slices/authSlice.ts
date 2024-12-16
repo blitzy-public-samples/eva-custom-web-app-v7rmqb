@@ -105,7 +105,8 @@ export const verifyMFA = createAsyncThunk(
   'auth/verifyMFA',
   async (code: string, { rejectWithValue }) => {
     try {
-      const response = await AuthService.verifyMFA(code);
+      // Temporarily handle MFA verification through login service until AuthService implements verifyMFA
+      const response = await AuthService.login({ mfaCode: code });
 
       // Log successful MFA verification
       console.info('MFA verification successful:', {
@@ -189,7 +190,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.user = action.payload;
         state.sessionExpiry = action.payload.expiresAt;
         state.loading = false;
         state.error = null;

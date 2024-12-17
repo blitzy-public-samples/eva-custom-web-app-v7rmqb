@@ -62,7 +62,7 @@ export interface AuthState {
     mfaRequired: boolean;        // MFA requirement flag
     sessionExpiry: number | null; // Session expiration timestamp
     lastActivity: number;        // Last user activity timestamp
-    sessionToken: AuthToken;     // Current session token
+    sessionToken: AuthToken | null; // Current session token
 }
 
 /**

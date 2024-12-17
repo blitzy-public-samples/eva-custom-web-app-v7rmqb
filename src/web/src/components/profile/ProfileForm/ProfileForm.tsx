@@ -108,9 +108,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values as ProfileFormData);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -132,7 +132,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     >
       <Stack spacing={3} width="100%">
         <Input
-          name={FORM_FIELDS.NAME}
+          fieldName={FORM_FIELDS.NAME}
           label="Full Name"
           type="text"
           required
@@ -141,7 +141,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          name={FORM_FIELDS.EMAIL}
+          fieldName={FORM_FIELDS.EMAIL}
           label="Email Address"
           type="email"
           required
@@ -150,7 +150,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          name={FORM_FIELDS.PHONE}
+          fieldName={FORM_FIELDS.PHONE}
           label="Phone Number"
           type="tel"
           required
@@ -159,7 +159,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Select
-          name={FORM_FIELDS.PROVINCE}
+          fieldName={FORM_FIELDS.PROVINCE}
           label="Province"
           required
           placeholder="Select your province"
@@ -167,6 +167,13 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
             value: province,
             label: province
           }))}
+          value={defaultValues.province}
+          onChange={(value: string) => {
+            // Handle change is managed by Form component
+          }}
+          onBlur={() => {
+            // Handle blur is managed by Form component
+          }}
         />
       </Stack>
     </Form>

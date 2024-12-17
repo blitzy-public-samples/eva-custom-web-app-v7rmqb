@@ -269,6 +269,9 @@ class AuthService {
       email: decodedToken.email,
       name: decodedToken.name,
       province: decodedToken.province,
+      phone: decodedToken.phone || null,
+      mfaEnabled: decodedToken.mfa_enabled || false,
+      status: decodedToken.status || 'active',
       accessToken: token,
       idToken: decodedToken.idToken,
       expiresAt: decodedToken.exp * 1000

@@ -13,6 +13,7 @@ const ARIA_LABELS = {
 // Interface for component props with comprehensive typing
 export interface InputProps {
   id: string;
+  name: string;
   label: string;
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -88,6 +89,7 @@ const StyledTextField = styled(TextField)(() => ({
  */
 const Input: React.FC<InputProps> = React.memo(({
   id,
+  name,
   label,
   value,
   onChange,
@@ -113,6 +115,7 @@ const Input: React.FC<InputProps> = React.memo(({
   return (
     <StyledTextField
       id={inputId}
+      name={name}
       label={label}
       value={value}
       onChange={onChange}

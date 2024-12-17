@@ -7,7 +7,6 @@ import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { DelegateRole } from '../../../types/delegate.types';
 
-// Analytics event constants
 const ANALYTICS_EVENTS = {
   DELEGATE_FORM_START: 'delegate_form_start',
   DELEGATE_FORM_SUBMIT: 'delegate_form_submit',
@@ -15,7 +14,6 @@ const ANALYTICS_EVENTS = {
   DELEGATE_FORM_ERROR: 'delegate_form_error'
 } as const;
 
-// Interface for delegate data
 interface DelegateData {
   id?: string;
   email: string;
@@ -26,7 +24,6 @@ interface DelegateData {
   notes?: string;
 }
 
-// Interface for delegate form props
 interface DelegateFormProps {
   delegate?: DelegateData;
   onSuccess: () => void;
@@ -34,13 +31,11 @@ interface DelegateFormProps {
   onError?: (error: Error) => void;
 }
 
-// Interface for delegate permissions
 interface DelegatePermission {
   resourceType: 'FINANCIAL' | 'MEDICAL' | 'LEGAL';
   accessLevel: 'READ' | 'WRITE';
 }
 
-// Declare analytics interface
 declare global {
   interface Window {
     analytics?: {
@@ -49,7 +44,6 @@ declare global {
   }
 }
 
-// Initial form values
 const INITIAL_VALUES: DelegateData = {
   email: '',
   name: '',
@@ -59,7 +53,6 @@ const INITIAL_VALUES: DelegateData = {
   notes: ''
 };
 
-// Role-based permission presets
 const ROLE_PERMISSIONS: Record<DelegateRole, DelegatePermission[]> = {
   [DelegateRole.EXECUTOR]: [
     { resourceType: 'FINANCIAL', accessLevel: 'READ' },
@@ -78,10 +71,6 @@ const ROLE_PERMISSIONS: Record<DelegateRole, DelegatePermission[]> = {
   ]
 };
 
-/**
- * Enhanced form component for creating and managing delegates with comprehensive
- * validation, accessibility features, and security controls.
- */
 const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   delegate,
   onSuccess,
@@ -91,7 +80,6 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // Validation schema with enhanced security rules
   const validationSchema = useMemo(() => yup.object().shape({
     email: yup.string()
       .email(t('delegate.form.errors.email.format'))
@@ -120,7 +108,6 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .max(500, t('delegate.form.errors.notes.max'))
   }), [t]);
 
-  // Handle form submission with proper error handling and analytics
   const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {

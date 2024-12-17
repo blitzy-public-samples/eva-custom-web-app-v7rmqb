@@ -105,7 +105,10 @@ export const updateSubscription = createAsyncThunk(
   'subscription/update',
   async (updateData: Partial<ISubscription>, { rejectWithValue }) => {
     try {
-      const updatedSubscription = await SubscriptionService.updateSubscription(updateData);
+      const updatedSubscription = await SubscriptionService.updateSubscription(
+        updateData.id || '',
+        updateData
+      );
       return updatedSubscription;
     } catch (error: any) {
       return rejectWithValue({
@@ -186,10 +189,13 @@ const subscriptionSlice = createSlice({
       })
       .addCase(fetchSubscriptionPlans.fulfilled, (state, action) => {
         state.availablePlans = action.payload;
-        const plansMap = action.payload.reduce<Record<string, ISubscriptionPlanDetails>>((acc, plan) => {
-          acc[plan.id] = plan;
-          return acc;
-        }, {});
+        const plansMap = action.payload.reduce<Record<string, ISubscriptionPlanDetails>>(
+          (acc: Record<string, ISubscriptionPlanDetails>, plan: ISubscriptionPlanDetails) => {
+            acc[plan.id] = plan;
+            return acc;
+          },
+          {}
+        );
         state.cache.plans = plansMap;
         state.cache.expiresAt = new Date(Date.now() + CACHE_DURATION);
         state.loading['fetchPlans'] = false;

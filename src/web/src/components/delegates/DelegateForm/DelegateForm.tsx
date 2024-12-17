@@ -154,7 +154,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }, []);
 
   return (
-    <Form<DelegateData>
+    <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -166,7 +166,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       analyticsEvent="delegate_form"
       data-testid="delegate-form"
     >
-      {({ values, setFieldValue }) => (
+      {({ values, setFieldValue }: { values: DelegateData; setFieldValue: (field: string, value: any) => void }) => (
         <Stack spacing={3}>
           <Typography variant="h6" component="h2">
             {t(delegate ? 'delegate.form.editTitle' : 'delegate.form.createTitle')}
@@ -217,7 +217,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
             id="expiresAt"
             name="expiresAt"
             label={t('delegate.form.expiresAt')}
-            type="date"
+            type="text"
             value={values.expiresAt ? new Date(values.expiresAt).toISOString().split('T')[0] : ''}
             onChange={(e) => setFieldValue('expiresAt', e.target.value ? new Date(e.target.value) : null)}
           />

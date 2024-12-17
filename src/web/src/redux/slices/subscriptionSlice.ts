@@ -13,45 +13,13 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import SubscriptionService from '../../services/subscription.service';
-
-// Define types inline until types file is created
-export enum SubscriptionStatus {
-  ACTIVE = 'ACTIVE',
-  CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED',
-  PENDING = 'PENDING'
-}
-
-export enum SubscriptionPlan {
-  BASIC = 'BASIC',
-  PREMIUM = 'PREMIUM',
-  ENTERPRISE = 'ENTERPRISE'
-}
-
-export enum BillingCycle {
-  MONTHLY = 'MONTHLY',
-  YEARLY = 'YEARLY'
-}
-
-export interface ISubscriptionPlanDetails {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  features: string[];
-  billingCycles: BillingCycle[];
-}
-
-export interface ISubscription {
-  id: string;
-  userId: string;
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  startDate: Date;
-  endDate: Date;
-  billingCycle: BillingCycle;
-  autoRenew: boolean;
-}
+import {
+  SubscriptionStatus,
+  SubscriptionPlan,
+  BillingCycle,
+  ISubscriptionPlanDetails,
+  ISubscription
+} from '../../types/subscription.types';
 
 // Interface for subscription-related errors
 interface ISubscriptionError {
@@ -116,10 +84,10 @@ export const fetchCurrentSubscription = createAsyncThunk(
  */
 export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
-  async (plan: SubscriptionPlan, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const planDetails = await SubscriptionService.getSubscriptionPlan(plan);
-      return [planDetails]; // Return as array to maintain compatibility
+      const plans = await SubscriptionService.getSubscriptionPlans();
+      return plans;
     } catch (error: any) {
       return rejectWithValue({
         code: error.code || 'FETCH_PLANS_ERROR',
@@ -135,15 +103,9 @@ export const fetchSubscriptionPlans = createAsyncThunk(
  */
 export const updateSubscription = createAsyncThunk(
   'subscription/update',
-  async (updateData: {
-    plan: SubscriptionPlan;
-    billingCycle: BillingCycle;
-  }, { rejectWithValue }) => {
+  async (updateData: Partial<ISubscription>, { rejectWithValue }) => {
     try {
-      const updatedSubscription = await SubscriptionService.updateSubscription(
-        updateData.plan,
-        updateData.billingCycle
-      );
+      const updatedSubscription = await SubscriptionService.updateSubscription(updateData);
       return updatedSubscription;
     } catch (error: any) {
       return rejectWithValue({
@@ -224,10 +186,11 @@ const subscriptionSlice = createSlice({
       })
       .addCase(fetchSubscriptionPlans.fulfilled, (state, action) => {
         state.availablePlans = action.payload;
-        state.cache.plans = action.payload.reduce((acc: Record<string, ISubscriptionPlanDetails>, plan: ISubscriptionPlanDetails) => ({
-          ...acc,
-          [plan.id]: plan
-        }), {});
+        const plansMap = action.payload.reduce<Record<string, ISubscriptionPlanDetails>>((acc, plan) => {
+          acc[plan.id] = plan;
+          return acc;
+        }, {});
+        state.cache.plans = plansMap;
         state.cache.expiresAt = new Date(Date.now() + CACHE_DURATION);
         state.loading['fetchPlans'] = false;
       })

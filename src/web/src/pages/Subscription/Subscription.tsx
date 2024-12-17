@@ -42,7 +42,7 @@ export const Subscription: React.FC = () => {
     try {
       setSelectedPlanId(planId);
       
-      const selectedPlan = availablePlans.find(plan => plan.planId === planId);
+      const selectedPlan = availablePlans.find(plan => plan.id === planId);
       if (!selectedPlan) {
         throw new Error('Selected plan not found');
       }
@@ -73,10 +73,10 @@ export const Subscription: React.FC = () => {
    * Handles subscription cancellation with confirmation
    */
   const handleCancelSubscription = useCallback(async () => {
-    if (!currentSubscription?.subscriptionId) return;
+    if (!currentSubscription?.id) return;
 
     try {
-      await cancelSubscription(currentSubscription.subscriptionId);
+      await cancelSubscription(currentSubscription.id);
 
       // Announce cancellation to screen readers
       const announcement = 'Subscription successfully cancelled';
@@ -174,7 +174,7 @@ export const Subscription: React.FC = () => {
           <SubscriptionCard
             subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.planId === completeSubscription.plan.planId
+              plan => plan.id === completeSubscription.plan.id
             ) || {
               name: 'Loading...',
               price: 0,
@@ -212,12 +212,12 @@ export const Subscription: React.FC = () => {
         ) : (
           <Grid container spacing={3}>
             {availablePlans.map((plan) => (
-              <Grid item xs={12} md={4} key={plan.planId}>
+              <Grid item xs={12} md={4} key={plan.id}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.plan.planId === plan.planId}
+                  isCurrentPlan={currentSubscription?.plan.id === plan.id}
                   onSelect={handlePlanSelect}
-                  isLoading={selectedPlanId === plan.planId}
+                  isLoading={selectedPlanId === plan.id}
                   error={error.update ? new Error(error.update) : null}
                 />
               </Grid>

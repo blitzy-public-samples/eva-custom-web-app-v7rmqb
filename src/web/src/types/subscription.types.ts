@@ -74,6 +74,7 @@ export interface ISubscription {
   lastBillingDate: Date | null;
   nextBillingDate: Date | null;
   features: string[];
+  price: number; // Added price property to match usage in Dashboard component
 }
 
 /**

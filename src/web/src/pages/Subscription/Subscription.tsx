@@ -11,6 +11,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { SubscriptionPlan } from '../../components/subscription/SubscriptionPlan/SubscriptionPlan';
 import { SubscriptionCard } from '../../components/subscription/SubscriptionCard/SubscriptionCard';
 import type { ISubscriptionPlanDetails } from '../../types/subscription.types';
+import { SubscriptionStatus } from '../../types/subscription.types';
 
 /**
  * Subscription Management Page Component
@@ -48,9 +49,9 @@ export const Subscription: React.FC = () => {
 
       await updateSubscription({
         planId: selectedPlan.id,
-        billingCycles: selectedPlan.billingCycles[0], // Use first available billing cycle
+        billingCycle: selectedPlan.billingCycle, // Fixed property name
         autoRenew: true,
-        status: 'active' // Use lowercase enum value
+        status: SubscriptionStatus.ACTIVE // Use enum value
       });
 
       // Announce success to screen readers
@@ -125,8 +126,8 @@ export const Subscription: React.FC = () => {
     ...currentSubscription,
     shopifySubscriptionId: currentSubscription.shopifySubscriptionId || '',
     shopifyCustomerId: currentSubscription.shopifyCustomerId || '',
-    lastBillingDate: currentSubscription.lastBillingDate || new Date().toISOString(),
-    nextBillingDate: currentSubscription.nextBillingDate || new Date().toISOString()
+    lastBillingDate: new Date(currentSubscription.lastBillingDate || new Date()),
+    nextBillingDate: new Date(currentSubscription.nextBillingDate || new Date())
   } : null;
 
   return (
@@ -173,7 +174,7 @@ export const Subscription: React.FC = () => {
           <SubscriptionCard
             subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.id === completeSubscription.planId
+              plan => plan.id === completeSubscription.plan.id
             ) || {
               name: 'Loading...',
               price: 0,
@@ -214,7 +215,7 @@ export const Subscription: React.FC = () => {
               <Grid item xs={12} md={4} key={plan.id}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.planId === plan.id}
+                  isCurrentPlan={currentSubscription?.plan.id === plan.id}
                   onSelect={handlePlanSelect}
                   isLoading={selectedPlanId === plan.id}
                   error={error.update ? new Error(error.update) : null}

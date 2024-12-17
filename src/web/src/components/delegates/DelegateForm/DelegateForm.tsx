@@ -108,7 +108,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .max(500, t('delegate.form.errors.notes.max'))
   }), [t]);
 
-  const handleSubmit = useCallback(async (values: Record<string, any>) => {
+  const handleSubmit = useCallback(async (values: DelegateData) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -154,7 +154,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }, []);
 
   return (
-    <Form
+    <Form<DelegateData>
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}
@@ -166,61 +166,72 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       analyticsEvent="delegate_form"
       data-testid="delegate-form"
     >
-      <Stack spacing={3}>
-        <Typography variant="h6" component="h2">
-          {t(delegate ? 'delegate.form.editTitle' : 'delegate.form.createTitle')}
-        </Typography>
-
-        <Input
-          id="email"
-          name="email"
-          label={t('delegate.form.email')}
-          type="email"
-          required
-          autoComplete="email"
-        />
-
-        <Input
-          id="name"
-          name="name"
-          label={t('delegate.form.name')}
-          required
-          autoComplete="name"
-        />
-
-        <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            {t('delegate.form.role')}
+      {({ values, setFieldValue }) => (
+        <Stack spacing={3}>
+          <Typography variant="h6" component="h2">
+            {t(delegate ? 'delegate.form.editTitle' : 'delegate.form.createTitle')}
           </Typography>
-          {Object.values(DelegateRole).map((role: DelegateRole) => (
-            <FormControlLabel
-              key={String(role)}
-              control={
-                <Checkbox
-                  name="role"
-                  value={role}
-                  checked={role === DelegateRole.EXECUTOR}
-                />
-              }
-              label={t(`delegate.roles.${role.toLowerCase()}`)}
-            />
-          ))}
-        </Box>
 
-        <Input
-          id="expiresAt"
-          name="expiresAt"
-          label={t('delegate.form.expiresAt')}
-          type="text"
-        />
+          <Input
+            id="email"
+            name="email"
+            label={t('delegate.form.email')}
+            type="email"
+            required
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => setFieldValue('email', e.target.value)}
+          />
 
-        <Input
-          id="notes"
-          name="notes"
-          label={t('delegate.form.notes')}
-          type="text"
-        />
-      </Stack>
+          <Input
+            id="name"
+            name="name"
+            label={t('delegate.form.name')}
+            required
+            autoComplete="name"
+            value={values.name}
+            onChange={(e) => setFieldValue('name', e.target.value)}
+          />
+
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              {t('delegate.form.role')}
+            </Typography>
+            {Object.values(DelegateRole).map((role: DelegateRole) => (
+              <FormControlLabel
+                key={String(role)}
+                control={
+                  <Checkbox
+                    name="role"
+                    value={role}
+                    checked={values.role === role}
+                    onChange={(e) => setFieldValue('role', e.target.value)}
+                  />
+                }
+                label={t(`delegate.roles.${role.toLowerCase()}`)}
+              />
+            ))}
+          </Box>
+
+          <Input
+            id="expiresAt"
+            name="expiresAt"
+            label={t('delegate.form.expiresAt')}
+            type="date"
+            value={values.expiresAt ? new Date(values.expiresAt).toISOString().split('T')[0] : ''}
+            onChange={(e) => setFieldValue('expiresAt', e.target.value ? new Date(e.target.value) : null)}
+          />
+
+          <Input
+            id="notes"
+            name="notes"
+            label={t('delegate.form.notes')}
+            type="text"
+            value={values.notes || ''}
+            onChange={(e) => setFieldValue('notes', e.target.value)}
+          />
+        </Stack>
+      )}
     </Form>
   );
 });

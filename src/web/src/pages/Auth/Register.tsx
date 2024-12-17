@@ -95,6 +95,7 @@ const Register: React.FC = () => {
     <>
       <Input
         id="name"
+        name="name"
         label="Full Name"
         type="text"
         required
@@ -108,6 +109,7 @@ const Register: React.FC = () => {
 
       <Input
         id="email"
+        name="email"
         label="Email Address"
         type="email"
         required
@@ -121,6 +123,7 @@ const Register: React.FC = () => {
 
       <Input
         id="password"
+        name="password"
         label="Password"
         type={showPassword ? 'text' : 'password'}
         required
@@ -226,7 +229,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {(props) => renderForm(props)}
+        {renderForm}
       </Form>
     </RegisterContainer>
   );

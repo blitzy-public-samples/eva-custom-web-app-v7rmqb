@@ -47,9 +47,11 @@ export interface ISubscriptionFeature {
  */
 export interface ISubscriptionPlanDetails {
   id: string;
+  planId: string;
   name: string;
   description: string;
   price: number;
+  plan: SubscriptionPlan;
   billingCycle: BillingCycle;
   features: ISubscriptionFeature[];
   shopifyProductId: string;

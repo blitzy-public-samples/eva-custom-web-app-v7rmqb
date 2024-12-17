@@ -62,12 +62,18 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       const documentsData: Document[] = [];
       const delegatesData: Delegate[] = [];
       const subscriptionData: ISubscription = {
+        id: 'sub_123',
         userId: user?.id || '',
         plan: SubscriptionPlan.PREMIUM,
         status: SubscriptionStatus.ACTIVE,
         autoRenew: true,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         lastBillingDate: new Date(),
-        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        billingCycle: 'monthly',
+        features: ['unlimited_storage', 'priority_support'],
+        price: 19.99
       };
 
       setDocuments(documentsData);

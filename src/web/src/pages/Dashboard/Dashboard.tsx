@@ -29,7 +29,7 @@ import { SubscriptionCard } from '../../components/subscription/SubscriptionCard
 import { useAuth } from '../../hooks/useAuth';
 import { Document } from '../../types/document.types';
 import { Delegate } from '../../types/delegate.types';
-import { ISubscription, SubscriptionPlan, SubscriptionStatus, BillingCycle } from '../../types/subscription.types';
+import { ISubscription, SubscriptionPlan, SubscriptionStatus } from '../../types/subscription.types';
 
 // Interface for component props
 interface DashboardProps {
@@ -71,7 +71,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
         endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         lastBillingDate: new Date(),
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        billingCycle: BillingCycle.MONTHLY,
+        billingCycle: 'monthly',
         features: ['unlimited_storage', 'priority_support'],
         price: 19.99
       };

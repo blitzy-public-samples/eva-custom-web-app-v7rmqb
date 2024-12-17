@@ -60,7 +60,7 @@ const Settings: React.FC = () => {
   /**
    * Enhanced profile form submission handler with security validation
    */
-  const handleProfileSubmit = async (values: ProfileFormProps['initialData']) => {
+  const handleProfileSubmit = async (values: NonNullable<ProfileFormProps['initialData']>) => {
     try {
       setLoading(true);
       setError(null);

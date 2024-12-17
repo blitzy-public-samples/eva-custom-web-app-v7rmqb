@@ -107,14 +107,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: Record<string, any>, auth: any) => {
+  const handleSubmit = async (values: ProfileFormData) => {
     try {
-      await onSubmit({
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-        province: values.province
-      });
+      await onSubmit(values);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;

@@ -63,7 +63,8 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       const delegatesData: Delegate[] = [];
       const subscriptionData: ISubscription = {
         userId: user?.id || '',
-        plan: 'premium',
+        shopifySubscriptionId: 'sub_123',
+        shopifyCustomerId: 'cust_123',
         status: 'active',
         autoRenew: true,
         paymentMethod: 'credit_card',

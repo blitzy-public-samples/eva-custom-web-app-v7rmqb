@@ -193,6 +193,7 @@ const Profile: React.FC = React.memo(() => {
             <ProfileForm
               onSubmit={handleProfileUpdate}
               initialData={initialProfileData}
+              isSubmitting={isSubmitting}
             />
           </Box>
         </Box>

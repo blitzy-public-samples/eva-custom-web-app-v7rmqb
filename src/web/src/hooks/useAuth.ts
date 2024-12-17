@@ -257,11 +257,11 @@ export const useAuth = () => {
     loading: authState.loading,
     error: authState.error as AuthError | null,
     mfaRequired: authState.mfaRequired,
-    mfaVerified: authState.mfaVerified,
+    isMFAVerified: authState.mfaVerified,
     requiresMFA: authState.mfaRequired && !authState.mfaVerified,
     isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
     token: authState.sessionToken,
-    role: authState.user?.role,
+    userRole: authState.user?.role,
 
     // Authentication operations
     login: handleLogin,

@@ -44,7 +44,7 @@ interface EncryptionMonitor {
  * with comprehensive security features and PIPEDA compliance
  */
 export class DocumentService {
-  private static instance: DocumentService | null = null;
+  private static instance: DocumentService;
   private uploadProgress: Map<string, DocumentUploadState>;
   private encryptionMonitor: EncryptionMonitor;
 

@@ -7,7 +7,6 @@ import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
 import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
-// Constants for form field names and validation
 const FORM_FIELDS = {
   NAME: 'name',
   EMAIL: 'email',
@@ -15,7 +14,6 @@ const FORM_FIELDS = {
   PROVINCE: 'province'
 } as const;
 
-// List of Canadian provinces
 const PROVINCES = [
   'Alberta',
   'British Columbia',
@@ -29,7 +27,6 @@ const PROVINCES = [
   'Saskatchewan'
 ] as const;
 
-// Validation messages optimized for senior users
 const VALIDATION_MESSAGES = {
   NAME_REQUIRED: 'Please enter your full name',
   NAME_MIN: 'Your name must be at least 2 characters long',
@@ -42,7 +39,6 @@ const VALIDATION_MESSAGES = {
   PROVINCE_INVALID: 'Please select a valid Canadian province'
 } as const;
 
-// Interface for form data with strict validation types
 export interface ProfileFormData {
   name: string;
   email: string;
@@ -50,14 +46,12 @@ export interface ProfileFormData {
   province: string;
 }
 
-// Props interface for ProfileForm component
 export interface ProfileFormProps {
   onSubmit: (values: ProfileFormData) => void | Promise<void>;
   initialData?: ProfileFormData | null;
   isSubmitting: boolean;
 }
 
-// Enhanced validation schema with Canadian-specific rules
 const validationSchema = yup.object().shape({
   name: yup
     .string()
@@ -70,7 +64,7 @@ const validationSchema = yup.object().shape({
     .string()
     .required(VALIDATION_MESSAGES.EMAIL_REQUIRED)
     .email(VALIDATION_MESSAGES.EMAIL_INVALID)
-    .max(254) // RFC 5321 length limit
+    .max(254)
     .matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, VALIDATION_MESSAGES.EMAIL_INVALID),
   
   phone: yup
@@ -87,19 +81,13 @@ const validationSchema = yup.object().shape({
     .oneOf(PROVINCES, VALIDATION_MESSAGES.PROVINCE_INVALID)
 });
 
-/**
- * Enhanced profile form component with senior-friendly design and accessibility features.
- * Implements comprehensive validation and security measures for user data handling.
- */
 const ProfileForm: React.FC<ProfileFormProps> = React.memo(({ 
   onSubmit, 
   initialData = null,
   isSubmitting 
 }) => {
-  // Get current user data from auth context
   const { user } = useAuth();
 
-  // Initialize form with user's current profile data
   const defaultValues: ProfileFormData = {
     name: initialData?.name || user?.name || '',
     email: initialData?.email || user?.email || '',
@@ -107,7 +95,6 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     province: initialData?.province || ''
   };
 
-  // Handle form submission with validation
   const handleSubmit = async (values: ProfileFormData) => {
     try {
       await onSubmit(values);
@@ -180,7 +167,6 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   );
 });
 
-// Display name for debugging
 ProfileForm.displayName = 'ProfileForm';
 
 export default ProfileForm;

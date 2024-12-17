@@ -55,7 +55,7 @@ export const Subscription: React.FC = () => {
           billingCycle: selectedPlan.billingCycle,
           description: selectedPlan.description,
           features: selectedPlan.features
-        },
+        } as SubscriptionPlan,
         billingCycle: selectedPlan.billingCycle,
         autoRenew: true,
         status: SubscriptionStatus.ACTIVE

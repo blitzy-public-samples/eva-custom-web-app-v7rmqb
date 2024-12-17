@@ -6,6 +6,7 @@ import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/materia
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
 import { DelegateRole } from '../../../types/delegate.types';
+import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
 const ANALYTICS_EVENTS = {
   DELEGATE_FORM_START: 'delegate_form_start',
@@ -108,7 +109,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .max(500, t('delegate.form.errors.notes.max'))
   }), [t]);
 
-  const handleSubmit = useCallback(async (values: DelegateData) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -154,7 +155,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }, []);
 
   return (
-    <Form<DelegateData>
+    <Form<Record<string, any>>
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
       validationSchema={validationSchema}

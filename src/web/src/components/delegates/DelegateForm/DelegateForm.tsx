@@ -75,8 +75,7 @@ const ROLE_PERMISSIONS: Record<DelegateRole, DelegatePermission[]> = {
   [DelegateRole.LEGAL_ADVISOR]: [
     { resourceType: 'LEGAL', accessLevel: 'READ' },
     { resourceType: 'FINANCIAL', accessLevel: 'READ' }
-  ],
-  [DelegateRole.OWNER]: []
+  ]
 };
 
 /**
@@ -122,7 +121,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: DelegateData) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -130,7 +129,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
       const payload = {
         ...values,
-        permissions: ROLE_PERMISSIONS[values.role]
+        permissions: ROLE_PERMISSIONS[values.role as DelegateRole]
       };
 
       const response = await fetch('/api/delegates', {
@@ -187,19 +186,19 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
         <Input
           id="email"
+          name="email"
           label={t('delegate.form.email')}
           type="email"
           required
           autoComplete="email"
-          fieldName="email"
         />
 
         <Input
           id="name"
+          name="name"
           label={t('delegate.form.name')}
           required
           autoComplete="name"
-          fieldName="name"
         />
 
         <Box>
@@ -207,35 +206,32 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
             {t('delegate.form.role')}
           </Typography>
           {Object.values(DelegateRole).map((role: DelegateRole) => (
-            role !== DelegateRole.OWNER && (
-              <FormControlLabel
-                key={String(role)}
-                control={
-                  <Checkbox
-                    name="role"
-                    value={role}
-                    checked={role === DelegateRole.EXECUTOR}
-                  />
-                }
-                label={t(`delegate.roles.${role.toLowerCase()}`)}
-              />
-            )
+            <FormControlLabel
+              key={String(role)}
+              control={
+                <Checkbox
+                  name="role"
+                  value={role}
+                  checked={role === DelegateRole.EXECUTOR}
+                />
+              }
+              label={t(`delegate.roles.${role.toLowerCase()}`)}
+            />
           ))}
         </Box>
 
         <Input
           id="expiresAt"
+          name="expiresAt"
           label={t('delegate.form.expiresAt')}
-          type="date"
-          fieldName="expiresAt"
+          type="text"
         />
 
         <Input
           id="notes"
+          name="notes"
           label={t('delegate.form.notes')}
           type="text"
-          rows={4}
-          fieldName="notes"
         />
       </Stack>
     </Form>

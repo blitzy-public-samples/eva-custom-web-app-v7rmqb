@@ -90,18 +90,24 @@ const Form: React.FC<FormProps> = React.memo(({
           errors: {}
         };
       } catch (errors) {
+        if (errors instanceof yup.ValidationError) {
+          return {
+            values: {},
+            errors: errors.inner.reduce(
+              (allErrors: Record<string, { type: string; message: string }>, currentError) => ({
+                ...allErrors,
+                [currentError.path || '']: {
+                  type: currentError.type ?? 'validation',
+                  message: currentError.message
+                }
+              }),
+              {}
+            )
+          };
+        }
         return {
           values: {},
-          errors: errors.inner.reduce(
-            (allErrors: any, currentError: any) => ({
-              ...allErrors,
-              [currentError.path]: {
-                type: currentError.type ?? 'validation',
-                message: currentError.message
-              }
-            }),
-            {}
-          )
+          errors: { '': { type: 'validation', message: 'Validation failed' } }
         };
       }
     } : undefined

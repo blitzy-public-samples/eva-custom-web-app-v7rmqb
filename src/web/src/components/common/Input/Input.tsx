@@ -18,7 +18,7 @@ export interface InputProps {
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
-  type?: 'text' | 'email' | 'password' | 'tel';
+  type?: 'text' | 'email' | 'password' | 'tel' | 'date';
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;

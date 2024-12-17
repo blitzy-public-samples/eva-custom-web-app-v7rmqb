@@ -91,7 +91,7 @@ const Register: React.FC = () => {
     }
   }, [register, navigate]);
 
-  const renderForm = (formProps: { values: Record<string, any>; handleChange: (e: any) => void }) => (
+  const renderForm = ({ values, handleChange }: { values: Record<string, any>; handleChange: (e: any) => void }) => (
     <>
       <Input
         id="name"
@@ -103,8 +103,8 @@ const Register: React.FC = () => {
         placeholder="Enter your full name"
         error={formError}
         aria-label="Enter your full name"
-        value={formProps.values.name}
-        onChange={formProps.handleChange}
+        value={values.name}
+        onChange={handleChange}
       />
 
       <Input
@@ -117,8 +117,8 @@ const Register: React.FC = () => {
         placeholder="Enter your email address"
         error={formError}
         aria-label="Enter your email address"
-        value={formProps.values.email}
-        onChange={formProps.handleChange}
+        value={values.email}
+        onChange={handleChange}
       />
 
       <Input
@@ -131,8 +131,8 @@ const Register: React.FC = () => {
         placeholder="Create a secure password"
         error={formError}
         aria-label="Create a secure password"
-        value={formProps.values.password}
-        onChange={formProps.handleChange}
+        value={values.password}
+        onChange={handleChange}
       />
 
       <Select
@@ -143,8 +143,8 @@ const Register: React.FC = () => {
         fullWidth
         helpText="Select your province for jurisdiction-specific features"
         aria-label="Select your province"
-        value={formProps.values.province}
-        onChange={(value) => formProps.handleChange({ target: { name: 'province', value } })}
+        value={values.province}
+        onChange={(value) => handleChange({ target: { name: 'province', value } })}
         onBlur={() => {}}
       />
 
@@ -229,7 +229,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {(props) => renderForm(props)}
+        {renderForm}
       </Form>
     </RegisterContainer>
   );

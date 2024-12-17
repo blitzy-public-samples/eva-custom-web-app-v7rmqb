@@ -22,7 +22,8 @@ const initialState: AuthState = {
   mfaVerified: false,
   mfaPending: false,
   sessionExpiry: null,
-  lastActivity: Date.now()
+  lastActivity: Date.now(),
+  sessionToken: null
 };
 
 /**
@@ -189,7 +190,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-        state.user = action.payload.user;
+        state.sessionToken = action.payload;
         state.sessionExpiry = action.payload.expiresAt;
         state.loading = false;
         state.error = null;
@@ -200,6 +201,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.isAuthenticated = false;
         state.user = null;
+        state.sessionToken = null;
       })
 
     // Register reducers
@@ -245,6 +247,7 @@ const authSlice = createSlice({
     // Token refresh reducers
     builder
       .addCase(refreshToken.fulfilled, (state, action) => {
+        state.sessionToken = action.payload;
         state.sessionExpiry = action.payload.expiresAt;
         state.lastActivity = Date.now();
       })
@@ -255,6 +258,7 @@ const authSlice = createSlice({
     // Session refresh reducers
     builder
       .addCase(refreshSession.fulfilled, (state, action) => {
+        state.sessionToken = action.payload;
         state.sessionExpiry = action.payload.expiresAt;
         state.lastActivity = Date.now();
       })

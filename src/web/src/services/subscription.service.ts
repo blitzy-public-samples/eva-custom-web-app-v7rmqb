@@ -129,6 +129,27 @@ export class SubscriptionService {
   }
 
   /**
+   * Gets all available subscription plans
+   */
+  public async getSubscriptionPlans(): Promise<ISubscriptionPlanDetails[]> {
+    try {
+      const plans = await apiService.get<ISubscriptionPlanDetails[]>(
+        '/api/v1/subscription-plans'
+      );
+      
+      // Update cache with fetched plans
+      plans.forEach(plan => {
+        this.subscriptionPlansCache.set(plan.plan, plan);
+      });
+      
+      return plans;
+    } catch (error) {
+      console.error('Failed to fetch subscription plans:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Gets subscription plan details
    */
   public async getSubscriptionPlan(plan: SubscriptionPlan): Promise<ISubscriptionPlanDetails> {

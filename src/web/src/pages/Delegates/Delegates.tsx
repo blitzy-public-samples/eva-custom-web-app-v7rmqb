@@ -222,7 +222,7 @@ const Delegates: React.FC = React.memo(() => {
           </Typography>
 
           <DelegateForm
-            delegate={selectedDelegate}
+            delegate={selectedDelegate as any}
             onSuccess={handleSuccess}
             onCancel={handleDialogClose}
             onError={handleError}

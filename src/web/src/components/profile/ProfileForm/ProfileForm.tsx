@@ -95,7 +95,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     province: initialData?.province || ''
   };
 
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: ProfileFormData, auth: Auth0ContextInterface<User>) => {
     try {
       await onSubmit(values);
     } catch (error) {
@@ -117,52 +117,62 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       testId="profile-form"
       isSubmitting={isSubmitting}
     >
-      <Stack spacing={3} width="100%">
-        <Input
-          name={FORM_FIELDS.NAME}
-          label="Full Name"
-          type="text"
-          required
-          autoComplete="name"
-          placeholder="Enter your full name"
-        />
+      {({ values, handleChange, handleBlur }) => (
+        <Stack spacing={3} width="100%">
+          <Input
+            id={FORM_FIELDS.NAME}
+            name={FORM_FIELDS.NAME}
+            label="Full Name"
+            type="text"
+            required
+            autoComplete="name"
+            placeholder="Enter your full name"
+            value={values.name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Input
-          name={FORM_FIELDS.EMAIL}
-          label="Email Address"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="Enter your email address"
-        />
+          <Input
+            id={FORM_FIELDS.EMAIL}
+            name={FORM_FIELDS.EMAIL}
+            label="Email Address"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="Enter your email address"
+            value={values.email}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Input
-          name={FORM_FIELDS.PHONE}
-          label="Phone Number"
-          type="tel"
-          required
-          autoComplete="tel"
-          placeholder="Enter your phone number (e.g., 123-456-7890)"
-        />
+          <Input
+            id={FORM_FIELDS.PHONE}
+            name={FORM_FIELDS.PHONE}
+            label="Phone Number"
+            type="tel"
+            required
+            autoComplete="tel"
+            placeholder="Enter your phone number (e.g., 123-456-7890)"
+            value={values.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
 
-        <Select
-          name={FORM_FIELDS.PROVINCE}
-          label="Province"
-          required
-          placeholder="Select your province"
-          options={PROVINCES.map(province => ({
-            value: province,
-            label: province
-          }))}
-          value={defaultValues.province}
-          onChange={(value: string | number) => {
-            // Handle change is managed by Form component
-          }}
-          onBlur={() => {
-            // Handle blur is managed by Form component
-          }}
-        />
-      </Stack>
+          <Select
+            name={FORM_FIELDS.PROVINCE}
+            label="Province"
+            required
+            placeholder="Select your province"
+            options={PROVINCES.map(province => ({
+              value: province,
+              label: province
+            }))}
+            value={values.province}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+        </Stack>
+      )}
     </Form>
   );
 });

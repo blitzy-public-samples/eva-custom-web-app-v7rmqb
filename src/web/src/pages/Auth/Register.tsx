@@ -226,7 +226,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {renderForm}
+        {(props) => renderForm(props)}
       </Form>
     </RegisterContainer>
   );

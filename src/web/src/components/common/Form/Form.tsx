@@ -1,7 +1,7 @@
 import React from 'react'; // v18.2+
 import { FormProvider, useForm } from 'react-hook-form'; // v7.0.0
 import { Box, Stack, Alert } from '@mui/material'; // v5.11+
-import { useAuth0 } from '@auth0/auth0-react'; // v2.0.0
+import { useAuth0, User } from '@auth0/auth0-react'; // v2.0.0
 import * as yup from 'yup';
 import { Button } from '../Button/Button';
 import { validateLoginPayload, validateRegisterPayload } from '../../../utils/validation.util';
@@ -37,17 +37,25 @@ const ANALYTICS_EVENTS = {
 } as const;
 
 // Form component props interface
+// Add this interface to define the form render props
+export interface FormRenderProps {
+  values: Record<string, any>;
+  setFieldValue: (field: string, value: any) => void;
+}
+
+// Update the Form component props interface to include children as a render prop
 export interface FormProps {
   initialValues: Record<string, any>;
-  onSubmit: (values: Record<string, any>, auth: Auth0ContextInterface) => void | Promise<void>;
-  children: React.ReactNode;
-  submitLabel?: string;
-  resetLabel?: string;
+  onSubmit: (values: Record<string, any>, auth: Auth0ContextInterface<User>) => Promise<void>;
+  validationSchema: yup.Schema<any>;
+  submitLabel: string;
   showReset?: boolean;
+  resetLabel?: string;
+  onReset?: () => void;
   isProtected?: boolean;
   analyticsEvent?: string;
-  testId?: string;
-  validationSchema?: yup.ObjectSchema<any>;
+  'data-testid'?: string;
+  children: (props: FormRenderProps) => React.ReactElement;
 }
 
 declare global {
@@ -90,18 +98,24 @@ const Form: React.FC<FormProps> = React.memo(({
           errors: {}
         };
       } catch (errors) {
+        if (errors instanceof yup.ValidationError) {
+          return {
+            values: {},
+            errors: errors.inner.reduce(
+              (allErrors: Record<string, { type: string; message: string }>, currentError) => ({
+                ...allErrors,
+                [currentError.path || '']: {
+                  type: currentError.type ?? 'validation',
+                  message: currentError.message
+                }
+              }),
+              {}
+            )
+          };
+        }
         return {
           values: {},
-          errors: errors.inner.reduce(
-            (allErrors: any, currentError: any) => ({
-              ...allErrors,
-              [currentError.path]: {
-                type: currentError.type ?? 'validation',
-                message: currentError.message
-              }
-            }),
-            {}
-          )
+          errors: { '': { type: 'validation', message: 'Validation failed' } }
         };
       }
     } : undefined
@@ -215,7 +229,6 @@ const Form: React.FC<FormProps> = React.memo(({
         aria-label={ARIA_LABELS.FORM}
       >
         <Stack spacing={FORM_STYLES.GAP}>
-          {/* Form Fields */}
           {children}
 
           {/* Error Message */}

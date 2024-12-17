@@ -109,7 +109,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .max(500, t('delegate.form.errors.notes.max'))
   }), [t]);
 
-  const handleSubmit = useCallback(async (values: DelegateData, auth: Auth0ContextInterface<User>) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -117,7 +117,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
       const payload = {
         ...values,
-        permissions: ROLE_PERMISSIONS[values.role]
+        permissions: ROLE_PERMISSIONS[values.role as DelegateRole]
       };
 
       const response = await fetch('/api/delegates', {
@@ -167,7 +167,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       analyticsEvent="delegate_form"
       data-testid="delegate-form"
     >
-      {({ values, setFieldValue }: { values: DelegateData; setFieldValue: (field: string, value: any) => void }) => (
+      {({ values, setFieldValue }) => (
         <Stack spacing={3}>
           <Typography variant="h6" component="h2">
             {t(delegate ? 'delegate.form.editTitle' : 'delegate.form.createTitle')}

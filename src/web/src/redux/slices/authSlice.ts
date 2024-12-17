@@ -189,14 +189,7 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-        state.user = {
-          id: action.payload.id,
-          email: action.payload.email,
-          name: action.payload.name,
-          province: action.payload.province,
-          mfaEnabled: action.payload.mfaEnabled,
-          phone: action.payload.phone
-        };
+        state.user = action.payload.user;
         state.sessionExpiry = action.payload.expiresAt;
         state.loading = false;
         state.error = null;

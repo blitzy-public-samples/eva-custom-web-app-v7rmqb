@@ -25,9 +25,6 @@ const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
 const Documents = lazy(() => import('../pages/Documents/Documents'));
 const Delegates = lazy(() => import('../pages/Delegates/Delegates'));
 const Profile = lazy(() => import('../pages/Profile/Profile'));
-const MFAVerify = lazy(() => import('../pages/Auth/MFAVerify'));
-const NotFound = lazy(() => import('../pages/Auth/NotFound'));
-const Unauthorized = lazy(() => import('../pages/Auth/Unauthorized'));
 
 // Error fallback component
 const ErrorFallback: FC<{ error: Error }> = ({ error }) => (
@@ -96,16 +93,6 @@ export const AppRoutes: FC = () => {
             }
           />
 
-          {/* MFA Verification Route */}
-          <Route
-            path="/mfa-verify"
-            element={
-              <PrivateRoute requireMFA={false}>
-                <MFAVerify />
-              </PrivateRoute>
-            }
-          />
-
           {/* Protected Routes */}
           <Route
             path="/dashboard"
@@ -139,17 +126,6 @@ export const AppRoutes: FC = () => {
               </PrivateRoute>
             }
           />
-
-          {/* Error Routes */}
-          <Route
-            path="/unauthorized"
-            element={
-              <PrivateRoute requireMFA={false}>
-                <Unauthorized />
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>

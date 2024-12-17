@@ -11,6 +11,7 @@ export interface User {
     province: Province;
     phone: string;
     mfaEnabled: boolean;
+    role: UserRole;
     profile?: Record<string, unknown>;
 }
 
@@ -61,6 +62,7 @@ export interface AuthState {
     mfaRequired: boolean;        // MFA requirement flag
     sessionExpiry: number | null; // Session expiration timestamp
     lastActivity: number;        // Last user activity timestamp
+    sessionToken: AuthToken;     // Current session token
 }
 
 /**
@@ -71,6 +73,16 @@ export interface AuthToken {
     accessToken: string;         // JWT access token
     idToken: string;            // OpenID Connect ID token
     expiresAt: number;          // Token expiration timestamp
+    id: string;                 // User ID
+    email: string;              // User email
+    name: string;               // User name
+    province: Province;         // User province
+    mfaEnabled: boolean;        // MFA status
+    phone: string;              // User phone
+    status: {                   // Token status
+        requiresMFA: boolean;
+        mfaVerified: boolean;
+    };
 }
 
 /**
@@ -177,6 +189,11 @@ export interface ISubscription {
     features: string[];
     price: number;
     billingCycle: string;
+    plan: string;
+    shopifySubscriptionId: string;
+    shopifyCustomerId: string;
+    lastBillingDate: string;
+    nextBillingDate: string;
 }
 
 /**

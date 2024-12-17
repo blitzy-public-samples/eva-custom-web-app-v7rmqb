@@ -8,7 +8,7 @@
  */
 
 // External imports
-import { UUID } from 'crypto'; // v18.0.0+
+import { UUID } from 'crypto';
 
 /**
  * Enumeration of possible delegate roles in the system.

@@ -70,6 +70,35 @@ export class DocumentService {
   }
 
   /**
+   * Checks the encryption status of a document
+   */
+  public async checkEncryptionStatus(documentId: string): Promise<boolean> {
+    try {
+      // First check local encryption monitor
+      if (this.encryptionMonitor.status.has(documentId)) {
+        return this.encryptionMonitor.status.get(documentId) || false;
+      }
+
+      // If not in local monitor, fetch from API
+      const document = await apiService.get<Document>(
+        `${API_BASE_PATH}/${documentId}`
+      );
+
+      const isEncrypted = document.status === DocumentStatus.COMPLETED;
+      this.encryptionMonitor.status.set(documentId, isEncrypted);
+      this.encryptionMonitor.progress.set(documentId, isEncrypted ? 100 : 50);
+
+      return isEncrypted;
+    } catch (error: unknown) {
+      this.logSecurityEvent('ENCRYPTION_STATUS_CHECK_FAILURE', {
+        documentId,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+      return false;
+    }
+  }
+
+  /**
    * Retrieves documents based on specified criteria
    */
   public async getDocuments(params: GetDocumentsParams): Promise<Document[]> {

@@ -47,10 +47,10 @@ export const Subscription: React.FC = () => {
       }
 
       await updateSubscription({
-        plan: selectedPlan.plan,
-        billingCycle: selectedPlan.billingCycle,
+        planId: selectedPlan.id,
+        billingCycles: selectedPlan.billingCycles[0], // Use first available billing cycle
         autoRenew: true,
-        status: currentSubscription?.status || 'ACTIVE'
+        status: 'active' // Use lowercase enum value
       });
 
       // Announce success to screen readers
@@ -66,7 +66,7 @@ export const Subscription: React.FC = () => {
     } finally {
       setSelectedPlanId(null);
     }
-  }, [availablePlans, currentSubscription, updateSubscription]);
+  }, [availablePlans, updateSubscription]);
 
   /**
    * Handles subscription cancellation with confirmation
@@ -120,6 +120,15 @@ export const Subscription: React.FC = () => {
     </Grid>
   );
 
+  // Create a complete subscription object with all required properties
+  const completeSubscription = currentSubscription ? {
+    ...currentSubscription,
+    shopifySubscriptionId: currentSubscription.shopifySubscriptionId || '',
+    shopifyCustomerId: currentSubscription.shopifyCustomerId || '',
+    lastBillingDate: currentSubscription.lastBillingDate || new Date().toISOString(),
+    nextBillingDate: currentSubscription.nextBillingDate || new Date().toISOString()
+  } : null;
+
   return (
     <Container
       maxWidth="lg"
@@ -160,11 +169,11 @@ export const Subscription: React.FC = () => {
       >
         {loading.any ? (
           renderSubscriptionSkeleton()
-        ) : currentSubscription && (
+        ) : completeSubscription && (
           <SubscriptionCard
-            subscription={currentSubscription}
+            subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.id === currentSubscription.plan
+              plan => plan.id === completeSubscription.planId
             ) || {
               name: 'Loading...',
               price: 0,
@@ -201,11 +210,11 @@ export const Subscription: React.FC = () => {
           renderPlansSkeleton()
         ) : (
           <Grid container spacing={3}>
-            {availablePlans.map((plan: ISubscriptionPlanDetails) => (
+            {availablePlans.map((plan) => (
               <Grid item xs={12} md={4} key={plan.id}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.plan === plan.id}
+                  isCurrentPlan={currentSubscription?.planId === plan.id}
                   onSelect={handlePlanSelect}
                   isLoading={selectedPlanId === plan.id}
                   error={error.update ? new Error(error.update) : null}

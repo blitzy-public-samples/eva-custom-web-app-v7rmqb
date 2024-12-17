@@ -139,7 +139,7 @@ export class SubscriptionService {
       
       // Update cache with fetched plans
       plans.forEach(plan => {
-        this.subscriptionPlansCache.set(plan.plan, plan);
+        this.subscriptionPlansCache.set(String(plan.plan), plan);
       });
       
       return plans;

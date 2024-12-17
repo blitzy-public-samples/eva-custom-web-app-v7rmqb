@@ -73,6 +73,7 @@ export interface ISubscription {
   shopifyCustomerId: string;
   lastBillingDate: Date | null;
   nextBillingDate: Date | null;
+  features: string[];
 }
 
 /**

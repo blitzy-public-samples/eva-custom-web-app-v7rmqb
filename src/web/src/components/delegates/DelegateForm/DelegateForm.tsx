@@ -5,7 +5,7 @@ import * as yup from 'yup';
 import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/material';
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
-import { DelegateRole } from '../../../../../backend/src/types/delegate.types';
+import { DelegateRole } from '../../../types/delegate.types';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -50,12 +50,12 @@ declare global {
 }
 
 // Initial form values
-const INITIAL_VALUES = {
+const INITIAL_VALUES: DelegateData = {
   email: '',
   name: '',
   role: DelegateRole.EXECUTOR,
   permissions: [] as DelegatePermission[],
-  expiresAt: null as Date | null,
+  expiresAt: null,
   notes: ''
 };
 
@@ -104,8 +104,8 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .min(2, t('delegate.form.errors.name.min'))
       .max(100, t('delegate.form.errors.name.max'))
       .matches(/^[a-zA-Z\u00c0-\u00ff\s'-]+$/, t('delegate.form.errors.name.format')),
-    role: yup.string()
-      .oneOf(Object.values(DelegateRole), t('delegate.form.errors.role.invalid'))
+    role: yup.mixed<DelegateRole>()
+      .oneOf(Object.values(DelegateRole) as DelegateRole[], t('delegate.form.errors.role.invalid'))
       .required(t('delegate.form.errors.role.required')),
     permissions: yup.array()
       .of(yup.object().shape({
@@ -122,7 +122,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
   }), [t]);
 
   // Handle form submission with proper error handling and analytics
-  const handleSubmit = useCallback(async (values: Record<string, any>) => {
+  const handleSubmit = useCallback(async (values: DelegateData) => {
     try {
       window.analytics?.track(ANALYTICS_EVENTS.DELEGATE_FORM_SUBMIT, {
         delegateRole: values.role
@@ -130,7 +130,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
       const payload = {
         ...values,
-        permissions: ROLE_PERMISSIONS[values.role as DelegateRole]
+        permissions: ROLE_PERMISSIONS[values.role]
       };
 
       const response = await fetch('/api/delegates', {
@@ -171,7 +171,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
-      validation={validationSchema}
+      validationSchema={validationSchema}
       submitLabel={t(delegate ? 'delegate.form.update' : 'delegate.form.create')}
       showReset
       resetLabel={t('common.cancel')}
@@ -191,7 +191,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           type="email"
           required
           autoComplete="email"
-          name="email"
+          fieldName="email"
         />
 
         <Input
@@ -199,17 +199,17 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           label={t('delegate.form.name')}
           required
           autoComplete="name"
-          name="name"
+          fieldName="name"
         />
 
         <Box>
           <Typography variant="subtitle2" gutterBottom>
             {t('delegate.form.role')}
           </Typography>
-          {Object.values(DelegateRole).map(role => (
+          {Object.values(DelegateRole).map((role: DelegateRole) => (
             role !== DelegateRole.OWNER && (
               <FormControlLabel
-                key={role}
+                key={String(role)}
                 control={
                   <Checkbox
                     name="role"
@@ -226,18 +226,16 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         <Input
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
-          type="text"
-          name="expiresAt"
-          inputProps={{ type: 'date' }}
+          type="date"
+          fieldName="expiresAt"
         />
 
         <Input
           id="notes"
           label={t('delegate.form.notes')}
           type="text"
-          multiline
-          maxRows={4}
-          name="notes"
+          rows={4}
+          fieldName="notes"
         />
       </Stack>
     </Form>

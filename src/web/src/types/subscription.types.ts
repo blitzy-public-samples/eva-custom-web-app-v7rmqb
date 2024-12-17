@@ -10,7 +10,8 @@
 export enum SubscriptionPlan {
   FREE = 'FREE',
   BASIC = 'BASIC',
-  PREMIUM = 'PREMIUM'
+  PREMIUM = 'PREMIUM',
+  ENTERPRISE = 'ENTERPRISE'
 }
 
 /**
@@ -65,6 +66,7 @@ export interface ISubscription {
   startDate: Date;
   endDate: Date | null;
   autoRenew: boolean;
+  billingCycle: BillingCycle;
   shopifySubscriptionId: string;
   shopifyCustomerId: string;
   lastBillingDate: Date | null;

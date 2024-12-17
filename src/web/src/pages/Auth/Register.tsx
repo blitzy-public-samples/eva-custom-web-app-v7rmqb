@@ -9,6 +9,7 @@ import Select from '../../components/common/Select/Select';
 import { styled } from '@mui/material/styles';
 import { Box, Typography, Alert, Link } from '@mui/material';
 import * as Yup from 'yup';
+import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
 const RegisterContainer = styled(Box)(() => ({
   maxWidth: '600px',
@@ -56,7 +57,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
 
-  const handleSubmit = useCallback(async (values: RegisterPayload) => {
+  const handleSubmit = useCallback(async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
       setFormError(undefined);
 
@@ -112,7 +113,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {({ values, handleChange }: { values: RegisterPayload; handleChange: (e: any) => void }) => (
+        {(formProps: { values: Record<string, any>; handleChange: (e: any) => void }) => (
           <>
             <Input
               id="name"
@@ -123,8 +124,8 @@ const Register: React.FC = () => {
               placeholder="Enter your full name"
               error={formError}
               aria-label="Enter your full name"
-              value={values.name}
-              onChange={handleChange}
+              value={formProps.values.name}
+              onChange={formProps.handleChange}
             />
 
             <Input
@@ -136,8 +137,8 @@ const Register: React.FC = () => {
               placeholder="Enter your email address"
               error={formError}
               aria-label="Enter your email address"
-              value={values.email}
-              onChange={handleChange}
+              value={formProps.values.email}
+              onChange={formProps.handleChange}
             />
 
             <Input
@@ -149,8 +150,8 @@ const Register: React.FC = () => {
               placeholder="Create a secure password"
               error={formError}
               aria-label="Create a secure password"
-              value={values.password}
-              onChange={handleChange}
+              value={formProps.values.password}
+              onChange={formProps.handleChange}
             />
 
             <Select
@@ -161,8 +162,8 @@ const Register: React.FC = () => {
               fullWidth
               helpText="Select your province for jurisdiction-specific features"
               aria-label="Select your province"
-              value={values.province}
-              onChange={(value) => handleChange({ target: { name: 'province', value } })}
+              value={formProps.values.province}
+              onChange={(value) => formProps.handleChange({ target: { name: 'province', value } })}
               onBlur={() => {}}
             />
 

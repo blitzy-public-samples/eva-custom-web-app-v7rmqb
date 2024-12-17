@@ -82,7 +82,29 @@ const Form: React.FC<FormProps> = React.memo(({
   const methods = useForm({
     defaultValues: initialValues,
     mode: 'onChange',
-    resolver: validationSchema ? yup.reach(validationSchema) : undefined
+    resolver: validationSchema ? async (data, context, options) => {
+      try {
+        const values = await validationSchema.validate(data, { abortEarly: false });
+        return {
+          values,
+          errors: {}
+        };
+      } catch (errors) {
+        return {
+          values: {},
+          errors: errors.inner.reduce(
+            (allErrors: any, currentError: any) => ({
+              ...allErrors,
+              [currentError.path]: {
+                type: currentError.type ?? 'validation',
+                message: currentError.message
+              }
+            }),
+            {}
+          )
+        };
+      }
+    } : undefined
   });
 
   const { handleSubmit, reset, formState: { isSubmitting, isDirty } } = methods;

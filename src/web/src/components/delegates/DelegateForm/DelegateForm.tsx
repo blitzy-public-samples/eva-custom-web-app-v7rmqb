@@ -5,7 +5,7 @@ import * as yup from 'yup';
 import { Box, Stack, Typography, FormControlLabel, Checkbox } from '@mui/material';
 import Form from '../../../components/common/Form/Form';
 import Input from '../../../components/common/Input/Input';
-import { UserRole } from '../../../../../backend/src/types/user.types';
+import { DelegateRole } from '../../../../../backend/src/types/delegate.types';
 
 // Analytics event constants
 const ANALYTICS_EVENTS = {
@@ -20,7 +20,7 @@ interface DelegateData {
   id?: string;
   email: string;
   name: string;
-  role: UserRole;
+  role: DelegateRole;
   permissions: DelegatePermission[];
   expiresAt: Date | null;
   notes?: string;
@@ -53,30 +53,30 @@ declare global {
 const INITIAL_VALUES = {
   email: '',
   name: '',
-  role: UserRole.EXECUTOR,
+  role: DelegateRole.EXECUTOR,
   permissions: [] as DelegatePermission[],
   expiresAt: null as Date | null,
   notes: ''
 };
 
 // Role-based permission presets
-const ROLE_PERMISSIONS: Record<UserRole, DelegatePermission[]> = {
-  [UserRole.EXECUTOR]: [
+const ROLE_PERMISSIONS: Record<DelegateRole, DelegatePermission[]> = {
+  [DelegateRole.EXECUTOR]: [
     { resourceType: 'FINANCIAL', accessLevel: 'READ' },
     { resourceType: 'LEGAL', accessLevel: 'READ' }
   ],
-  [UserRole.HEALTHCARE_PROXY]: [
+  [DelegateRole.HEALTHCARE_PROXY]: [
     { resourceType: 'MEDICAL', accessLevel: 'READ' },
     { resourceType: 'LEGAL', accessLevel: 'READ' }
   ],
-  [UserRole.FINANCIAL_ADVISOR]: [
+  [DelegateRole.FINANCIAL_ADVISOR]: [
     { resourceType: 'FINANCIAL', accessLevel: 'READ' }
   ],
-  [UserRole.LEGAL_ADVISOR]: [
+  [DelegateRole.LEGAL_ADVISOR]: [
     { resourceType: 'LEGAL', accessLevel: 'READ' },
     { resourceType: 'FINANCIAL', accessLevel: 'READ' }
   ],
-  [UserRole.OWNER]: []
+  [DelegateRole.OWNER]: []
 };
 
 /**
@@ -105,7 +105,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
       .max(100, t('delegate.form.errors.name.max'))
       .matches(/^[a-zA-Z\u00c0-\u00ff\s'-]+$/, t('delegate.form.errors.name.format')),
     role: yup.string()
-      .oneOf(Object.values(UserRole), t('delegate.form.errors.role.invalid'))
+      .oneOf(Object.values(DelegateRole), t('delegate.form.errors.role.invalid'))
       .required(t('delegate.form.errors.role.required')),
     permissions: yup.array()
       .of(yup.object().shape({
@@ -130,7 +130,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
 
       const payload = {
         ...values,
-        permissions: ROLE_PERMISSIONS[values.role as UserRole]
+        permissions: ROLE_PERMISSIONS[values.role as DelegateRole]
       };
 
       const response = await fetch('/api/delegates', {
@@ -206,15 +206,15 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           <Typography variant="subtitle2" gutterBottom>
             {t('delegate.form.role')}
           </Typography>
-          {Object.values(UserRole).map(role => (
-            role !== UserRole.OWNER && (
+          {Object.values(DelegateRole).map(role => (
+            role !== DelegateRole.OWNER && (
               <FormControlLabel
                 key={role}
                 control={
                   <Checkbox
                     name="role"
                     value={role}
-                    checked={role === UserRole.EXECUTOR}
+                    checked={role === DelegateRole.EXECUTOR}
                   />
                 }
                 label={t(`delegate.roles.${role.toLowerCase()}`)}

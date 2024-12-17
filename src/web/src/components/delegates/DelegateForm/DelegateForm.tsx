@@ -171,14 +171,14 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
-      validationSchema={validationSchema}
+      validation={validationSchema}
       submitLabel={t(delegate ? 'delegate.form.update' : 'delegate.form.create')}
       showReset
       resetLabel={t('common.cancel')}
       onReset={onCancel}
       isProtected
       analyticsEvent="delegate_form"
-      testId="delegate-form"
+      data-testid="delegate-form"
     >
       <Stack spacing={3}>
         <Typography variant="h6" component="h2">
@@ -191,7 +191,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           type="email"
           required
           autoComplete="email"
-          fieldName="email"
+          name="email"
         />
 
         <Input
@@ -199,7 +199,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           label={t('delegate.form.name')}
           required
           autoComplete="name"
-          fieldName="name"
+          name="name"
         />
 
         <Box>
@@ -226,17 +226,18 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         <Input
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
-          type="date"
-          fieldName="expiresAt"
+          type="text"
+          name="expiresAt"
+          inputProps={{ type: 'date' }}
         />
 
         <Input
           id="notes"
           label={t('delegate.form.notes')}
           type="text"
-          isMultiline
+          multiline
           maxRows={4}
-          fieldName="notes"
+          name="notes"
         />
       </Stack>
     </Form>

@@ -24,6 +24,7 @@ interface SelectProps {
   fullWidth?: boolean;
   helpText?: string;
   ariaLabel?: string;
+  placeholder?: string;
 }
 
 // Styled Components
@@ -94,6 +95,7 @@ const Select: React.FC<SelectProps> = ({
   fullWidth = true,
   helpText,
   ariaLabel,
+  placeholder,
 }) => {
   // Handle keyboard navigation
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -157,6 +159,7 @@ const Select: React.FC<SelectProps> = ({
         labelId={labelId}
         error={!!error}
         disabled={disabled}
+        placeholder={placeholder}
         MenuProps={{
           PaperProps: {
             style: {

@@ -42,13 +42,20 @@ export const Subscription: React.FC = () => {
     try {
       setSelectedPlanId(planId);
       
-      const selectedPlan = availablePlans.find(plan => plan.planId === planId);
+      const selectedPlan = availablePlans.find(plan => plan.id === planId);
       if (!selectedPlan) {
         throw new Error('Selected plan not found');
       }
 
       await updateSubscription({
-        plan: selectedPlan,
+        plan: {
+          id: selectedPlan.id,
+          name: selectedPlan.name,
+          price: selectedPlan.price,
+          billingCycle: selectedPlan.billingCycle,
+          description: selectedPlan.description,
+          features: selectedPlan.features
+        },
         billingCycle: selectedPlan.billingCycle,
         autoRenew: true,
         status: SubscriptionStatus.ACTIVE
@@ -174,7 +181,7 @@ export const Subscription: React.FC = () => {
           <SubscriptionCard
             subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.planId === completeSubscription.plan.planId
+              plan => plan.id === completeSubscription.plan.id
             ) || {
               name: 'Loading...',
               price: 0,
@@ -212,12 +219,12 @@ export const Subscription: React.FC = () => {
         ) : (
           <Grid container spacing={3}>
             {availablePlans.map((plan) => (
-              <Grid item xs={12} md={4} key={plan.planId}>
+              <Grid item xs={12} md={4} key={plan.id}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.plan.planId === plan.planId}
+                  isCurrentPlan={currentSubscription?.plan.id === plan.id}
                   onSelect={handlePlanSelect}
-                  isLoading={selectedPlanId === plan.planId}
+                  isLoading={selectedPlanId === plan.id}
                   error={error.update ? new Error(error.update) : null}
                 />
               </Grid>

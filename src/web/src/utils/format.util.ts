@@ -37,7 +37,8 @@ export const formatSubscriptionPlan = (plan: SubscriptionPlan): string => {
   const planMap: Record<SubscriptionPlan, string> = {
     [SubscriptionPlan.FREE]: 'Free Plan',
     [SubscriptionPlan.BASIC]: 'Basic Plan',
-    [SubscriptionPlan.PREMIUM]: 'Premium Plan'
+    [SubscriptionPlan.PREMIUM]: 'Premium Plan',
+    [SubscriptionPlan.ENTERPRISE]: 'Enterprise Plan'
   };
   
   return planMap[plan] || 'Unknown Plan';

@@ -32,14 +32,6 @@ interface SecuritySettings {
   updatedBy: string;
 }
 
-// Interface for profile form data
-interface ProfileFormData {
-  name: string;
-  email: string;
-  phone: string;
-  province: string;
-}
-
 /**
  * Enhanced settings page component with senior-friendly design and comprehensive security features.
  * Implements WCAG 2.1 Level AA compliance and extensive error handling.
@@ -47,7 +39,7 @@ interface ProfileFormData {
 const Settings: React.FC = () => {
   // Hooks
   const { user } = useAuth();
-  const analytics = new AnalyticsBrowser({
+  const analytics = AnalyticsBrowser.load({
     writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || ''
   });
   
@@ -68,7 +60,7 @@ const Settings: React.FC = () => {
   /**
    * Enhanced profile form submission handler with security validation
    */
-  const handleProfileSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
+  const handleProfileSubmit = async (values: ProfileForm.ProfileFormData) => {
     try {
       setLoading(true);
       setError(null);
@@ -215,8 +207,8 @@ const Settings: React.FC = () => {
           initialData={{
             name: user?.name || '',
             email: user?.email || '',
-            phone: user?.phone || '',
-            province: user?.province || ''
+            phone: '',
+            province: ''
           }}
         />
       </Card>

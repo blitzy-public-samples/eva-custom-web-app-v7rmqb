@@ -23,7 +23,7 @@ interface DelegateData {
   role: UserRole;
   permissions: DelegatePermission[];
   expiresAt: Date | null;
-  notes: string;
+  notes?: string;
 }
 
 // Interface for delegate form props
@@ -171,7 +171,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
     <Form
       initialValues={delegate || INITIAL_VALUES}
       onSubmit={handleSubmit}
-      schema={validationSchema}
+      validationSchema={validationSchema}
       submitLabel={t(delegate ? 'delegate.form.update' : 'delegate.form.create')}
       showReset
       resetLabel={t('common.cancel')}
@@ -191,7 +191,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           type="email"
           required
           autoComplete="email"
-          name="email"
+          fieldName="email"
         />
 
         <Input
@@ -199,7 +199,7 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
           label={t('delegate.form.name')}
           required
           autoComplete="name"
-          name="name"
+          fieldName="name"
         />
 
         <Box>
@@ -226,17 +226,17 @@ const DelegateForm: React.FC<DelegateFormProps> = React.memo(({
         <Input
           id="expiresAt"
           label={t('delegate.form.expiresAt')}
-          type="text"
-          name="expiresAt"
+          type="date"
+          fieldName="expiresAt"
         />
 
         <Input
           id="notes"
           label={t('delegate.form.notes')}
           type="text"
-          multiline
+          isMultiline
           maxRows={4}
-          name="notes"
+          fieldName="notes"
         />
       </Stack>
     </Form>

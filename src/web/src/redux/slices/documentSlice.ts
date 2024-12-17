@@ -64,13 +64,12 @@ export const fetchDocuments = createAsyncThunk(
   async ({ rejectWithValue, type }: { rejectWithValue: any; type?: DocumentType }) => {
     try {
       const startTime = Date.now();
-      const documentService = new DocumentService();
-      const documents = await documentService.listDocuments(type);
+      const documents = await DocumentService.listDocuments(type);
       
       // Verify encryption status for each document
       const documentsWithEncryption = await Promise.all(
         documents.map(async (doc: Document) => {
-          const isEncrypted = await documentService.verifyEncryption(doc.id);
+          const isEncrypted = await DocumentService.verifyEncryption(doc.id);
           return { ...doc, encryptionVerified: isEncrypted };
         })
       );
@@ -95,7 +94,6 @@ export const uploadDocument = createAsyncThunk(
   'documents/uploadDocument',
   async (request: DocumentUploadRequest, { dispatch, rejectWithValue }) => {
     try {
-      const documentService = new DocumentService();
       const startTime = Date.now();
 
       // Initialize upload tracking
@@ -103,7 +101,7 @@ export const uploadDocument = createAsyncThunk(
       dispatch(documentSlice.actions.setUploadProgress({ id: uploadId, progress: 0 }));
 
       // Upload with progress monitoring
-      const document = await documentService.uploadDocument(
+      const document = await DocumentService.uploadDocument(
         request,
         (progress: number) => {
           dispatch(documentSlice.actions.setUploadProgress({
@@ -114,7 +112,7 @@ export const uploadDocument = createAsyncThunk(
       );
 
       // Monitor encryption status
-      const encryptionStatus = await documentService.verifyEncryption(document.id);
+      const encryptionStatus = await DocumentService.verifyEncryption(document.id);
       
       // Record performance metrics
       const duration = Date.now() - startTime;
@@ -139,9 +137,8 @@ export const deleteDocument = createAsyncThunk(
   'documents/deleteDocument',
   async (documentId: string, { dispatch, rejectWithValue }) => {
     try {
-      const documentService = new DocumentService();
       const startTime = Date.now();
-      await documentService.secureDeleteDocument(documentId);
+      await DocumentService.secureDeleteDocument(documentId);
 
       // Record audit log
       dispatch(documentSlice.actions.logSecurityEvent({

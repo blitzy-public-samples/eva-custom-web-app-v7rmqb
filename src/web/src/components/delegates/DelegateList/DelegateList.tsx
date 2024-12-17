@@ -12,7 +12,6 @@ import { Grid, Typography, CircularProgress, Alert, Box } from '@mui/material';
 import DelegateCard from '../DelegateCard/DelegateCard';
 import { useDelegate } from '../../../hooks/useDelegate';
 import { DelegateStatus, Delegate } from '../../../types/delegate.types';
-import { EntityId } from '../../../types/common.types';
 
 // Interface for component props with enhanced accessibility options
 export interface DelegateListProps {
@@ -42,7 +41,8 @@ export const DelegateList: React.FC<DelegateListProps> = ({
     delegates,
     status,
     error,
-    getDelegateById
+    getDelegateById,
+    fetchDelegates
   } = useDelegate();
 
   // Initial data fetch with security validation

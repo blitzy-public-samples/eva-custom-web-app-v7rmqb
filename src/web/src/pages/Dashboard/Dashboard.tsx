@@ -63,13 +63,12 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       const delegatesData: Delegate[] = [];
       const subscriptionData: ISubscription = {
         userId: user?.id || '',
-        shopifySubscriptionId: 'sub_123',
-        shopifyCustomerId: 'cust_123',
-        lastBillingDate: new Date().toISOString(),
-        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        plan: 'premium',
         status: 'active',
         autoRenew: true,
-        paymentMethod: 'credit_card'
+        paymentMethod: 'credit_card',
+        lastBillingDate: new Date().toISOString(),
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
 
       setDocuments(documentsData);

@@ -28,24 +28,17 @@ const SHOPIFY_CONFIG = {
   apiVersion: '2024-01' // Latest stable API version
 };
 
-interface ShopifySubscriptionResponse {
-  id: string;
-  [key: string]: any;
-}
-
 /**
  * Service class for managing subscriptions and Shopify integration
  */
 export class SubscriptionService {
   private static instance: SubscriptionService;
-  private shopifyClient: Client;
   private subscriptionPlansCache: Map<string, ISubscriptionPlanDetails>;
 
   /**
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
-    this.shopifyClient = Client.buildClient(SHOPIFY_CONFIG);
     this.subscriptionPlansCache = new Map();
   }
 

@@ -18,8 +18,7 @@ import {
   Delegate, 
   CreateDelegateDTO, 
   UpdateDelegateDTO, 
-  DelegateRole, 
-  DelegateAuditLog 
+  DelegateRole
 } from '../../types/delegate.types';
 import DelegateService from '../../services/delegate.service';
 
@@ -29,6 +28,13 @@ const delegateAdapter = createEntityAdapter<Delegate>({
   sortComparer: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
 });
 
+interface AuditLogEntry {
+  timestamp: number;
+  action: string;
+  delegateId: string;
+  details: string;
+}
+
 // Interface for delegate state including cache and audit log
 interface DelegateState {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -37,7 +43,7 @@ interface DelegateState {
     timestamp: number;
     ttl: number;
   };
-  auditLog: DelegateAuditLog[];
+  auditLog: AuditLogEntry[];
 }
 
 // Initial state with cache configuration
@@ -124,7 +130,7 @@ const delegateSlice = createSlice({
       state.error = null;
     },
     // Add audit log entry
-    addAuditLogEntry: (state, action: PayloadAction<DelegateAuditLog>) => {
+    addAuditLogEntry: (state, action: PayloadAction<AuditLogEntry>) => {
       state.auditLog.push(action.payload);
     },
     // Clear cache to force refresh
@@ -141,7 +147,7 @@ const delegateSlice = createSlice({
       .addCase(fetchDelegates.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.cache.timestamp = Date.now();
-        delegateAdapter.setAll(state, action.payload);
+        delegateAdapter.setAll(state, action.payload.data);
       })
       .addCase(fetchDelegates.rejected, (state, action) => {
         state.status = 'failed';

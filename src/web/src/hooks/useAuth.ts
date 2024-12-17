@@ -20,7 +20,8 @@ import {
 import type { 
   AuthState, 
   AuthError,
-  Province
+  Province,
+  RegisterPayload
 } from '../types/auth.types';
 import { auth0Client } from '../config/auth.config';
 import { AppDispatch } from '../redux/store';
@@ -47,8 +48,8 @@ export const useAuth = () => {
     const checkAndRefreshSession = async () => {
       try {
         // Check if session is active and needs refresh
-        if (authState.isAuthenticated && authState.sessionToken?.expiresAt) {
-          const timeUntilExpiry = new Date(authState.sessionToken.expiresAt).getTime() - Date.now();
+        if (authState.isAuthenticated && authState.token?.expiresAt) {
+          const timeUntilExpiry = new Date(authState.token.expiresAt).getTime() - Date.now();
           
           if (timeUntilExpiry <= SESSION_EXPIRY_BUFFER) {
             await handleSessionRefresh();
@@ -78,7 +79,7 @@ export const useAuth = () => {
         clearInterval(sessionCheckInterval);
       }
     };
-  }, [authState.isAuthenticated, authState.sessionToken?.expiresAt]);
+  }, [authState.isAuthenticated, authState.token?.expiresAt]);
 
   /**
    * Enhanced login handler with MFA support and security logging
@@ -95,7 +96,7 @@ export const useAuth = () => {
       const result = await dispatch(login(credentials)).unwrap();
 
       // Handle MFA requirement
-      if (result.requiresMFA && !result.isMFAVerified) {
+      if (result.mfaRequired && !result.mfaVerified) {
         console.info('MFA required for:', {
           timestamp: new Date().toISOString(),
           email: credentials.email.replace(/[^@\w.-]/g, '')
@@ -123,7 +124,7 @@ export const useAuth = () => {
     name: string;
     province: Province;
     acceptedTerms: boolean;
-    mfaPreference: string;
+    mfaPreference: boolean;
   }) => {
     try {
       // Log registration attempt (sanitized)
@@ -132,8 +133,8 @@ export const useAuth = () => {
         email: userData.email.replace(/[^@\w.-]/g, '')
       });
 
-      // Dispatch registration action
-      const result = await dispatch(registerAction(userData)).unwrap();
+      // Dispatch registration action with correct payload type
+      const result = await dispatch(registerAction(userData as RegisterPayload)).unwrap();
 
       // Log successful registration
       console.info('Registration successful:', {
@@ -256,11 +257,11 @@ export const useAuth = () => {
     loading: authState.loading,
     error: authState.error as AuthError | null,
     mfaRequired: authState.mfaRequired,
-    isMFAVerified: authState.mfaVerified, // Updated to match expected casing
-    requiresMFA: authState.mfaRequired && !authState.mfaVerified, // Added requiresMFA property
-    isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
-    sessionToken: authState.sessionToken,
-    role: authState.user?.role, // Added role property
+    mfaVerified: authState.mfaVerified,
+    requiresMFA: authState.mfaRequired && !authState.mfaVerified,
+    isSessionValid: authState.isAuthenticated && !!authState.token,
+    token: authState.token,
+    userRole: authState.user?.userRole,
 
     // Authentication operations
     login: handleLogin,

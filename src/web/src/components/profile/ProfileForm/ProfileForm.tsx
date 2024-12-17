@@ -5,7 +5,6 @@ import Form from '../../common/Form/Form';
 import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
 import { useAuth } from '../../../hooks/useAuth';
-import { User } from '../../../types/auth.types';
 
 // Constants for form field names and validation
 const FORM_FIELDS = {
@@ -54,6 +53,7 @@ export interface ProfileFormData {
 export interface ProfileFormProps {
   onSubmit: (values: ProfileFormData) => void | Promise<void>;
   initialData?: ProfileFormData | null;
+  isSubmitting: boolean;
 }
 
 // Enhanced validation schema with Canadian-specific rules
@@ -92,7 +92,8 @@ const validationSchema = yup.object().shape({
  */
 const ProfileForm: React.FC<ProfileFormProps> = React.memo(({ 
   onSubmit, 
-  initialData = null 
+  initialData = null,
+  isSubmitting 
 }) => {
   // Get current user data from auth context
   const { user } = useAuth();
@@ -106,9 +107,14 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: Record<string, any>, auth: any) => {
     try {
-      await onSubmit(values);
+      await onSubmit({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        province: values.province
+      });
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -126,10 +132,11 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       isProtected
       analyticsEvent="profile_update"
       testId="profile-form"
+      isSubmitting={isSubmitting}
     >
       <Stack spacing={3} width="100%">
         <Input
-          fieldName={FORM_FIELDS.NAME}
+          name={FORM_FIELDS.NAME}
           label="Full Name"
           type="text"
           required
@@ -138,7 +145,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          fieldName={FORM_FIELDS.EMAIL}
+          name={FORM_FIELDS.EMAIL}
           label="Email Address"
           type="email"
           required
@@ -147,7 +154,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          fieldName={FORM_FIELDS.PHONE}
+          name={FORM_FIELDS.PHONE}
           label="Phone Number"
           type="tel"
           required
@@ -156,7 +163,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Select
-          fieldName={FORM_FIELDS.PROVINCE}
+          name={FORM_FIELDS.PROVINCE}
           label="Province"
           required
           placeholder="Select your province"

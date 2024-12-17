@@ -1,7 +1,7 @@
 import React from 'react';
 import { Stack, Switch, Typography } from '@mui/material';
 import { AnalyticsBrowser } from '@segment/analytics-next'; // v1.51+
-import ProfileForm from '../../components/profile/ProfileForm/ProfileForm';
+import ProfileForm, { ProfileFormProps } from '../../components/profile/ProfileForm/ProfileForm';
 import Card from '../../components/common/Card/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { Auth0ContextInterface, User } from '@auth0/auth0-react';
@@ -60,7 +60,7 @@ const Settings: React.FC = () => {
   /**
    * Enhanced profile form submission handler with security validation
    */
-  const handleProfileSubmit = async (values: ProfileForm.ProfileFormData) => {
+  const handleProfileSubmit = async (values: ProfileFormProps['initialData']) => {
     try {
       setLoading(true);
       setError(null);
@@ -210,6 +210,7 @@ const Settings: React.FC = () => {
             phone: '',
             province: ''
           }}
+          isSubmitting={loading}
         />
       </Card>
 

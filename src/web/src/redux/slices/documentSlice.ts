@@ -64,12 +64,12 @@ export const fetchDocuments = createAsyncThunk(
   async ({ rejectWithValue, type }: { rejectWithValue: any; type?: DocumentType }) => {
     try {
       const startTime = Date.now();
-      const documents = await DocumentService.listDocuments(type);
+      const documents = await DocumentService.getDocuments({ type });
       
       // Verify encryption status for each document
       const documentsWithEncryption = await Promise.all(
         documents.map(async (doc: Document) => {
-          const isEncrypted = await DocumentService.verifyEncryption(doc.id);
+          const isEncrypted = await DocumentService.checkEncryptionStatus(doc.id);
           return { ...doc, encryptionVerified: isEncrypted };
         })
       );
@@ -112,7 +112,7 @@ export const uploadDocument = createAsyncThunk(
       );
 
       // Monitor encryption status
-      const encryptionStatus = await DocumentService.verifyEncryption(document.id);
+      const encryptionStatus = await DocumentService.checkEncryptionStatus(document.id);
       
       // Record performance metrics
       const duration = Date.now() - startTime;

@@ -2,6 +2,7 @@ import React from 'react'; // v18.2+
 import { FormProvider, useForm } from 'react-hook-form'; // v7.0.0
 import { Box, Stack, Alert } from '@mui/material'; // v5.11+
 import { useAuth0 } from '@auth0/auth0-react'; // v2.0.0
+import * as yup from 'yup';
 import { Button } from '../Button/Button';
 import { validateLoginPayload, validateRegisterPayload } from '../../../utils/validation.util';
 import { Auth0ContextInterface } from '@auth0/auth0-react';
@@ -46,6 +47,7 @@ export interface FormProps {
   isProtected?: boolean;
   analyticsEvent?: string;
   testId?: string;
+  validationSchema?: yup.ObjectSchema<any>;
 }
 
 declare global {
@@ -69,7 +71,8 @@ const Form: React.FC<FormProps> = React.memo(({
   showReset = false,
   isProtected = false,
   analyticsEvent,
-  testId
+  testId,
+  validationSchema
 }) => {
   // Auth0 integration
   const auth0Context = useAuth0();
@@ -78,7 +81,8 @@ const Form: React.FC<FormProps> = React.memo(({
   // Form state management
   const methods = useForm({
     defaultValues: initialValues,
-    mode: 'onChange'
+    mode: 'onChange',
+    resolver: validationSchema ? yup.reach(validationSchema) : undefined
   });
 
   const { handleSubmit, reset, formState: { isSubmitting, isDirty } } = methods;

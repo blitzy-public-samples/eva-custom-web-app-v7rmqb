@@ -13,13 +13,45 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import SubscriptionService from '../../services/subscription.service';
-import { 
-  ISubscription, 
-  ISubscriptionPlanDetails,
-  SubscriptionStatus,
-  SubscriptionPlan,
-  BillingCycle 
-} from '../types/subscription.types';
+
+// Define types inline until types file is created
+export enum SubscriptionStatus {
+  ACTIVE = 'ACTIVE',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
+  PENDING = 'PENDING'
+}
+
+export enum SubscriptionPlan {
+  BASIC = 'BASIC',
+  PREMIUM = 'PREMIUM',
+  ENTERPRISE = 'ENTERPRISE'
+}
+
+export enum BillingCycle {
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY'
+}
+
+export interface ISubscriptionPlanDetails {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  features: string[];
+  billingCycles: BillingCycle[];
+}
+
+export interface ISubscription {
+  id: string;
+  userId: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startDate: Date;
+  endDate: Date;
+  billingCycle: BillingCycle;
+  autoRenew: boolean;
+}
 
 // Interface for subscription-related errors
 interface ISubscriptionError {

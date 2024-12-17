@@ -51,6 +51,11 @@ const validationSchema = Yup.object().shape({
   acceptedTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
+interface FormProps {
+  values: Record<string, any>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: any } }) => void;
+}
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
@@ -91,7 +96,7 @@ const Register: React.FC = () => {
     }
   }, [register, navigate]);
 
-  const renderForm = ({ values, handleChange }: { values: Record<string, any>; handleChange: (e: any) => void }) => (
+  const renderForm = ({ values, handleChange }: FormProps): React.ReactNode => (
     <>
       <Input
         id="name"
@@ -229,7 +234,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {(formProps) => renderForm(formProps)}
+        {renderForm}
       </Form>
     </RegisterContainer>
   );

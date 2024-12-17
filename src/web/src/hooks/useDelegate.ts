@@ -110,10 +110,10 @@ export const useDelegate = () => {
     details?: Record<string, any>
   ) => {
     dispatch(addAuditLogEntry({
-      timestamp: new Date().toISOString(),
+      timestamp: Date.now(),
       action,
-      delegateId,
-      details
+      delegateId: delegateId.toString(),
+      details: details ? JSON.stringify(details) : ''
     }));
   }, [dispatch]);
 

@@ -229,7 +229,7 @@ const Register: React.FC = () => {
         analyticsEvent="register"
         validationSchema={validationSchema}
       >
-        {renderForm}
+        {(formProps) => renderForm(formProps)}
       </Form>
     </RegisterContainer>
   );

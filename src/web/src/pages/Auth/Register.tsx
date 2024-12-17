@@ -104,7 +104,7 @@ const Register: React.FC = () => {
         Registration form for Estate Kit. All fields are required unless marked optional.
       </Typography>
 
-      <Form<RegisterPayload>
+      <Form
         initialValues={initialFormState}
         onSubmit={handleSubmit}
         submitLabel="Create Account"

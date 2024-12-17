@@ -86,7 +86,12 @@ export const fetchSubscriptionPlans = createAsyncThunk(
   'subscription/fetchPlans',
   async (_, { rejectWithValue }) => {
     try {
-      const plans = await SubscriptionService.getSubscriptionPlans();
+      // Temporary solution: Fetch individual plans until service is updated
+      const plans = await Promise.all(
+        Object.values(SubscriptionPlan).map(plan =>
+          SubscriptionService.getSubscriptionPlan(plan)
+        )
+      );
       return plans;
     } catch (error: any) {
       return rejectWithValue({

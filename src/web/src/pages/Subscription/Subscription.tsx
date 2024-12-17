@@ -42,20 +42,13 @@ export const Subscription: React.FC = () => {
     try {
       setSelectedPlanId(planId);
       
-      const selectedPlan = availablePlans.find(plan => plan.id === planId);
+      const selectedPlan = availablePlans.find(plan => plan.planId === planId);
       if (!selectedPlan) {
         throw new Error('Selected plan not found');
       }
 
       await updateSubscription({
-        plan: {
-          id: selectedPlan.id,
-          name: selectedPlan.name,
-          price: selectedPlan.price,
-          billingCycle: selectedPlan.billingCycle,
-          description: selectedPlan.description,
-          features: selectedPlan.features
-        },
+        plan: selectedPlan,
         billingCycle: selectedPlan.billingCycle,
         autoRenew: true,
         status: SubscriptionStatus.ACTIVE
@@ -80,10 +73,10 @@ export const Subscription: React.FC = () => {
    * Handles subscription cancellation with confirmation
    */
   const handleCancelSubscription = useCallback(async () => {
-    if (!currentSubscription?.id) return;
+    if (!currentSubscription?.subscriptionId) return;
 
     try {
-      await cancelSubscription(currentSubscription.id);
+      await cancelSubscription(currentSubscription.subscriptionId);
 
       // Announce cancellation to screen readers
       const announcement = 'Subscription successfully cancelled';
@@ -181,7 +174,7 @@ export const Subscription: React.FC = () => {
           <SubscriptionCard
             subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.id === completeSubscription.plan.id
+              plan => plan.planId === completeSubscription.plan.planId
             ) || {
               name: 'Loading...',
               price: 0,
@@ -219,12 +212,12 @@ export const Subscription: React.FC = () => {
         ) : (
           <Grid container spacing={3}>
             {availablePlans.map((plan) => (
-              <Grid item xs={12} md={4} key={plan.id}>
+              <Grid item xs={12} md={4} key={plan.planId}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.plan.id === plan.id}
+                  isCurrentPlan={currentSubscription?.plan.planId === plan.planId}
                   onSelect={handlePlanSelect}
-                  isLoading={selectedPlanId === plan.id}
+                  isLoading={selectedPlanId === plan.planId}
                   error={error.update ? new Error(error.update) : null}
                 />
               </Grid>

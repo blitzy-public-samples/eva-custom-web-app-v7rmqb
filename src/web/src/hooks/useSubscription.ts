@@ -64,7 +64,7 @@ export const useSubscription = () => {
 
     const attemptFetch = async (): Promise<void> => {
       try {
-        await dispatch(subscriptionThunks.fetchCurrentSubscription({})).unwrap();
+        await dispatch(subscriptionThunks.fetchCurrentSubscription('')).unwrap();
       } catch (error: any) {
         if (retries < MAX_RETRIES) {
           retries++;
@@ -90,7 +90,7 @@ export const useSubscription = () => {
     setError(prev => ({ ...prev, fetch: null }));
 
     try {
-      await dispatch(subscriptionThunks.fetchSubscriptionPlans({})).unwrap();
+      await dispatch(subscriptionThunks.fetchSubscriptionPlans()).unwrap();
     } catch (error: any) {
       setError(prev => ({ 
         ...prev, 

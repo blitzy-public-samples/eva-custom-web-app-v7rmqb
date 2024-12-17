@@ -265,6 +265,10 @@ class AuthService {
   private processToken(token: string): AuthToken {
     const decodedToken = this.decodeToken(token);
     return {
+      id: decodedToken.sub,
+      email: decodedToken.email,
+      name: decodedToken.name,
+      province: decodedToken.province,
       accessToken: token,
       idToken: decodedToken.idToken,
       expiresAt: decodedToken.exp * 1000

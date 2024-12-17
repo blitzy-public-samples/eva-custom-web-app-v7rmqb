@@ -29,7 +29,7 @@ import { SubscriptionCard } from '../../components/subscription/SubscriptionCard
 import { useAuth } from '../../hooks/useAuth';
 import { Document } from '../../types/document.types';
 import { Delegate } from '../../types/delegate.types';
-import { ISubscription } from '../../types/auth.types';
+import { ISubscription } from '../../types/subscription.types';
 
 // Interface for component props
 interface DashboardProps {
@@ -63,10 +63,9 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       const delegatesData: Delegate[] = [];
       const subscriptionData: ISubscription = {
         userId: user?.id || '',
-        plan: 'premium',
+        plan: 'PREMIUM',
         status: 'active',
         autoRenew: true,
-        paymentMethod: 'credit_card',
         lastBillingDate: new Date().toISOString(),
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };

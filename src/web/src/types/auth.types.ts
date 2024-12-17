@@ -70,15 +70,15 @@ export interface AuthState {
  * Implements JWT token structure with expiration tracking.
  */
 export interface AuthToken {
-    accessToken: string;         // JWT access token
-    idToken: string;            // OpenID Connect ID token
-    expiresAt: number;          // Token expiration timestamp
     id: string;                 // User ID
     email: string;              // User email
     name: string;               // User name
     province: Province;         // User province
+    phone: string;              // User phone number
+    accessToken: string;         // JWT access token
+    idToken: string;            // OpenID Connect ID token
+    expiresAt: number;          // Token expiration timestamp
     mfaEnabled: boolean;        // MFA status
-    phone: string;              // User phone
     status: {                   // Token status
         requiresMFA: boolean;
         mfaVerified: boolean;
@@ -194,6 +194,7 @@ export interface ISubscription {
     shopifyCustomerId: string;
     lastBillingDate: string;
     nextBillingDate: string;
+    paymentMethod: string;
 }
 
 /**

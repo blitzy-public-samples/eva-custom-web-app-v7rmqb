@@ -82,8 +82,12 @@ export class SubscriptionService {
    */
   public async updateSubscription(
     subscriptionId: string, 
-    updates: Partial<ISubscription>
+    updates: Partial<ISubscription> = {}
   ): Promise<ISubscription> {
+    if (!subscriptionId) {
+      throw new Error('Subscription ID is required');
+    }
+
     try {
       // Update subscription through backend API
       const updatedSubscription = await apiService.put<ISubscription>(

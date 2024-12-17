@@ -108,14 +108,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
+  const handleSubmit = async (values: ProfileFormData) => {
     try {
-      await onSubmit({
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-        province: values.province
-      });
+      await onSubmit(values);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -126,7 +121,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     <Form
       initialValues={defaultValues}
       onSubmit={handleSubmit}
-      validationSchema={validationSchema}
+      schema={validationSchema}
       submitLabel="Save Profile"
       showReset
       resetLabel="Reset Changes"
@@ -137,7 +132,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     >
       <Stack spacing={3} width="100%">
         <Input
-          fieldName={FORM_FIELDS.NAME}
+          name={FORM_FIELDS.NAME}
           label="Full Name"
           type="text"
           required
@@ -146,7 +141,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          fieldName={FORM_FIELDS.EMAIL}
+          name={FORM_FIELDS.EMAIL}
           label="Email Address"
           type="email"
           required
@@ -155,7 +150,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Input
-          fieldName={FORM_FIELDS.PHONE}
+          name={FORM_FIELDS.PHONE}
           label="Phone Number"
           type="tel"
           required
@@ -164,7 +159,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
         />
 
         <Select
-          fieldName={FORM_FIELDS.PROVINCE}
+          name={FORM_FIELDS.PROVINCE}
           label="Province"
           required
           placeholder="Select your province"
@@ -172,9 +167,6 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
             value: province,
             label: province
           }))}
-          value=""
-          onChange={() => {}}
-          onBlur={() => {}}
         />
       </Stack>
     </Form>

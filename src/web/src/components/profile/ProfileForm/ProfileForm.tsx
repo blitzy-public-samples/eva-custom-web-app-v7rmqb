@@ -1,6 +1,6 @@
-import React from 'react'; // v18.2+
-import { Stack } from '@mui/material'; // v5.11+
-import * as yup from 'yup'; // ^1.0.0
+import React from 'react';
+import { Stack } from '@mui/material';
+import * as yup from 'yup';
 import Form from '../../common/Form/Form';
 import Input from '../../common/Input/Input';
 import Select from '../../common/Select/Select';
@@ -95,9 +95,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     province: initialData?.province || ''
   };
 
-  const handleSubmit = async (values: ProfileFormData, auth: Auth0ContextInterface<User>) => {
+  const handleSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values as ProfileFormData);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -117,7 +117,7 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       testId="profile-form"
       isSubmitting={isSubmitting}
     >
-      {({ values, handleChange, handleBlur }) => (
+      {(formProps: { values: ProfileFormData; handleChange: (e: React.ChangeEvent<any>) => void; handleBlur: (e: React.FocusEvent<any>) => void }) => (
         <Stack spacing={3} width="100%">
           <Input
             id={FORM_FIELDS.NAME}
@@ -127,9 +127,8 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
             required
             autoComplete="name"
             placeholder="Enter your full name"
-            value={values.name}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.name}
+            onChange={formProps.handleChange}
           />
 
           <Input
@@ -140,9 +139,8 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
             required
             autoComplete="email"
             placeholder="Enter your email address"
-            value={values.email}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.email}
+            onChange={formProps.handleChange}
           />
 
           <Input
@@ -153,9 +151,8 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
             required
             autoComplete="tel"
             placeholder="Enter your phone number (e.g., 123-456-7890)"
-            value={values.phone}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.phone}
+            onChange={formProps.handleChange}
           />
 
           <Select
@@ -167,9 +164,8 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
               value: province,
               label: province
             }))}
-            value={values.province}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            value={formProps.values.province}
+            onChange={formProps.handleChange}
           />
         </Stack>
       )}

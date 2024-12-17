@@ -108,9 +108,9 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
   };
 
   // Handle form submission with validation
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (values: Record<string, any>, auth: Auth0ContextInterface<User>) => {
     try {
-      await onSubmit(values);
+      await onSubmit(values as ProfileFormData);
     } catch (error) {
       console.error('Profile update failed:', error);
       throw error;
@@ -132,30 +132,39 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
     >
       <Stack spacing={3} width="100%">
         <Input
+          id={FORM_FIELDS.NAME}
           name={FORM_FIELDS.NAME}
           label="Full Name"
           type="text"
           required
           autoComplete="name"
           placeholder="Enter your full name"
+          value={defaultValues.name}
+          onChange={() => {}} // Form component handles the onChange
         />
 
         <Input
+          id={FORM_FIELDS.EMAIL}
           name={FORM_FIELDS.EMAIL}
           label="Email Address"
           type="email"
           required
           autoComplete="email"
           placeholder="Enter your email address"
+          value={defaultValues.email}
+          onChange={() => {}} // Form component handles the onChange
         />
 
         <Input
+          id={FORM_FIELDS.PHONE}
           name={FORM_FIELDS.PHONE}
           label="Phone Number"
           type="tel"
           required
           autoComplete="tel"
           placeholder="Enter your phone number (e.g., 123-456-7890)"
+          value={defaultValues.phone}
+          onChange={() => {}} // Form component handles the onChange
         />
 
         <Select

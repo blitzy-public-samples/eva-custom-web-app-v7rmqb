@@ -23,7 +23,7 @@ const initialState: AuthState = {
   mfaPending: false,
   sessionExpiry: null,
   lastActivity: Date.now(),
-  sessionToken: null
+  sessionToken: undefined // Changed from null to undefined to match updated type
 };
 
 /**
@@ -201,7 +201,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
         state.isAuthenticated = false;
         state.user = null;
-        state.sessionToken = null;
+        state.sessionToken = undefined; // Changed from null to undefined
       })
 
     // Register reducers

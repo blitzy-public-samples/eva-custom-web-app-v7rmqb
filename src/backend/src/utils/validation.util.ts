@@ -217,30 +217,6 @@ export function validateFileSize(sizeInBytes: number, fileType: string): Validat
 }
 
 /**
- * Validates file type against allowed file types
- * @param fileType - MIME type of the file
- * @returns ValidationResult object
- */
-export function validateFileType(fileType: string): ValidationResult {
-  try {
-    if (!fileType || typeof fileType !== 'string') {
-      return { isValid: false, message: 'File type is required' };
-    }
-
-    if (!ALLOWED_FILE_TYPES.includes(fileType)) {
-      return {
-        isValid: false,
-        message: `File type ${fileType} is not allowed. Allowed types: ${ALLOWED_FILE_TYPES.join(', ')}`
-      };
-    }
-
-    return { isValid: true, message: 'File type is valid' };
-  } catch (error) {
-    return { isValid: false, message: 'File type validation failed', details: { error } };
-  }
-}
-
-/**
  * Input sanitization for XSS prevention
  * @param input - String to sanitize
  * @returns Sanitized string

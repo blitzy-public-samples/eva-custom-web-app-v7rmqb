@@ -36,6 +36,16 @@ export interface Permission {
 }
 
 /**
+ * Interface defining access control rules and validation.
+ * Used for implementing role-based access control (RBAC).
+ */
+export interface AccessControl {
+    resourceType: ResourceType;
+    requiredLevel: AccessLevel;
+    validate(permission: Permission): boolean;
+}
+
+/**
  * Data transfer object for creating new permissions.
  * Contains required fields for permission creation.
  */

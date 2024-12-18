@@ -17,8 +17,9 @@ import {
   DocumentMetadata
 } from '../types/document.types';
 
-import { UserModel } from './user.model';
+import UserModel from './user.model';
 import { EncryptionService } from '../services/encryption.service';
+import * as crypto from 'crypto';
 
 // Initialize encryption service for document content encryption
 const encryptionService = new EncryptionService();
@@ -34,44 +35,44 @@ const encryptionService = new EncryptionService();
 @Index(['type', 'status'])
 export default class DocumentModel {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', nullable: false })
-  userId: string;
+  userId!: string;
 
   @Column({ 
     type: 'varchar', 
     length: 255, 
     nullable: false 
   })
-  title: string;
+  title!: string;
 
   @Column({
     type: 'enum',
     enum: DocumentType,
     nullable: false
   })
-  type: DocumentType;
+  type!: DocumentType;
 
   @Column({
     type: 'enum',
     enum: DocumentStatus,
     default: DocumentStatus.PENDING
   })
-  status: DocumentStatus;
+  status!: DocumentStatus;
 
   @Column({
     type: 'jsonb',
     nullable: false
   })
-  metadata: DocumentMetadata;
+  metadata!: DocumentMetadata;
 
   @Column({
     type: 'jsonb',
     nullable: false,
     comment: 'Encrypted storage details for document content'
   })
-  encryptedStorageDetails: {
+  encryptedStorageDetails!: {
     bucket: string;
     key: string;
     version: string;
@@ -85,7 +86,7 @@ export default class DocumentModel {
     default: [],
     comment: 'Audit trail for document operations'
   })
-  auditLog: Array<{
+  auditLog!: Array<{
     timestamp: Date;
     operation: string;
     userId: string;
@@ -98,7 +99,7 @@ export default class DocumentModel {
     nullable: false,
     comment: 'Document version identifier'
   })
-  version: string;
+  version!: string;
 
   @Column({
     type: 'varchar',
@@ -106,43 +107,43 @@ export default class DocumentModel {
     nullable: false,
     comment: 'SHA-256 checksum of document content'
   })
-  checksum: string;
+  checksum!: string;
 
   @Column({
     type: 'boolean',
     default: true,
     comment: 'Indicates if document content is encrypted'
   })
-  isEncrypted: boolean;
+  isEncrypted!: boolean;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: false,
     comment: 'Document retention expiration date'
   })
-  retentionDate: Date;
+  retentionDate!: Date;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Last document access timestamp'
   })
-  lastAccessedAt: Date;
+  lastAccessedAt!: Date;
 
   @CreateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Document creation timestamp'
   })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Last update timestamp'
   })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ManyToOne(() => UserModel, { onDelete: 'CASCADE' })
-  user: UserModel;
+  user!: UserModel;
 
   /**
    * Creates a new document instance with enhanced security initialization
@@ -230,8 +231,9 @@ export default class DocumentModel {
         version: this.version,
         timestamp: new Date()
       });
-    } catch (error) {
-      throw new Error(`Failed to encrypt storage details: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to encrypt storage details: ${errorMessage}`);
     }
   }
 

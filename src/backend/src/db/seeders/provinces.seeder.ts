@@ -1,19 +1,19 @@
 // @ts-check
-import { DataSource, QueryRunner } from 'typeorm'; // ^0.3.0
-import { Logger } from 'winston'; // ^3.0.0
+import { QueryRunner } from 'typeorm'; // ^0.3.0
+import { createLogger, format, transports } from 'winston'; // ^3.0.0
 import { dataSource } from '../../config/database';
 import crypto from 'crypto';
 
 // Initialize logger for seeding operations
-const logger = new Logger({
+const logger = createLogger({
   level: 'info',
-  format: Logger.format.combine(
-    Logger.format.timestamp(),
-    Logger.format.json()
+  format: format.combine(
+    format.timestamp(),
+    format.json()
   ),
   transports: [
-    new Logger.transports.File({ filename: 'province-seeder.log' }),
-    new Logger.transports.Console()
+    new transports.File({ filename: 'province-seeder.log' }),
+    new transports.Console()
   ]
 });
 
@@ -27,8 +27,25 @@ const DATA_INTEGRITY_CONFIG = {
   validationRules: ['complete_metadata', 'valid_references', 'unique_codes']
 };
 
+interface ProvinceData {
+  code: string;
+  name: string;
+  metadata: {
+    estateLaws: string;
+    probateRequired: boolean;
+    version: string;
+    lastUpdated: string;
+    checksum: string;
+    legalRequirements: {
+      willsRegistry: boolean;
+      probateThreshold: number;
+      executorRequirements: string[];
+    };
+  };
+}
+
 // Comprehensive Canadian province data with enhanced metadata
-const PROVINCES = [
+const PROVINCES: ProvinceData[] = [
   {
     code: 'ON',
     name: 'Ontario',
@@ -85,11 +102,11 @@ const PROVINCES = [
  * @param provinces - Array of province data to validate
  * @returns Promise<boolean> - Validation result
  */
-export async function validateProvinceData(provinces: typeof PROVINCES): Promise<boolean> {
+export async function validateProvinceData(provinces: ProvinceData[]): Promise<boolean> {
   try {
     // Check for required fields
-    const requiredFields = ['code', 'name', 'metadata'];
-    const requiredMetadata = ['estateLaws', 'probateRequired', 'version', 'lastUpdated', 'legalRequirements'];
+    const requiredFields: Array<keyof ProvinceData> = ['code', 'name', 'metadata'];
+    const requiredMetadata: Array<keyof ProvinceData['metadata']> = ['estateLaws', 'probateRequired', 'version', 'lastUpdated', 'legalRequirements'];
 
     for (const province of provinces) {
       // Validate basic structure
@@ -122,7 +139,7 @@ export async function validateProvinceData(provinces: typeof PROVINCES): Promise
 
     return true;
   } catch (error) {
-    logger.error('Province data validation failed:', { error: error.message });
+    logger.error('Province data validation failed:', { error: (error as Error).message });
     return false;
   }
 }
@@ -153,7 +170,7 @@ export async function seedProvinces(): Promise<void> {
 
     // Backup existing data if enabled
     if (DATA_INTEGRITY_CONFIG.backupEnabled) {
-      const existingData = await queryRunner.manager.query('SELECT * FROM provinces');
+      await queryRunner.manager.query('SELECT * FROM provinces');
       await queryRunner.manager.query(
         'INSERT INTO provinces_backup SELECT *, NOW() as backup_date FROM provinces'
       );
@@ -196,7 +213,7 @@ export async function seedProvinces(): Promise<void> {
     }
 
     logger.error('Province data seeding failed:', {
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString()
     });
 

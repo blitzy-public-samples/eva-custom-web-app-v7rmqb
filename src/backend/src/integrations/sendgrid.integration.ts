@@ -32,6 +32,16 @@ interface EmailOptions {
 }
 
 /**
+ * Interface for email message headers
+ */
+interface EmailHeaders {
+  'X-Estate-Kit-Sender': string;
+  'X-Estate-Kit-Template': string;
+  'X-Message-Id'?: string;
+  [key: string]: string | undefined;
+}
+
+/**
  * Service class for handling all email communications through SendGrid
  */
 export class SendGridService {
@@ -47,10 +57,7 @@ export class SendGridService {
     this.sgMail.setApiKey(this.config.apiKey);
 
     // Initialize rate limiter (100 emails per minute)
-    this.rateLimiter = new RateLimiter({
-      tokensPerInterval: 100,
-      interval: 'minute'
-    });
+    this.rateLimiter = new RateLimiter(100, 'minute');
 
     // Log initialization
     logger.info('SendGrid service initialized', {
@@ -103,7 +110,7 @@ export class SendGridService {
           'X-Estate-Kit-Sender': 'system',
           'X-Estate-Kit-Template': templateId,
           ...options.customArgs
-        },
+        } as EmailHeaders,
         trackingSettings: {
           openTracking: { enable: this.config.emailDefaults.tracking.openTracking },
           clickTracking: { enable: this.config.emailDefaults.tracking.clickTracking },

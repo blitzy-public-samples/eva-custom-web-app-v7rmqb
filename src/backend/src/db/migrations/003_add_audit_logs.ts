@@ -5,7 +5,6 @@
  */
 
 import { MigrationInterface, QueryRunner } from 'typeorm';
-import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 export class AddAuditLogs implements MigrationInterface {
   name = '003_add_audit_logs';

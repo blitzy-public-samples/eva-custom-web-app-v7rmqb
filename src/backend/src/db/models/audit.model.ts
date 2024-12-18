@@ -29,7 +29,7 @@ export class AuditModel {
    * Unique identifier for the audit log entry
    */
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   /**
    * Type of audited event (e.g., USER_LOGIN, DOCUMENT_ACCESS)
@@ -40,7 +40,7 @@ export class AuditModel {
     enum: AuditEventType,
     comment: 'Type of the audited security or system event'
   })
-  eventType: AuditEventType;
+  eventType!: AuditEventType;
 
   /**
    * Severity level of the audit event
@@ -51,7 +51,7 @@ export class AuditModel {
     enum: AuditSeverity,
     comment: 'Severity level of the audit event for incident classification'
   })
-  severity: AuditSeverity;
+  severity!: AuditSeverity;
 
   /**
    * ID of the user who performed the audited action
@@ -60,7 +60,7 @@ export class AuditModel {
   @Column({
     comment: 'ID of the user who performed the action'
   })
-  userId: string;
+  userId!: string;
 
   /**
    * ID of the affected resource (optional)
@@ -70,7 +70,7 @@ export class AuditModel {
     nullable: true,
     comment: 'ID of the affected resource (document, delegate, etc.)'
   })
-  resourceId: string;
+  resourceId!: string;
 
   /**
    * Type of resource being accessed or modified
@@ -79,7 +79,7 @@ export class AuditModel {
   @Column({
     comment: 'Type of resource being accessed or modified'
   })
-  resourceType: string;
+  resourceType!: string;
 
   /**
    * IP address of the request
@@ -88,7 +88,7 @@ export class AuditModel {
   @Column({
     comment: 'IP address from which the request originated'
   })
-  ipAddress: string;
+  ipAddress!: string;
 
   /**
    * User agent string from the request
@@ -97,7 +97,7 @@ export class AuditModel {
   @Column({
     comment: 'User agent string identifying the client software'
   })
-  userAgent: string;
+  userAgent!: string;
 
   /**
    * Additional event-specific details stored as JSONB
@@ -108,7 +108,7 @@ export class AuditModel {
     nullable: true,
     comment: 'Additional event-specific details in JSON format'
   })
-  details: Record<string, any>;
+  details!: Record<string, any>;
 
   /**
    * Timestamp when the audit log was created
@@ -117,5 +117,5 @@ export class AuditModel {
   @CreateDateColumn({
     comment: 'Timestamp when the audit log was created'
   })
-  createdAt: Date;
+  createdAt!: Date;
 }

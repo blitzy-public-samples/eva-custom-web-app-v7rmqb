@@ -127,7 +127,7 @@ export class BaseError extends Error {
    * Creates security audit entry for security-relevant errors
    */
   private createSecurityAudit(): void {
-    logger.securityEvent(AuditEventType.ERROR, {
+    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
       correlationId: this.correlationId,
       errorCode: this.errorCode,
       securityLevel: this.securityLevel,
@@ -171,7 +171,7 @@ export function handleError(error: Error): ErrorResponse {
   // Check for security thresholds
   if (baseError.securityLevel === SecurityImpactLevel.CRITICAL) {
     // Trigger immediate security alert
-    logger.securityEvent(AuditEventType.SECURITY_EVENT, {
+    logger.logSecurityEvent(AuditEventType.CRITICAL_SECURITY_EVENT, {
       correlationId: baseError.correlationId,
       errorCode: baseError.errorCode,
       securityLevel: baseError.securityLevel,

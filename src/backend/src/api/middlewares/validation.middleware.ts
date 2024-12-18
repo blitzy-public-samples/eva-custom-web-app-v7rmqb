@@ -8,7 +8,7 @@
 import { Request, Response, NextFunction } from 'express'; // v4.18.2
 import { z } from 'zod'; // v3.22.0
 import { ValidationError } from '../../utils/error.util';
-import { validateEmail, validatePassword, sanitizeInput } from '../../utils/validation.util';
+import { sanitizeInput } from '../../utils/validation.util';
 
 /**
  * Security-enhanced validation context

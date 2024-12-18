@@ -6,11 +6,11 @@
 
 import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { RateLimiter } from 'rate-limiter-flexible'; // ^2.4.1
+import { RateLimiterMemory } from 'rate-limiter-flexible'; // ^2.4.1
 import { Logger } from 'winston';
 
 // Internal imports
-import { SubscriptionModel } from '../db/models/subscription.model';
+import SubscriptionModel from '../db/models/subscription.model';
 import { 
   ISubscription, 
   ISubscriptionCreateDTO,
@@ -18,7 +18,7 @@ import {
   SubscriptionPlan 
 } from '../types/subscription.types';
 import { ShopifyIntegration } from '../integrations/shopify.integration';
-import { AuditEventType, AuditSeverity } from '../types/audit.types';
+import { AuditEventType } from '../types/audit.types';
 import { EncryptionService } from '../services/encryption.service';
 
 /**
@@ -27,7 +27,7 @@ import { EncryptionService } from '../services/encryption.service';
  */
 @Service()
 export class SubscriptionService {
-  private readonly rateLimiter: RateLimiter;
+  private readonly rateLimiter: RateLimiterMemory;
   private readonly encryptionService: EncryptionService;
   private readonly logger: Logger;
 
@@ -37,7 +37,7 @@ export class SubscriptionService {
     logger: Logger
   ) {
     // Initialize rate limiter for subscription operations
-    this.rateLimiter = new RateLimiter({
+    this.rateLimiter = new RateLimiterMemory({
       points: 100, // Number of operations
       duration: 60, // Per 60 seconds
       blockDuration: 120 // Block for 2 minutes if exceeded
@@ -82,7 +82,13 @@ export class SubscriptionService {
             quantity: 1,
             variantId: this.getPlanVariantId(createDTO.plan, createDTO.billingCycle)
           }],
-          billingAddress: {} // To be populated from user service
+          billingAddress: {
+            address1: '',
+            city: '',
+            province: '',
+            country: '',
+            zip: ''
+          }
         });
 
         // Create subscription record
@@ -125,7 +131,7 @@ export class SubscriptionService {
         });
 
         return savedSubscription;
-      } catch (error) {
+      } catch (error: unknown) {
         // Rollback transaction on error
         await queryRunner.rollbackTransaction();
         throw error;
@@ -133,9 +139,9 @@ export class SubscriptionService {
         // Release query runner
         await queryRunner.release();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to create subscription', {
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         userId: createDTO.userId
       });
       throw error;
@@ -207,15 +213,15 @@ export class SubscriptionService {
           topic: webhookEvent.topic,
           subscriptionId: subscription.id
         });
-      } catch (error) {
+      } catch (error: unknown) {
         await queryRunner.rollbackTransaction();
         throw error;
       } finally {
         await queryRunner.release();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to process subscription webhook', {
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         topic: webhookEvent.topic
       });
       throw error;

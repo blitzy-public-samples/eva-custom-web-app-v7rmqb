@@ -1,10 +1,11 @@
 // External dependencies
-import { z } from 'zod'; // Version: ^3.22.0
-import { ClamScan } from '@estatekit/clamav-client'; // Version: ^1.0.0
+import { z } from 'zod';
+import { ClamScan } from '@estatekit/clamav-client';
+import { Request } from 'express';
 
 // Internal imports
 import { DocumentType } from '../../types/document.types';
-import { validateFileSize, validateFileType } from '../../utils/validation.util';
+import { validateFileSize } from '../../utils/validation.util';
 
 // Constants for validation rules
 const TITLE_MIN_LENGTH = 3;
@@ -43,11 +44,11 @@ export const createDocumentSchema = z.object({
     errorMap: () => ({ message: 'Invalid document type' })
   }),
 
-  file: z.custom<Express.Multer.File>((file) => {
+  file: z.custom<Express.Request['file']>((file) => {
     if (!file) return false;
     const sizeValid = validateFileSize(file.size, file.mimetype);
-    const typeValid = validateFileType(file.mimetype);
-    return sizeValid.isValid && typeValid.isValid;
+    const typeValid = ALLOWED_MIME_TYPES.includes(file.mimetype);
+    return sizeValid.isValid && typeValid;
   }, {
     message: `File must be one of ${ALLOWED_FILE_TYPES.join(', ')} and under ${MAX_FILE_SIZE_MB}MB`
   }),
@@ -105,7 +106,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
   try {
     // Rate limiting check
     const rateLimitKey = `document_upload_${payload.metadata.fileName}`;
-    if (!checkRateLimit(rateLimitKey, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
+    if (!checkRateLimit(rateLimitKey)) {
       return {
         isValid: false,
         message: 'Rate limit exceeded for document uploads'
@@ -128,10 +129,12 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
       };
     }
 
-    // Validate file type and MIME type
-    const typeValidation = validateFileType(payload.metadata.mimeType);
-    if (!typeValidation.isValid) {
-      return typeValidation;
+    // Validate MIME type
+    if (!ALLOWED_MIME_TYPES.includes(payload.metadata.mimeType)) {
+      return {
+        isValid: false,
+        message: 'Invalid file type'
+      };
     }
 
     // Sanitize metadata
@@ -143,7 +146,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
 
     // Log validation attempt for audit
     await logValidationAttempt({
-      fileName: payload.metadata.fileName,
+      fileName: sanitizedMetadata.fileName,
       fileSize: payload.metadata.fileSize,
       mimeType: payload.metadata.mimeType,
       scanResult: scanResult.summary
@@ -164,9 +167,10 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
 }
 
 // Helper function to check rate limiting
-function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
-  // Implementation of rate limiting logic
-  return true; // Placeholder return
+function checkRateLimit(key: string): boolean {
+  // Implementation of rate limiting logic using Redis
+  // This is a placeholder that will be implemented with actual Redis rate limiting
+  return true;
 }
 
 // Helper function to sanitize file names
@@ -177,8 +181,14 @@ function sanitizeFileName(fileName: string): string {
 }
 
 // Helper function to log validation attempts
-async function logValidationAttempt(details: any): Promise<void> {
-  // Implementation of validation logging
+async function logValidationAttempt(details: {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  scanResult: string;
+}): Promise<void> {
+  // Implementation of validation logging using the audit service
+  // This is a placeholder that will be implemented with actual audit logging
 }
 
 // Interface for validation results

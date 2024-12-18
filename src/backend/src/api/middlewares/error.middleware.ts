@@ -58,7 +58,7 @@ const trackErrorRate = (error: BaseError): void => {
 
   // Check thresholds and trigger alerts
   if (errorStats.total >= ERROR_MONITORING.THRESHOLD.TOTAL) {
-    logger.securityEvent(AuditEventType.ERROR, {
+    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
       message: 'Error rate threshold exceeded',
       count: errorStats.total,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -67,7 +67,7 @@ const trackErrorRate = (error: BaseError): void => {
   }
 
   if (errorStats.critical >= ERROR_MONITORING.THRESHOLD.CRITICAL) {
-    logger.securityEvent(AuditEventType.ERROR, {
+    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
       message: 'Critical error rate threshold exceeded',
       count: errorStats.critical,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -81,7 +81,7 @@ const trackErrorRate = (error: BaseError): void => {
  * @param req - Express request object
  * @param error - The error being processed
  */
-const createSecurityContext = (req: Request, error: Error) => ({
+const createSecurityContext = (req: Request & { user?: { id: string } }, error: Error) => ({
   userId: req.user?.id,
   ipAddress: req.ip,
   userAgent: req.headers['user-agent'],
@@ -97,9 +97,8 @@ const createSecurityContext = (req: Request, error: Error) => ({
  */
 const errorMiddleware = (
   error: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
+  req: Request & { user?: { id: string } },
+  res: Response
 ): void => {
   try {
     // Create security context for error tracking
@@ -111,7 +110,7 @@ const errorMiddleware = (
       500,
       'INTERNAL_ERROR',
       {},
-      { impactLevel: 'MEDIUM' }
+      { impactLevel: 'HIGH' }
     );
 
     // Track error rates
@@ -125,8 +124,8 @@ const errorMiddleware = (
     });
 
     // Create audit log entry
-    logger.auditLog({
-      eventType: AuditEventType.ERROR,
+    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
+      eventType: AuditEventType.SYSTEM_ERROR,
       severity: baseError.securityLevel === 'CRITICAL' ? 
         AuditSeverity.CRITICAL : AuditSeverity.ERROR,
       userId: securityContext.userId || 'SYSTEM',

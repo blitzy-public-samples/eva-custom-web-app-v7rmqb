@@ -52,15 +52,44 @@ const formatRequestLog = (req: Request): Record<string, any> => {
   };
 };
 
+interface ResponseLogEntry {
+  type: string;
+  timestamp: string;
+  correlationId: string | undefined;
+  statusCode: number;
+  statusMessage: string;
+  responseSize: string | undefined;
+  duration: {
+    microseconds: number;
+    milliseconds: number;
+  };
+  headers: Record<string, string | number | string[]>;
+  environment: string | undefined;
+  error?: {
+    code: number;
+    message: string;
+  };
+  metrics?: {
+    name: string;
+    value: number;
+    unit: string;
+    tags: {
+      statusCode: number;
+      path: string;
+      method: string;
+    };
+  };
+}
+
 /**
  * Formats response details into structured log entry with performance metrics
  */
-const formatResponseLog = (res: Response, duration: number): Record<string, any> => {
+const formatResponseLog = (res: Response, duration: number): ResponseLogEntry => {
   const { statusCode, statusMessage } = res;
   const responseSize = res.get('content-length');
   const correlationId = res.get('x-correlation-id');
 
-  const logEntry = {
+  const logEntry: ResponseLogEntry = {
     type: 'response',
     timestamp: new Date().toISOString(),
     correlationId,
@@ -77,14 +106,14 @@ const formatResponseLog = (res: Response, duration: number): Record<string, any>
 
   // Add error details for non-200 responses
   if (statusCode >= 400) {
-    logEntry['error'] = {
+    logEntry.error = {
       code: statusCode,
       message: statusMessage
     };
   }
 
   // Add performance metrics
-  logEntry['metrics'] = {
+  logEntry.metrics = {
     name: 'request_duration',
     value: duration / 1000, // Convert to milliseconds
     unit: 'milliseconds',

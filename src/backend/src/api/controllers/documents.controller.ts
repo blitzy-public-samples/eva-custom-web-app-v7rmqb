@@ -8,7 +8,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
-import { Controller, Get, Post, Put, Delete, UseMiddleware } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, UseMiddleware, Injectable } from '@nestjs/common';
 
 import { DocumentService } from '../../services/document.service';
 import { AuditService } from '../../services/audit.service';
@@ -45,6 +45,7 @@ const createDocumentSchema = z.object({
 /**
  * Controller handling document management endpoints with enhanced security
  */
+@Injectable()
 @Controller('/documents')
 export class DocumentsController {
   constructor(

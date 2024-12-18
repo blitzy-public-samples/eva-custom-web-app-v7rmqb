@@ -18,7 +18,7 @@ import {
   HttpStatus,
   HttpException,
   Logger
-} from '@nestjs/common'; // ^10.0.0
+} from '@nestjs/common';
 
 import {
   ApiTags,
@@ -26,10 +26,10 @@ import {
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth
-} from '@nestjs/swagger'; // ^7.0.0
+} from '@nestjs/swagger';
 
-import { JwtAuthGuard, RolesGuard } from '@nestjs/passport'; // ^10.0.0
-import { RateLimit } from '@nestjs/throttler'; // ^5.0.0
+import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 
 // Internal imports
 import { SubscriptionService } from '../../services/subscription.service';
@@ -47,7 +47,7 @@ import {
  */
 @Controller('subscriptions')
 @ApiTags('Subscriptions')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(LoggingInterceptor)
 @ApiBearerAuth()
 export class SubscriptionsController {
@@ -60,7 +60,7 @@ export class SubscriptionsController {
    */
   @Post()
   @Roles('admin', 'user')
-  @RateLimit({ ttl: 60, limit: 10 })
+  @Throttle({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Create new subscription' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
@@ -83,16 +83,16 @@ export class SubscriptionsController {
 
       this.logger.log(`Creating subscription for user: ${validatedData.userId}`);
 
-      const subscription = await this.subscriptionService.createSubscription(validatedData);
+      const result = await this.subscriptionService.createSubscription(validatedData);
 
-      this.logger.log(`Successfully created subscription: ${subscription.id}`);
+      this.logger.log(`Successfully created subscription: ${result.subscription.id}`);
 
-      return subscription;
-    } catch (error) {
-      this.logger.error(`Failed to create subscription: ${error.message}`, error.stack);
+      return result;
+    } catch (err: any) {
+      this.logger.error(`Failed to create subscription: ${err.message}`, err.stack);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Failed to create subscription',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -131,11 +131,11 @@ export class SubscriptionsController {
       });
 
       this.logger.log('Successfully processed Shopify webhook');
-    } catch (error) {
-      this.logger.error(`Failed to process Shopify webhook: ${error.message}`, error.stack);
+    } catch (err: any) {
+      this.logger.error(`Failed to process Shopify webhook: ${err.message}`, err.stack);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Failed to process webhook',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -145,7 +145,7 @@ export class SubscriptionsController {
    */
   @Put(':subscriptionId')
   @Roles('admin', 'user')
-  @RateLimit({ ttl: 60, limit: 10 })
+  @Throttle({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Update subscription' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -158,19 +158,19 @@ export class SubscriptionsController {
     try {
       this.logger.log(`Updating subscription: ${subscriptionId}`);
 
-      const subscription = await this.subscriptionService.updateSubscription(
+      const result = await this.subscriptionService.updateSubscription(
         subscriptionId,
         updateDTO
       );
 
       this.logger.log(`Successfully updated subscription: ${subscriptionId}`);
 
-      return subscription;
-    } catch (error) {
-      this.logger.error(`Failed to update subscription: ${error.message}`, error.stack);
+      return result;
+    } catch (err: any) {
+      this.logger.error(`Failed to update subscription: ${err.message}`, err.stack);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Failed to update subscription',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -191,14 +191,14 @@ export class SubscriptionsController {
     try {
       this.logger.log(`Retrieving subscription: ${subscriptionId}`);
 
-      const subscription = await this.subscriptionService.getSubscription(subscriptionId);
+      const result = await this.subscriptionService.getSubscription(subscriptionId);
 
-      return subscription;
-    } catch (error) {
-      this.logger.error(`Failed to retrieve subscription: ${error.message}`, error.stack);
+      return result;
+    } catch (err: any) {
+      this.logger.error(`Failed to retrieve subscription: ${err.message}`, err.stack);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Failed to retrieve subscription',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -222,11 +222,11 @@ export class SubscriptionsController {
       await this.subscriptionService.cancelSubscription(subscriptionId);
 
       this.logger.log(`Successfully cancelled subscription: ${subscriptionId}`);
-    } catch (error) {
-      this.logger.error(`Failed to cancel subscription: ${error.message}`, error.stack);
+    } catch (err: any) {
+      this.logger.error(`Failed to cancel subscription: ${err.message}`, err.stack);
       throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Failed to cancel subscription',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }

@@ -13,7 +13,6 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 import {
   Document,
-  DocumentType,
   DocumentStatus,
   CreateDocumentDTO,
   DocumentMetadata,
@@ -21,7 +20,7 @@ import {
 } from '../types/document.types';
 import { AuditService } from './audit.service';
 import { logger } from '../utils/logger.util';
-import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
+import { ResourceType, AccessLevel } from '../types/permission.types';
 
 // Constants for security and compliance
 const ENCRYPTION_KEY_ROTATION_DAYS = 90;

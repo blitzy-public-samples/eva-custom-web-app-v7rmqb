@@ -6,7 +6,7 @@
 
 import { describe, beforeEach, test, expect, jest } from '@jest/globals'; // ^29.0.0
 import { Repository } from 'typeorm';
-import { createMockRepository } from 'typeorm-mock-unit-testing'; // ^1.0.0
+import { createMockRepository } from '@golevelup/ts-jest'; // ^1.0.0
 import crypto from 'crypto';
 
 // Internal imports

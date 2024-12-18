@@ -1,7 +1,6 @@
 import { describe, beforeEach, it, expect, jest } from '@jest/globals'; // ^29.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import MockDate from 'mockdate'; // ^3.0.0
-import { TypeOrmMock } from 'typeorm-mock-unit-testing'; // ^1.0.0
 
 import { DelegateService } from '../../src/services/delegate.service';
 import { 

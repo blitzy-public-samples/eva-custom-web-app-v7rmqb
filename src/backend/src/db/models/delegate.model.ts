@@ -16,12 +16,12 @@ import {
   BeforeInsert,
   BeforeUpdate,
   AfterLoad
-} from 'typeorm';
+} from 'typeorm'; // ^0.3.0
 
-import { UserRole, DelegateStatus } from '../../../types/delegate.types';
-import { UserModel } from './user.model';
-import { EncryptionService } from '../services/encryption.service';
-import { AuditLogger } from '../services/audit.service';
+import { UserRole, DelegateStatus } from '../../types/delegate.types';
+import UserModel from './user.model';
+import { EncryptionService } from '../../services/encryption.service';
+import { AuditLogger } from '../../services/audit.service';
 import { randomBytes } from 'crypto';
 
 // Initialize services
@@ -55,7 +55,7 @@ export class DelegateEntity {
     enum: DelegateStatus,
     default: DelegateStatus.PENDING
   })
-  status: DelegateStatus = DelegateStatus.PENDING;
+  status!: DelegateStatus;
 
   @Column({
     type: 'timestamp with time zone',
@@ -96,14 +96,14 @@ export class DelegateEntity {
     nullable: true,
     comment: 'Last successful access timestamp'
   })
-  lastAccessedAt: Date | null = null;
+  lastAccessedAt!: Date | null;
 
   @Column({
     type: 'integer',
     default: 0,
     comment: 'Number of successful access attempts'
   })
-  accessCount: number = 0;
+  accessCount!: number;
 
   @ManyToOne(() => UserModel, { onDelete: 'CASCADE' })
   owner!: UserModel;

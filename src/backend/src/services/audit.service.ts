@@ -6,7 +6,7 @@
 
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { InjectRepository } from 'typeorm'; // ^0.3.0
+import { InjectRepository } from '@nestjs/typeorm'; // ^9.0.0
 
 import { AuditModel } from '../db/models/audit.model';
 import { 
@@ -43,14 +43,19 @@ export class AuditService {
       this.validateLogEntry(logEntry);
 
       // Create new audit model instance with compliance metadata
-      const auditLog = this.auditRepository.create({
-        ...logEntry,
-        details: {
-          ...logEntry.details,
-          complianceFlags: this.generateComplianceFlags(logEntry),
-          retentionDate: this.calculateRetentionDate(),
-        }
-      });
+      const auditLog = new AuditModel();
+      auditLog.eventType = logEntry.eventType;
+      auditLog.severity = logEntry.severity;
+      auditLog.userId = logEntry.userId;
+      auditLog.resourceId = logEntry.resourceId || undefined;
+      auditLog.resourceType = logEntry.resourceType;
+      auditLog.ipAddress = logEntry.ipAddress;
+      auditLog.userAgent = logEntry.userAgent;
+      auditLog.details = {
+        ...logEntry.details,
+        complianceFlags: this.generateComplianceFlags(logEntry),
+        retentionDate: this.calculateRetentionDate(),
+      };
 
       // Save audit log with enhanced error handling
       const savedLog = await this.auditRepository.save(auditLog);

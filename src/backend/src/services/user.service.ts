@@ -8,7 +8,7 @@ import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from 'typeorm-typedi-extensions'; // ^0.4.1
 
-import { UserModel } from '../db/models/user.model';
+import UserModel from '../db/models/user.model';
 import { 
   User, 
   CreateUserDTO, 
@@ -24,8 +24,6 @@ import { logger } from '../utils/logger.util';
 @Service()
 export class UserService {
   // Security constants
-  private readonly MAX_LOGIN_ATTEMPTS = 5;
-  private readonly PASSWORD_EXPIRY_DAYS = 90;
   private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'];
 
   constructor(
@@ -86,8 +84,8 @@ export class UserService {
         userId: savedUser.id,
         resourceId: savedUser.id,
         resourceType: 'USER',
-        ipAddress: userData.ipAddress || '0.0.0.0',
-        userAgent: userData.userAgent || 'SYSTEM',
+        ipAddress: '0.0.0.0',
+        userAgent: 'SYSTEM',
         details: {
           action: 'CREATE_USER',
           email: savedUser.email
@@ -133,7 +131,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0', // Should be passed from request context
+        ipAddress: '0.0.0.0',
         userAgent: 'SYSTEM',
         details: {
           action: 'READ_USER',
@@ -198,7 +196,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0', // Should be passed from request context
+        ipAddress: '0.0.0.0',
         userAgent: 'SYSTEM',
         details: {
           action: 'UPDATE_USER',
@@ -219,7 +217,7 @@ export class UserService {
    * @private
    */
   private async validateUserAccess(
-    userId: string,
+    id: string,
     requestingRole: UserRole,
     operation: string
   ): Promise<boolean> {
@@ -268,6 +266,7 @@ export class UserService {
                 content: Buffer.from(user.profile[field], 'base64'),
                 iv: Buffer.alloc(16),
                 authTag: Buffer.alloc(16),
+                keyVersion: '1',
                 metadata: {
                   algorithm: 'aes-256-gcm',
                   timestamp: Date.now()

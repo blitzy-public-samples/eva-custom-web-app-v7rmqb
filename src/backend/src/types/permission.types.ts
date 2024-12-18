@@ -1,6 +1,5 @@
 // @ts-check
-import { UUID } from './user.types'; // Internal import for UUID type
-import { UUID as CryptoUUID } from 'crypto'; // Version: latest - Used for unique identifier types
+import { UUID } from 'crypto'; // Using crypto UUID directly since it's the source type
 
 /**
  * Enum defining types of resources that can be accessed in the system.

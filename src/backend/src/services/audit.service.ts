@@ -81,6 +81,39 @@ export class AuditService {
   }
 
   /**
+   * Logs delegate-related actions with enhanced security tracking
+   * @param userId The ID of the user performing the delegate action
+   * @param delegateId The ID of the delegate involved
+   * @param action The type of delegate action performed
+   * @param details Additional details about the delegate action
+   * @returns Promise<AuditModel> The created audit log
+   */
+  async logDelegateAction(
+    userId: string,
+    delegateId: string,
+    action: string,
+    details: Record<string, any>,
+    ipAddress: string,
+    userAgent: string
+  ): Promise<AuditModel> {
+    const logEntry: AuditLogEntry = {
+      eventType: AuditEventType.DELEGATE_ACCESS,
+      severity: AuditSeverity.INFO,
+      userId,
+      resourceId: delegateId,
+      resourceType: 'DELEGATE',
+      ipAddress,
+      userAgent,
+      details: {
+        action,
+        ...details,
+      }
+    };
+
+    return this.createAuditLog(logEntry);
+  }
+
+  /**
    * Retrieves audit logs with enhanced filtering and compliance metadata
    * @param filter Filtering criteria for audit logs
    * @returns Promise with paginated logs and compliance information

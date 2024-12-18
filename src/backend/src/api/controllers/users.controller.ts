@@ -20,8 +20,8 @@ import {
   NotFoundException,
   InternalServerErrorException
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
-import { CorrelationIdInterceptor } from '@evanion/nestjs-correlation-id';
+import { RateLimit } from '@nestjs/throttler';
+import { CorrelationId } from '@evanion/nestjs-correlation-id';
 import { ApiOperation, ApiResponse, ApiTags, ApiSecurity } from '@nestjs/swagger';
 
 import { UserService } from '../../services/user.service';
@@ -50,8 +50,8 @@ import {
 @ApiTags('Users')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RoleGuard)
-@UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor, CorrelationIdInterceptor)
-@Throttle({ ttl: 60, limit: 100 })
+@UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor)
+@RateLimit({ ttl: 60, limit: 100 })
 export class UsersController {
   constructor(
     private readonly userService: UserService,
@@ -71,7 +71,7 @@ export class UsersController {
     @Body() userData: CreateUserDTO,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @Headers('x-correlation-id') correlationId: string
+    @CorrelationId() correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -79,6 +79,7 @@ export class UsersController {
 
       const user = await this.userService.createUser(userData);
 
+      // Create audit log for user creation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.USER_LOGIN,
         severity: AuditSeverity.INFO,
@@ -95,9 +96,9 @@ export class UsersController {
       });
 
       return user;
-    } catch (err) {
-      logger.error('User creation failed', { error: err, email: userData.email });
-      throw new BadRequestException('Failed to create user');
+    } catch (error) {
+      logger.error('User creation failed', { error, email: userData.email });
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -114,7 +115,7 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @Headers('x-correlation-id') correlationId: string
+    @CorrelationId() correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -124,6 +125,7 @@ export class UsersController {
         throw new NotFoundException('User not found');
       }
 
+      // Log access attempt
       await this.auditService.createAuditLog({
         eventType: AuditEventType.DOCUMENT_ACCESS,
         severity: AuditSeverity.INFO,
@@ -140,12 +142,12 @@ export class UsersController {
       });
 
       return user;
-    } catch (err) {
-      logger.error('User retrieval failed', { error: err, userId: id });
-      if (err instanceof NotFoundException) {
-        throw err;
+    } catch (error) {
+      logger.error('User retrieval failed', { error, userId: id });
+      if (error instanceof NotFoundException) {
+        throw error;
       }
-      throw new InternalServerErrorException('Failed to retrieve user');
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -163,7 +165,7 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @Headers('x-correlation-id') correlationId: string
+    @CorrelationId() correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -174,6 +176,7 @@ export class UsersController {
         userRole
       );
 
+      // Log update operation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.INFO,
@@ -191,12 +194,12 @@ export class UsersController {
       });
 
       return updatedUser;
-    } catch (err) {
-      logger.error('User update failed', { error: err, userId: id });
-      if (err instanceof UnauthorizedException) {
-        throw err;
+    } catch (error) {
+      logger.error('User update failed', { error, userId: id });
+      if (error.message === 'Unauthorized access') {
+        throw new UnauthorizedException(error.message);
       }
-      throw new InternalServerErrorException('Failed to update user');
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -213,13 +216,14 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @Headers('x-correlation-id') correlationId: string
+    @CorrelationId() correlationId: string
   ): Promise<void> {
     try {
       logger.addCorrelationId(correlationId);
 
       await this.userService.deleteUser(id, userRole);
 
+      // Log deletion operation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.USER_LOGIN,
         severity: AuditSeverity.WARNING,
@@ -234,12 +238,12 @@ export class UsersController {
           correlationId
         }
       });
-    } catch (err) {
-      logger.error('User deletion failed', { error: err, userId: id });
-      if (err instanceof UnauthorizedException) {
-        throw err;
+    } catch (error) {
+      logger.error('User deletion failed', { error, userId: id });
+      if (error.message === 'Unauthorized access') {
+        throw new UnauthorizedException(error.message);
       }
-      throw new InternalServerErrorException('Failed to delete user');
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

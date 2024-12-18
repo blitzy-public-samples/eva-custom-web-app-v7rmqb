@@ -17,15 +17,15 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
+} from '@nestjs/common'; // ^9.0.0
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth,
-} from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+} from '@nestjs/swagger'; // ^6.0.0
+import { RateLimit } from '@nestjs/throttler'; // ^4.0.0
 
 // Internal service imports
 import { DelegateService } from '../../services/delegate.service';
@@ -38,6 +38,8 @@ import {
 
 // Types and enums
 import { ResourceType, AccessLevel } from '../../types/permission.types';
+import { UserRole } from '../../types/user.types';
+import { DelegateStatus } from '../../types/delegate.types';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Security guards and interceptors
@@ -61,7 +63,7 @@ export class DelegatesController {
    * Creates a new delegate relationship with comprehensive security validation
    */
   @Post()
-  @Throttle({ ttl: 60, limit: 10 })
+  @RateLimit({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Create new delegate relationship' })
   @ApiResponse({ status: 201, description: 'Delegate created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid delegate data' })
@@ -73,15 +75,15 @@ export class DelegatesController {
 
       // Create delegate with audit logging
       const delegate = await this.delegateService.createDelegate(
-        createDelegateDto.ownerId,
+        validatedData.ownerId,
         validatedData
       );
 
       // Log delegate creation
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.DELEGATE_INVITE,
         severity: AuditSeverity.INFO,
-        userId: createDelegateDto.ownerId,
+        userId: validatedData.ownerId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
         details: {
@@ -93,9 +95,8 @@ export class DelegatesController {
 
       return delegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to create delegate: ${errorMessage}`,
+        `Failed to create delegate: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }
@@ -105,7 +106,7 @@ export class DelegatesController {
    * Updates existing delegate relationship with security validation
    */
   @Put(':id')
-  @Throttle({ ttl: 60, limit: 20 })
+  @RateLimit({ ttl: 60, limit: 20 })
   @ApiOperation({ summary: 'Update delegate relationship' })
   @ApiResponse({ status: 200, description: 'Delegate updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid update data' })
@@ -128,7 +129,7 @@ export class DelegatesController {
       );
 
       // Log delegate update
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.INFO,
         userId: updatedDelegate.ownerId,
@@ -142,9 +143,8 @@ export class DelegatesController {
 
       return updatedDelegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to update delegate: ${errorMessage}`,
+        `Failed to update delegate: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }
@@ -154,7 +154,7 @@ export class DelegatesController {
    * Retrieves delegate information with security validation
    */
   @Get(':id')
-  @Throttle({ ttl: 60, limit: 100 })
+  @RateLimit({ ttl: 60, limit: 100 })
   @ApiOperation({ summary: 'Get delegate by ID' })
   @ApiResponse({ status: 200, description: 'Delegate retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -171,7 +171,7 @@ export class DelegatesController {
       }
 
       // Log delegate access
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: AuditSeverity.INFO,
         userId: delegate.ownerId,
@@ -182,9 +182,8 @@ export class DelegatesController {
 
       return delegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to retrieve delegate: ${errorMessage}`,
+        `Failed to retrieve delegate: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }
@@ -194,7 +193,7 @@ export class DelegatesController {
    * Lists delegates with filtering and security validation
    */
   @Get()
-  @Throttle({ ttl: 60, limit: 50 })
+  @RateLimit({ ttl: 60, limit: 50 })
   @ApiOperation({ summary: 'List delegates' })
   @ApiResponse({ status: 200, description: 'Delegates retrieved successfully' })
   async getDelegates(@Query() query: any) {
@@ -206,7 +205,7 @@ export class DelegatesController {
       );
 
       // Log delegate list access
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: AuditSeverity.INFO,
         userId: query.ownerId,
@@ -216,9 +215,8 @@ export class DelegatesController {
 
       return delegates;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to list delegates: ${errorMessage}`,
+        `Failed to list delegates: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }
@@ -228,7 +226,7 @@ export class DelegatesController {
    * Revokes delegate access with security validation
    */
   @Delete(':id')
-  @Throttle({ ttl: 60, limit: 10 })
+  @RateLimit({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Revoke delegate access' })
   @ApiResponse({ status: 200, description: 'Delegate access revoked successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -241,7 +239,7 @@ export class DelegatesController {
       const revokedDelegate = await this.delegateService.revokeDelegate(id);
 
       // Log delegate revocation
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.WARNING,
         userId: revokedDelegate.ownerId,
@@ -255,9 +253,8 @@ export class DelegatesController {
 
       return revokedDelegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to revoke delegate: ${errorMessage}`,
+        `Failed to revoke delegate: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }
@@ -267,7 +264,7 @@ export class DelegatesController {
    * Verifies delegate access permissions with security validation
    */
   @Get('verify-access')
-  @Throttle({ ttl: 60, limit: 100 })
+  @RateLimit({ ttl: 60, limit: 100 })
   @ApiOperation({ summary: 'Verify delegate access permissions' })
   @ApiResponse({ status: 200, description: 'Access verification result' })
   async verifyDelegateAccess(@Query() verifyAccessDto: any) {
@@ -279,7 +276,7 @@ export class DelegatesController {
       );
 
       // Log access verification
-      await this.auditService.logEvent({
+      await this.auditService.logDelegateAction({
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: hasAccess ? AuditSeverity.INFO : AuditSeverity.WARNING,
         userId: verifyAccessDto.delegateId,
@@ -292,9 +289,8 @@ export class DelegatesController {
 
       return { hasAccess };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new HttpException(
-        `Failed to verify access: ${errorMessage}`,
+        `Failed to verify access: ${error.message}`,
         HttpStatus.BAD_REQUEST
       );
     }

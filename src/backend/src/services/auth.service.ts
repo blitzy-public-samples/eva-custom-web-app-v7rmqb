@@ -1,4 +1,5 @@
 import { Redis } from 'ioredis'; // v5.0.0
+import { JwtPayload } from 'jsonwebtoken'; // v9.0.0
 import DeviceDetector from 'device-detector-js'; // v3.0.0
 import { Auth0Integration } from '../integrations/auth0.integration';
 import { User } from '../types/user.types';
@@ -6,7 +7,9 @@ import { createHash } from 'crypto';
 
 // Constants for authentication and session management
 const SESSION_EXPIRY = 3600; // 1 hour in seconds
+const TOKEN_REFRESH_WINDOW = 300; // 5 minutes before expiry
 const MAX_CONCURRENT_SESSIONS = 3;
+const FAILED_ATTEMPTS_THRESHOLD = 5;
 const SESSION_CLEANUP_INTERVAL = 900; // 15 minutes
 
 // Custom types for authentication flows
@@ -100,7 +103,7 @@ export class AuthService {
           `${this.userSessionsPrefix}${userId}`
         );
         if (oldestSession) {
-          await this.revokeSession(oldestSession);
+          await this.revokeSession(oldestSession, true);
         }
       }
 
@@ -204,8 +207,9 @@ export class AuthService {
   /**
    * Revoke user session with cleanup
    * @param sessionId Session to revoke
+   * @param isForced Whether revocation is forced
    */
-  async revokeSession(sessionId: string): Promise<void> {
+  async revokeSession(sessionId: string, isForced: boolean = false): Promise<void> {
     try {
       const sessionData = await this.redisClient.get(
         `${this.sessionPrefix}${sessionId}`
@@ -244,7 +248,7 @@ export class AuthService {
           
           if (age > SESSION_EXPIRY * 1000) {
             const sessionId = key.replace(this.sessionPrefix, '');
-            await this.revokeSession(sessionId);
+            await this.revokeSession(sessionId, true);
           }
         }
       }

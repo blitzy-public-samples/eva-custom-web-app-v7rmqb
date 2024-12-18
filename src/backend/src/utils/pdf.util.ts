@@ -5,10 +5,10 @@
  * @version 1.0.0
  */
 
-import { PDFDocument, PDFPage, rgb, StandardFonts, Rotation } from 'pdf-lib'; // v1.17.1
+import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib'; // v1.17.1
 import PDFParser from 'pdf2json'; // v2.0.0
-import { ReadableStreamBuffer } from 'stream-buffers'; // v3.0.2
-import { DocumentMetadata } from '../types/document.types';
+import { ReadableStreamBuffer, WritableStreamBuffer } from 'stream-buffers'; // v3.0.2
+import { DocumentType, DocumentMetadata } from '../types/document.types';
 import { logger } from '../utils/logger.util';
 
 // Constants for PDF processing
@@ -82,7 +82,7 @@ export async function validatePDF(
     
     // Basic format validation
     result.format.isPDF = true;
-    result.format.version = '1.7'; // Default to latest supported version
+    result.format.version = pdfDoc.getVersion();
     result.format.isVersionSupported = SUPPORTED_PDF_VERSIONS.includes(result.format.version);
 
     // Security checks
@@ -111,9 +111,9 @@ export async function validatePDF(
     });
 
     return result;
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('PDF validation failed', { error });
-    throw new Error(`PDF validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`PDF validation failed: ${error.message}`);
   }
 }
 
@@ -133,7 +133,7 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
     const parser = new PDFParser();
     
     return new Promise((resolve, reject) => {
-      parser.on('pdfParser_dataReady', async () => {
+      parser.on('pdfParser_dataReady', async (pdfData) => {
         try {
           const pdfDoc = await PDFDocument.load(pdfBuffer);
           
@@ -151,11 +151,10 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
           const info = pdfDoc.getTitle() || '';
           metadata.fileName = info.length > 0 ? info : 'Untitled Document';
 
-          // Sanitize string metadata fields
-          const stringFields: Array<keyof DocumentMetadata> = ['fileName', 'mimeType', 'geographicLocation'];
-          stringFields.forEach(field => {
-            if (typeof metadata[field] === 'string') {
-              metadata[field] = sanitizeMetadata(metadata[field] as string);
+          // Sanitize metadata
+          Object.keys(metadata).forEach(key => {
+            if (typeof metadata[key] === 'string') {
+              metadata[key] = sanitizeMetadata(metadata[key]);
             }
           });
 
@@ -166,20 +165,20 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
           });
 
           resolve(metadata);
-        } catch (error: unknown) {
-          reject(new Error(`Metadata extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        } catch (error) {
+          reject(new Error(`Metadata extraction failed: ${error.message}`));
         }
       });
 
-      parser.on('pdfParser_dataError', (error: unknown) => {
+      parser.on('pdfParser_dataError', (error) => {
         reject(new Error(`PDF parsing failed: ${error}`));
       });
 
       readStream.pipe(parser as any);
     });
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('PDF metadata extraction failed', { error });
-    throw new Error(`Metadata extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Metadata extraction failed: ${error.message}`);
   }
 }
 
@@ -202,6 +201,7 @@ export async function generatePDFPreview(
 
     // Configure preview options
     const watermarkText = options.watermarkText || PREVIEW_WATERMARK;
+    const resolution = options.resolution || PREVIEW_MAX_RESOLUTION;
     
     // Copy limited pages to preview
     const pageCount = Math.min(sourcePdf.getPageCount(), maxPages);
@@ -210,6 +210,21 @@ export async function generatePDFPreview(
       await addWatermark(page, watermarkText);
       previewPdf.addPage(page);
     }
+
+    // Apply security settings
+    await previewPdf.encrypt({
+      userPassword: undefined,
+      ownerPassword: generatePreviewPassword(),
+      permissions: {
+        printing: options.allowPrinting ? 'lowResolution' : 'none',
+        modifying: false,
+        copying: options.allowCopying || false,
+        annotating: false,
+        fillingForms: false,
+        contentAccessibility: true,
+        documentAssembly: false
+      }
+    });
 
     // Generate preview buffer
     const previewBuffer = await previewPdf.save();
@@ -221,31 +236,31 @@ export async function generatePDFPreview(
       pages: pageCount
     });
 
-    return Buffer.from(previewBuffer);
-  } catch (error: unknown) {
+    return previewBuffer;
+  } catch (error) {
     logger.error('PDF preview generation failed', { error });
-    throw new Error(`Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Preview generation failed: ${error.message}`);
   }
 }
 
 // Helper functions
 
-async function checkForJavaScript(): Promise<boolean> {
+async function checkForJavaScript(pdfDoc: PDFDocument): Promise<boolean> {
   // Implementation for JavaScript detection in PDF
   return false; // Placeholder
 }
 
-async function checkForExternalLinks(): Promise<boolean> {
+async function checkForExternalLinks(pdfDoc: PDFDocument): Promise<boolean> {
   // Implementation for external links detection
   return false; // Placeholder
 }
 
-async function performMalwareScan(): Promise<boolean> {
+async function performMalwareScan(pdfBuffer: Buffer): Promise<boolean> {
   // Implementation for malware scanning
   return false; // Placeholder
 }
 
-async function checkAccessibility(): Promise<any> {
+async function checkAccessibility(pdfDoc: PDFDocument): Promise<any> {
   return {
     hasTextContent: true,
     isTagged: true,
@@ -272,11 +287,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: degrees(45),
+    rotate: Math.PI / 4,
     opacity: 0.3
   });
-}
-
-function degrees(angle: number): Rotation {
-  return (angle * Math.PI / 180) as Rotation;
 }

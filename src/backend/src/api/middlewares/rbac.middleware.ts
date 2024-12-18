@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { Container } from 'typedi';
-import { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
+import { Container } from 'typedi'; // ^0.10.0
+import { Request, Response, NextFunction } from 'express'; // ^4.18.0
+import rateLimit from 'express-rate-limit'; // ^6.7.0
 
 import { DelegateService } from '../../services/delegate.service';
 import { AuthorizationError } from '../../utils/error.util';
@@ -38,7 +38,7 @@ const createRateLimiter = (options: RateLimitOptions = {}) => {
     skipFailedRequests: options.skipFailedRequests || false,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => IP_WHITELIST.includes(req.ip || ''),
+    skip: (req) => IP_WHITELIST.includes(req.ip),
     handler: (req, res) => {
       logger.warn('Rate limit exceeded', {
         ip: req.ip,
@@ -79,13 +79,17 @@ export const checkPermission = (
         throw new AuthorizationError('Delegate ID not provided');
       }
 
+      // Get delegate service instance
       const delegateService = Container.get(DelegateService);
+
+      // Verify delegate access
       const hasAccess = await delegateService.verifyDelegateAccess(
         delegateId,
         resourceType,
         requiredAccess
       );
 
+      // Log security event
       logger.logSecurityEvent('PERMISSION_CHECK', {
         correlationId,
         delegateId,
@@ -103,10 +107,11 @@ export const checkPermission = (
       }
 
       next();
-    } catch (error: any) {
+    } catch (error) {
+      // Log security event for access denial
       logger.logSecurityEvent('ACCESS_DENIED', {
         correlationId,
-        error: error?.message || 'Unknown error',
+        error: error.message,
         resourceType,
         ip: req.ip
       });
@@ -118,46 +123,65 @@ export const checkPermission = (
 
 /**
  * General-purpose RBAC middleware with enhanced security features
- * @param roles - Array of required roles for access
  */
-export const rbacMiddleware = (roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const correlationId = req.headers['x-correlation-id'] as string || 
-                         `rbac-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    try {
-      if (!req.headers['x-delegate-id']) {
-        throw new AuthorizationError('Missing delegate credentials');
-      }
-
-      const delegateId = req.headers['x-delegate-id'] as string;
-      const delegateService = Container.get(DelegateService);
-
-      // Verify if delegate has any of the required roles
-      const hasAccess = await delegateService.verifyDelegateRoles(delegateId, roles);
-
-      logger.logSecurityEvent('PERMISSION_CHECK', {
-        correlationId,
-        delegateId,
-        roles,
-        granted: hasAccess,
-        ip: req.ip
-      });
-
-      if (!hasAccess) {
-        throw new AuthorizationError('Insufficient role permissions');
-      }
-
-      next();
-    } catch (error: any) {
-      logger.logSecurityEvent('ACCESS_DENIED', {
-        correlationId,
-        error: error?.message || 'Unknown error',
-        roles,
-        ip: req.ip
-      });
-
-      next(error);
+export const rbacMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const correlationId = req.headers['x-correlation-id'] as string || 
+                       `rbac-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    // Validate security headers
+    if (!req.headers['x-delegate-id']) {
+      throw new AuthorizationError('Missing delegate credentials');
     }
-  };
+
+    const delegateId = req.headers['x-delegate-id'] as string;
+    const resourceType = req.headers['x-resource-type'] as ResourceType;
+    const requiredAccess = req.headers['x-required-access'] as AccessLevel;
+
+    if (!resourceType || !requiredAccess) {
+      throw new AuthorizationError('Missing resource access requirements');
+    }
+
+    // Get delegate service instance
+    const delegateService = Container.get(DelegateService);
+
+    // Verify permissions
+    const hasAccess = await delegateService.verifyDelegateAccess(
+      delegateId,
+      resourceType,
+      requiredAccess
+    );
+
+    // Log security event
+    logger.logSecurityEvent('PERMISSION_CHECK', {
+      correlationId,
+      delegateId,
+      resourceType,
+      requiredAccess,
+      granted: hasAccess,
+      ip: req.ip
+    });
+
+    if (!hasAccess) {
+      throw new AuthorizationError(
+        `Access denied for resource type: ${resourceType}`,
+        resourceType
+      );
+    }
+
+    next();
+  } catch (error) {
+    // Log security event for access denial
+    logger.logSecurityEvent('ACCESS_DENIED', {
+      correlationId,
+      error: error.message,
+      ip: req.ip
+    });
+
+    next(error);
+  }
 };

@@ -26,26 +26,6 @@ interface DocumentMetadata {
   securityContext: SecurityMetadata;
 }
 
-interface EnhancedMetadata {
-  contentType: string;
-  size: number;
-  checksum: string;
-  versionId: string;
-  lastModified: Date;
-  metadata: {
-    iv: string;
-    authTag: string;
-    encryptionVersion: string;
-    userId: string;
-    securityClassification: string;
-    accessLevel: string;
-    retentionPolicy: string;
-  };
-  encryption: {
-    keyId: string;
-  };
-}
-
 @injectable()
 export class StorageService {
   constructor(
@@ -135,13 +115,13 @@ export class StorageService {
         metadata: documentMetadata
       };
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document upload failed', {
         error,
         fileName,
         userId
       });
-      throw new Error(`Document upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document upload failed: ${error.message}`);
     }
   }
 
@@ -170,7 +150,7 @@ export class StorageService {
       });
 
       // Get document metadata for security validation
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Validate access permissions
       this.validateAccessPermissions(metadata, userId, securityContext);
@@ -204,13 +184,13 @@ export class StorageService {
 
       return decryptedContent;
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document download failed', {
         error,
         documentKey,
         userId
       });
-      throw new Error(`Document download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document download failed: ${error.message}`);
     }
   }
 
@@ -239,7 +219,7 @@ export class StorageService {
       });
 
       // Get document metadata
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Validate deletion permissions
       this.validateDeletionPermissions(metadata, userId);
@@ -254,13 +234,13 @@ export class StorageService {
         permanent: deletionMetadata.permanent
       });
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document deletion failed', {
         error,
         documentKey,
         userId
       });
-      throw new Error(`Document deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document deletion failed: ${error.message}`);
     }
   }
 
@@ -286,7 +266,7 @@ export class StorageService {
       });
 
       // Get base metadata from S3
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Compile enhanced metadata
       const enhancedMetadata: DocumentMetadata = {
@@ -310,12 +290,12 @@ export class StorageService {
 
       return enhancedMetadata;
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Failed to retrieve document metadata', {
         error,
         documentKey
       });
-      throw new Error(`Metadata retrieval failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Metadata retrieval failed: ${error.message}`);
     }
   }
 
@@ -324,7 +304,7 @@ export class StorageService {
    * @private
    */
   private validateAccessPermissions(
-    metadata: EnhancedMetadata,
+    metadata: any,
     userId: string,
     securityContext: SecurityMetadata
   ): void {
@@ -342,7 +322,7 @@ export class StorageService {
    * Validates user permissions for document deletion
    * @private
    */
-  private validateDeletionPermissions(metadata: EnhancedMetadata, userId: string): void {
+  private validateDeletionPermissions(metadata: any, userId: string): void {
     const documentUserId = metadata.metadata.userId;
     if (documentUserId !== userId) {
       throw new Error('Insufficient permissions to delete document');

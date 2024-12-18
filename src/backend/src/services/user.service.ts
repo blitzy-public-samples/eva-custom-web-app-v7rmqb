@@ -8,7 +8,7 @@ import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from 'typeorm-typedi-extensions'; // ^0.4.1
 
-import UserModel from '../db/models/user.model';
+import { UserModel } from '../db/models/user.model';
 import { 
   User, 
   CreateUserDTO, 
@@ -24,6 +24,8 @@ import { logger } from '../utils/logger.util';
 @Service()
 export class UserService {
   // Security constants
+  private readonly MAX_LOGIN_ATTEMPTS = 5;
+  private readonly PASSWORD_EXPIRY_DAYS = 90;
   private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'];
 
   constructor(
@@ -84,8 +86,8 @@ export class UserService {
         userId: savedUser.id,
         resourceId: savedUser.id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0',
-        userAgent: 'SYSTEM',
+        ipAddress: userData.ipAddress || '0.0.0.0',
+        userAgent: userData.userAgent || 'SYSTEM',
         details: {
           action: 'CREATE_USER',
           email: savedUser.email
@@ -131,7 +133,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0',
+        ipAddress: '0.0.0.0', // Should be passed from request context
         userAgent: 'SYSTEM',
         details: {
           action: 'READ_USER',
@@ -196,7 +198,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0',
+        ipAddress: '0.0.0.0', // Should be passed from request context
         userAgent: 'SYSTEM',
         details: {
           action: 'UPDATE_USER',
@@ -213,57 +215,11 @@ export class UserService {
   }
 
   /**
-   * Deletes a user with proper authorization and audit logging
-   * @param id User ID to delete
-   * @param requestingUserRole Role of requesting user
-   * @returns Promise<boolean> Success status
-   */
-  async deleteUser(id: string, requestingUserRole: UserRole): Promise<boolean> {
-    try {
-      // Validate access permissions
-      const hasAccess = await this.validateUserAccess(id, requestingUserRole, 'DELETE');
-      if (!hasAccess) {
-        throw new Error('Unauthorized access');
-      }
-
-      // Retrieve existing user
-      const user = await this.userRepository.findOne({ where: { id } });
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Delete user
-      await this.userRepository.remove(user);
-
-      // Create audit log for deletion
-      await this.auditService.createAuditLog({
-        eventType: AuditEventType.USER_DELETE,
-        severity: AuditSeverity.WARNING,
-        userId: id,
-        resourceId: id,
-        resourceType: 'USER',
-        ipAddress: '0.0.0.0',
-        userAgent: 'SYSTEM',
-        details: {
-          action: 'DELETE_USER',
-          email: user.email,
-          requestingRole: requestingUserRole
-        }
-      });
-
-      return true;
-    } catch (error) {
-      logger.error('Failed to delete user', { error, userId: id });
-      throw error;
-    }
-  }
-
-  /**
    * Validates user access permissions based on role
    * @private
    */
   private async validateUserAccess(
-    id: string,
+    userId: string,
     requestingRole: UserRole,
     operation: string
   ): Promise<boolean> {
@@ -312,7 +268,6 @@ export class UserService {
                 content: Buffer.from(user.profile[field], 'base64'),
                 iv: Buffer.alloc(16),
                 authTag: Buffer.alloc(16),
-                keyVersion: '1',
                 metadata: {
                   algorithm: 'aes-256-gcm',
                   timestamp: Date.now()

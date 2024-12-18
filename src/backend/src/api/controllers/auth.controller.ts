@@ -1,8 +1,8 @@
 // @ts-check
 import { Request, Response } from 'express'; // v4.18.2
 import { AuthService } from '../../services/auth.service';
-import { UserStatus } from '../../types/user.types';
-import { Auth0Integration } from '../../integrations/auth0.integration';
+import { User, UserStatus } from '../../types/user.types';
+import { Auth0IntegrationError } from '../../integrations/auth0.integration';
 
 // Custom error types for authentication flows
 class AuthenticationError extends Error {
@@ -47,7 +47,7 @@ export class AuthController {
   /**
    * Decorator for standardized error handling in auth endpoints
    */
-  private static tryCatch(_: any, __: string, descriptor: PropertyDescriptor) {
+  private static tryCatch(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
@@ -55,10 +55,10 @@ export class AuthController {
         return await originalMethod.apply(this, args);
       } catch (error) {
         const res = args[1] as Response;
-        if (error instanceof AuthenticationError || error instanceof Auth0Integration) {
+        if (error instanceof AuthenticationError || error instanceof Auth0IntegrationError) {
           return res.status(401).json({
-            error: (error as AuthenticationError).code,
-            message: (error as Error).message
+            error: error.code,
+            message: error.message
           });
         }
         return res.status(500).json({
@@ -88,7 +88,7 @@ export class AuthController {
   private extractSecurityMetadata(req: Request): SecurityMetadata {
     return {
       deviceId: req.headers['x-device-id'] as string || 'unknown',
-      ipAddress: req.ip || 'unknown',
+      ipAddress: req.ip,
       userAgent: req.headers['user-agent'] || 'unknown',
       timestamp: Date.now()
     };
@@ -200,7 +200,7 @@ export class AuthController {
    * @param res Express response object
    */
   @AuthController.tryCatch
-  async register(_: Request, __: Response): Promise<void> {
+  async register(req: Request, res: Response): Promise<void> {
     // Registration logic would be implemented here
     // This would typically involve Auth0 user creation and additional security setup
     throw new Error('Registration endpoint not implemented');

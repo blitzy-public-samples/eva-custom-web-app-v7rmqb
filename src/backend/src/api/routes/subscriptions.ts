@@ -4,9 +4,9 @@
  * @version 1.0.0
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
-import cors from 'cors';
+import { Router } from 'express'; // ^4.18.2
+import rateLimit from 'express-rate-limit'; // ^6.7.0
+import cors from 'cors'; // ^2.8.5
 
 // Internal imports
 import { 
@@ -135,7 +135,7 @@ router.post('/webhook/shopify',
 /**
  * Validates Shopify webhook signatures
  */
-function validateShopifyWebhook(req: Request, res: Response, next: NextFunction) {
+function validateShopifyWebhook(req: any, res: any, next: any) {
   const signature = req.headers['x-shopify-hmac-sha256'];
   const topic = req.headers['x-shopify-topic'];
   

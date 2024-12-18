@@ -20,7 +20,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 /**
  * Interface defining province-specific content structure
  */
-interface ProvinceContent {
+export interface ProvinceContent {
   name: string;
   code: string;
   resources: Resource[];
@@ -32,7 +32,7 @@ interface ProvinceContent {
 /**
  * Interface defining estate planning resource structure
  */
-interface Resource {
+export interface Resource {
   title: string;
   description: string;
   category: string;
@@ -46,7 +46,7 @@ interface Resource {
 /**
  * Interface defining estate planning guidelines
  */
-interface Guideline {
+export interface Guideline {
   title: string;
   content: string;
   category: string;
@@ -169,9 +169,8 @@ export async function getProvinceContent(
 
     return content as ProvinceContent;
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    logger.error(`Error retrieving province content: ${errorMessage}`, {
+  } catch (error) {
+    logger.error(`Error retrieving province content: ${error.message}`, {
       provinceCode,
       error
     });
@@ -214,9 +213,8 @@ export async function getResourcesByCategory(
 
     return resources as Resource[];
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    logger.error(`Error retrieving resources by category: ${errorMessage}`, {
+  } catch (error) {
+    logger.error(`Error retrieving resources by category: ${error.message}`, {
       category,
       error
     });
@@ -255,9 +253,8 @@ export async function searchResources(
 
     return resources as Resource[];
 
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    logger.error(`Error searching resources: ${errorMessage}`, {
+  } catch (error) {
+    logger.error(`Error searching resources: ${error.message}`, {
       searchTerm,
       error
     });
@@ -265,4 +262,5 @@ export async function searchResources(
   }
 }
 
-export { ProvinceContent, Resource, Guideline };
+// Export interfaces for external use
+export type { ProvinceContent, Resource, Guideline };

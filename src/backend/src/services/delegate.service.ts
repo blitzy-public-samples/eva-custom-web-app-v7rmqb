@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
-import { RateLimiterRes } from 'rate-limiter-flexible'; // ^2.3.0
+import { RateLimiter } from 'rate-limiter-flexible'; // ^2.3.0
 import { CloudWatch } from '@aws-sdk/client-cloudwatch'; // ^3.0.0
 
 import { DelegateEntity } from '../db/models/delegate.model';
@@ -22,10 +22,12 @@ import { AuditEventType, AuditSeverity } from '../types/audit.types';
 // Security and rate limiting configuration
 const RATE_LIMIT_POINTS = 100;
 const RATE_LIMIT_DURATION = 60; // seconds
+const MAX_FAILED_ATTEMPTS = 5;
+const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour in seconds
 
 @Injectable()
 export class DelegateService {
-  private rateLimiter: RateLimiterRes;
+  private rateLimiter: RateLimiter;
   private cloudWatch: CloudWatch;
 
   constructor(
@@ -35,7 +37,7 @@ export class DelegateService {
     private readonly auditService: AuditService
   ) {
     // Initialize rate limiter
-    this.rateLimiter = new RateLimiterRes({
+    this.rateLimiter = new RateLimiter({
       points: RATE_LIMIT_POINTS,
       duration: RATE_LIMIT_DURATION
     });
@@ -148,7 +150,6 @@ export class DelegateService {
           content: Buffer.from(delegate.encryptedData, 'base64'),
           iv: Buffer.alloc(16), // Should be stored with encrypted data
           authTag: Buffer.alloc(16), // Should be stored with encrypted data
-          keyVersion: '1', // Added required keyVersion
           metadata: {
             algorithm: 'aes-256-gcm',
             timestamp: Date.now()

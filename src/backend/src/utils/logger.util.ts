@@ -79,7 +79,7 @@ class CustomLogger {
     flushInterval: number;
   };
 
-  constructor() {
+  constructor(config: Record<string, any> = {}) {
     this.bufferConfig = {
       size: 100,
       flushInterval: 5000, // 5 seconds
@@ -122,6 +122,7 @@ class CustomLogger {
           logStreamName: `${NODE_ENV}-${new Date().toISOString()}`,
           awsRegion: AWS_REGION,
           messageFormatter: formatLogMessage,
+          handleExceptions: true,
           jsonMessage: true,
           bufferSize: this.bufferConfig.size,
           flushInterval: this.bufferConfig.flushInterval

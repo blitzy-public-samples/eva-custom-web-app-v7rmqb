@@ -4,7 +4,9 @@ import winston from 'winston'; // ^3.0.0
 import { 
   encrypt, 
   decrypt, 
-  generateEncryptionKey
+  generateEncryptionKey, 
+  generateSalt, 
+  deriveKey 
 } from '../utils/encryption.util';
 import { awsConfig } from '../config/aws';
 
@@ -36,7 +38,7 @@ interface EncryptedDataWithMetadata {
  * Service class providing enterprise-grade encryption operations with enhanced security features
  */
 export class EncryptionService {
-  private readonly kmsClient: AWS.KMS;
+  private KMS: AWS.KMS;
   private keyCache: Map<string, CachedKeyData>;
   private readonly KEY_ROTATION_INTERVAL_DAYS: number;
   private readonly MAX_RETRY_ATTEMPTS: number;
@@ -52,7 +54,7 @@ export class EncryptionService {
     maxRetryAttempts: number = 3
   ) {
     // Initialize AWS KMS client with provided configuration
-    this.kmsClient = new AWS.KMS(awsConfig);
+    this.KMS = new AWS.KMS(awsConfig);
     
     // Initialize key cache and configuration
     this.keyCache = new Map<string, CachedKeyData>();
@@ -75,7 +77,7 @@ export class EncryptionService {
     // Schedule automatic key rotation checks
     setInterval(() => {
       this.checkKeyRotation().catch(error => {
-        this.logger.error('Key rotation check failed:', { error: error instanceof Error ? error.message : String(error) });
+        this.logger.error('Key rotation check failed:', { error });
       });
     }, 24 * 60 * 60 * 1000); // Daily check
   }
@@ -92,7 +94,7 @@ export class EncryptionService {
     keyId: string
   ): Promise<EncryptedDataWithMetadata> {
     let attempts = 0;
-    let lastError: Error | null = null;
+    let lastError: Error;
 
     while (attempts < this.MAX_RETRY_ATTEMPTS) {
       try {
@@ -126,13 +128,13 @@ export class EncryptionService {
 
         return result;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error;
         attempts++;
         
         this.logger.warn('Encryption attempt failed', {
           keyId,
           attempt: attempts,
-          error: lastError.message
+          error: error.message
         });
 
         if (attempts === this.MAX_RETRY_ATTEMPTS) {
@@ -147,10 +149,10 @@ export class EncryptionService {
     this.logger.error('Encryption failed after maximum retry attempts', {
       keyId,
       maxAttempts: this.MAX_RETRY_ATTEMPTS,
-      error: lastError?.message
+      error: lastError
     });
 
-    throw new Error(`Encryption failed after ${this.MAX_RETRY_ATTEMPTS} attempts: ${lastError?.message}`);
+    throw new Error(`Encryption failed after ${this.MAX_RETRY_ATTEMPTS} attempts: ${lastError.message}`);
   }
 
   /**
@@ -190,14 +192,13 @@ export class EncryptionService {
 
       return decryptedData;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Decryption failed', {
         keyId,
-        error: errorMessage,
+        error: error.message,
         timestamp: new Date().toISOString()
       });
 
-      throw new Error(`Decryption failed: ${errorMessage}`);
+      throw new Error(`Decryption failed: ${error.message}`);
     }
   }
 
@@ -239,14 +240,13 @@ export class EncryptionService {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Key rotation failed', {
         keyId,
-        error: errorMessage,
+        error: error.message,
         timestamp: new Date().toISOString()
       });
 
-      throw new Error(`Key rotation failed: ${errorMessage}`);
+      throw new Error(`Key rotation failed: ${error.message}`);
     }
   }
 
@@ -272,9 +272,8 @@ export class EncryptionService {
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Key rotation check failed', {
-        error: errorMessage,
+        error: error.message,
         timestamp: new Date().toISOString()
       });
     }
@@ -326,11 +325,10 @@ export class EncryptionService {
       // Implement secure key deletion logic here
       // Note: Actual implementation would depend on specific security requirements
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Failed to delete old key version', {
         keyId,
         version,
-        error: errorMessage
+        error: error.message
       });
     }
   }

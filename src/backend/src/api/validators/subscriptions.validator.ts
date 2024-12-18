@@ -32,7 +32,7 @@ export const createSubscriptionSchema = z.object({
     SubscriptionPlan.BASIC,
     SubscriptionPlan.PREMIUM
   ], {
-    errorMap: () => ({
+    errorMap: (issue) => ({
       message: 'Invalid subscription plan. Must be one of: FREE, BASIC, or PREMIUM'
     })
   }),
@@ -41,7 +41,7 @@ export const createSubscriptionSchema = z.object({
     BillingCycle.MONTHLY,
     BillingCycle.ANNUAL
   ], {
-    errorMap: () => ({
+    errorMap: (issue) => ({
       message: 'Invalid billing cycle. Must be either MONTHLY or ANNUAL'
     })
   }),
@@ -62,7 +62,7 @@ export const updateSubscriptionSchema = z.object({
     SubscriptionPlan.BASIC,
     SubscriptionPlan.PREMIUM
   ], {
-    errorMap: () => ({
+    errorMap: (issue) => ({
       message: 'Invalid subscription plan. Must be one of: FREE, BASIC, or PREMIUM'
     })
   }).optional(),
@@ -71,7 +71,7 @@ export const updateSubscriptionSchema = z.object({
     BillingCycle.MONTHLY,
     BillingCycle.ANNUAL
   ], {
-    errorMap: () => ({
+    errorMap: (issue) => ({
       message: 'Invalid billing cycle. Must be either MONTHLY or ANNUAL'
     })
   }).optional(),
@@ -86,7 +86,7 @@ export const updateSubscriptionSchema = z.object({
     SubscriptionStatus.EXPIRED,
     SubscriptionStatus.PENDING
   ], {
-    errorMap: () => ({
+    errorMap: (issue) => ({
       message: 'Invalid subscription status. Must be one of: ACTIVE, CANCELLED, EXPIRED, or PENDING'
     })
   })

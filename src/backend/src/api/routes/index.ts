@@ -8,11 +8,11 @@ import { Router } from 'express'; // ^4.18.2
 import helmet from 'helmet'; // ^7.0.0
 
 // Import route modules
-import authRouter from './auth';
+import { authRouter } from './auth';
 import { userRouter } from './users';
-import documentsRouter from './documents';
+import { documentsRouter } from './documents';
 import { delegatesRouter } from './delegates';
-import subscriptionsRouter from './subscriptions';
+import { subscriptionsRouter } from './subscriptions';
 
 // Import security utilities
 import { logger } from '../../utils/logger.util';
@@ -64,7 +64,7 @@ export function configureApiRoutes(): Router {
 
   // Global error handler for unhandled routes
   router.use((req, res) => {
-    logger.logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, {
+    logger.securityEvent(AuditEventType.ERROR, {
       severity: AuditSeverity.WARNING,
       message: 'Attempted access to non-existent route',
       path: req.path,
@@ -101,8 +101,6 @@ export function configureApiRoutes(): Router {
         correlationId: req.headers['x-correlation-id']
       }
     });
-    
-    next(error);
   });
 
   return router;

@@ -80,7 +80,7 @@ const monitorSanityRequests = (client: any): void => {
   let errorCount = 0;
 
   // Setup request interceptor for monitoring
-  client.config().requestHook = (_: any, response: any) => {
+  client.config().requestHook = (request: any, response: any) => {
     const startTime = Date.now();
 
     // Monitor request duration
@@ -136,6 +136,12 @@ const createSanityClient = (options: Partial<SanityConfig> = {}) => {
   // Create client instance with security settings
   const client = createClient({
     ...config,
+    // Additional security headers
+    headers: {
+      'X-Sanity-Client': 'estate-kit-backend',
+      'X-Sanity-Client-Version': '1.0.0'
+    },
+    // Enable token-based authentication
     useProjectHostname: true,
     withCredentials: true
   });

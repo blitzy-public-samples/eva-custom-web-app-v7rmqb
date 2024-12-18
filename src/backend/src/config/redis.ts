@@ -9,7 +9,7 @@
  * @requires ioredis ^5.0.0
  */
 
-import Redis, { RedisOptions, ClusterOptions, Cluster } from 'ioredis'; // ^5.0.0
+import Redis, { RedisOptions, ClusterOptions } from 'ioredis'; // ^5.0.0
 
 /**
  * Interface for Redis node configuration in cluster mode
@@ -72,10 +72,32 @@ export const REDIS_TTL = {
 } as const;
 
 /**
+ * Decorator for Redis connection error handling
+ */
+function throwsRedisConnectionError(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor
+) {
+  const originalMethod = descriptor.value;
+  descriptor.value = async function (...args: any[]) {
+    try {
+      return await originalMethod.apply(this, args);
+    } catch (error) {
+      throw new RedisConnectionError(
+        `Redis connection error: ${error.message}`
+      );
+    }
+  };
+  return descriptor;
+}
+
+/**
  * Creates and configures a new Redis client instance
  * @param options - Optional Redis configuration overrides
  * @returns Configured Redis client instance
  */
+@throwsRedisConnectionError
 export async function createRedisClient(
   options: Partial<RedisOptions> = {}
 ): Promise<Redis> {
@@ -111,8 +133,8 @@ export async function createRedisClient(
     }
   };
 
-  // Add healthCheck as a property to the client type
-  (client as any).healthCheck = healthCheck;
+  // Attach health check to client instance
+  client.healthCheck = healthCheck;
 
   return client;
 }
@@ -123,10 +145,11 @@ export async function createRedisClient(
  * @param options - Optional cluster configuration overrides
  * @returns Configured Redis cluster client
  */
+@throwsRedisConnectionError
 export async function createRedisCluster(
   nodes: RedisNode[],
   options: Partial<ClusterOptions> = {}
-): Promise<Cluster> {
+): Promise<Redis.Cluster> {
   if (!nodes || nodes.length === 0) {
     throw new RedisClusterError('No cluster nodes provided');
   }
@@ -175,13 +198,13 @@ export async function createRedisCluster(
     }
   };
 
-  // Add healthCheck as a property to the cluster type
-  (cluster as any).healthCheck = clusterHealthCheck;
+  // Attach health check to cluster instance
+  cluster.healthCheck = clusterHealthCheck;
 
   return cluster;
 }
 
 // Create default Redis client instance
-const redisClient = createRedisClient();
+const redisClient = await createRedisClient();
 
 export default redisClient;

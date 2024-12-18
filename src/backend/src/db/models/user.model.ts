@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
   Index,
   BeforeInsert,
   BeforeUpdate
@@ -29,9 +30,9 @@ const encryptionService = new EncryptionService();
 @Index(['email'], { unique: true })
 @Index(['status'], { where: "status = 'ACTIVE'" })
 @Index(['role'], { where: "status = 'ACTIVE'" })
-export class UserModel {
+export default class UserModel {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
   @Column({ 
     type: 'varchar', 
@@ -39,34 +40,34 @@ export class UserModel {
     unique: true,
     nullable: false 
   })
-  email!: string;
+  email: string;
 
   @Column({ 
     type: 'varchar', 
     length: 255,
     nullable: false 
   })
-  name!: string;
+  name: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
     default: UserRole.OWNER
   })
-  role!: UserRole;
+  role: UserRole;
 
   @Column({
     type: 'enum',
     enum: UserStatus,
     default: UserStatus.PENDING
   })
-  status!: UserStatus;
+  status: UserStatus;
 
   @Column({
     type: 'jsonb',
     nullable: false
   })
-  profile!: UserProfile;
+  profile: UserProfile;
 
   @Column({
     type: 'varchar',
@@ -74,33 +75,33 @@ export class UserModel {
     nullable: true,
     comment: 'Last login IP address for security tracking'
   })
-  lastLoginIp!: string | null;
+  lastLoginIp: string | null;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Last successful login timestamp'
   })
-  lastLoginAt!: Date | null;
+  lastLoginAt: Date | null;
 
   @CreateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Account creation timestamp'
   })
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Last update timestamp'
   })
-  updatedAt!: Date;
+  updatedAt: Date;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Soft delete timestamp'
   })
-  deletedAt!: Date | null;
+  deletedAt: Date | null;
 
   /**
    * Creates a new user instance with enhanced security initialization
@@ -217,5 +218,3 @@ export class UserModel {
     };
   }
 }
-
-export default UserModel;

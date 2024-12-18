@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express'; // express v4.18.2
 import * as jwt from 'jsonwebtoken'; // jsonwebtoken v9.0.0
-import { JwksClient } from 'jwks-rsa'; // jwks-rsa v3.0.1
+import * as jwksRsa from 'jwks-rsa'; // jwks-rsa v3.0.1
 import { v4 as uuidv4 } from 'uuid'; // uuid v9.0.0
 import { jwtConfig } from '../../config/auth0';
 import { AuthenticationError } from '../../utils/error.util';
@@ -16,7 +16,7 @@ import { logger } from '../../utils/logger.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Configure JWKS client for Auth0 public key retrieval
-const jwksClient = new JwksClient({
+const jwksClient = jwksRsa({
   jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
   cache: true,
   cacheMaxAge: 86400000, // 24 hours
@@ -50,7 +50,7 @@ const getTokenFromHeader = (req: Request): string | null => {
 
   // Validate header format
   if (!authHeader.startsWith('Bearer ')) {
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.WARNING,
       message: 'Invalid authorization header format',
       ipAddress: req.ip
@@ -62,7 +62,7 @@ const getTokenFromHeader = (req: Request): string | null => {
 
   // Basic token format validation
   if (!token || token.length < 10) {
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.WARNING,
       message: 'Invalid token format',
       ipAddress: req.ip
@@ -93,7 +93,7 @@ const validateToken = async (token: string, correlationId: string): Promise<jwt.
 
     // Verify token with comprehensive checks
     const verified = jwt.verify(token, publicKey, {
-      algorithms: [...jwtConfig.algorithms],
+      algorithms: jwtConfig.algorithms,
       issuer: jwtConfig.issuer,
       audience: jwtConfig.audience,
       clockTolerance: 60, // 1 minute clock skew tolerance
@@ -109,7 +109,7 @@ const validateToken = async (token: string, correlationId: string): Promise<jwt.
 
     return verified;
   } catch (error) {
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.ERROR,
       message: 'Token validation failed',
       correlationId,
@@ -138,7 +138,7 @@ export const authMiddleware = async (
     // Extract and validate token
     const token = getTokenFromHeader(req);
     if (!token) {
-      logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+      logger.securityEvent(AuditEventType.USER_LOGIN, {
         severity: AuditSeverity.WARNING,
         message: 'Missing authentication token',
         correlationId,
@@ -161,7 +161,7 @@ export const authMiddleware = async (
     };
 
     // Log successful authentication
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.INFO,
       message: 'Authentication successful',
       correlationId,

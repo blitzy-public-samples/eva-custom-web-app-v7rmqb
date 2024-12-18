@@ -51,12 +51,6 @@ const permissionSchema = z.object({
   temporalAccess: temporalAccessSchema.optional()
 });
 
-type RolePermissions = {
-  [key in Exclude<UserRole, UserRole.OWNER>]: {
-    [key in ResourceType]: AccessLevel[];
-  };
-};
-
 /**
  * Validates permission matrix against role-based access control rules
  * Ensures compliance with security policies and authorization matrix
@@ -65,7 +59,7 @@ function validatePermissionMatrix(permissions: Array<{
   resourceType: ResourceType,
   accessLevel: AccessLevel
 }>, role: UserRole): boolean {
-  const rolePermissions: RolePermissions = {
+  const rolePermissions = {
     [UserRole.EXECUTOR]: {
       [ResourceType.PERSONAL_INFO]: [AccessLevel.READ],
       [ResourceType.FINANCIAL_DATA]: [AccessLevel.READ],
@@ -92,10 +86,6 @@ function validatePermissionMatrix(permissions: Array<{
     }
   };
 
-  if (role === UserRole.OWNER || !rolePermissions[role]) {
-    return false;
-  }
-
   return permissions.every(permission => {
     const allowedLevels = rolePermissions[role][permission.resourceType];
     return allowedLevels.includes(permission.accessLevel);
@@ -121,15 +111,12 @@ export const createDelegateSchema = z.object({
     .max(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), 'Expiration date cannot be more than 1 year in the future'),
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
-    .superRefine((permissions, ctx) => {
-      const role = (ctx.parent as { role: UserRole }).role;
-      if (!validatePermissionMatrix(permissions, role)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Invalid permission matrix for specified role'
-        });
+    .refine(
+      (permissions, ctx) => validatePermissionMatrix(permissions, ctx.role),
+      {
+        message: 'Invalid permission matrix for specified role'
       }
-    }),
+    ),
   businessHours: businessHoursSchema
 });
 
@@ -157,15 +144,12 @@ export const updateDelegateSchema = z.object({
     .optional(),
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
-    .superRefine((permissions, ctx) => {
-      const role = (ctx.parent as { role?: UserRole }).role || UserRole.EXECUTOR;
-      if (!validatePermissionMatrix(permissions, role)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Invalid permission matrix for specified role'
-        });
+    .refine(
+      (permissions, ctx) => validatePermissionMatrix(permissions, ctx.role || UserRole.EXECUTOR),
+      {
+        message: 'Invalid permission matrix for specified role'
       }
-    })
+    )
     .optional(),
   businessHours: businessHoursSchema.optional()
 }).refine(data => Object.keys(data).length > 0, {

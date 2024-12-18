@@ -15,7 +15,6 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 import { z } from 'zod'; // v3.22.0
 import { logger } from '../../utils/logger.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
-import { AuthService } from '../../services/auth.service';
 
 // Initialize router with security defaults
 const router = express.Router();
@@ -23,9 +22,8 @@ const router = express.Router();
 // Apply security headers
 router.use(helmet());
 
-// Initialize Auth Controller with required AuthService
-const authService = new AuthService();
-const authController = new AuthController(authService);
+// Initialize Auth Controller
+const authController = new AuthController();
 
 // Rate limiting configuration for authentication endpoints
 const authRateLimiter = rateLimit({
@@ -35,7 +33,7 @@ const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.WARNING,
       message: 'Rate limit exceeded for authentication',
       ipAddress: req.ip,
@@ -141,7 +139,7 @@ router.post('/logout',
 );
 
 // Global error handler for authentication routes
-router.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+router.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error('Authentication route error', {
     error,
     path: req.path,

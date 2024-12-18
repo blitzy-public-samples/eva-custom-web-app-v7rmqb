@@ -16,13 +16,12 @@ import {
   BeforeInsert,
   BeforeUpdate,
   AfterLoad
-} from 'typeorm';
+} from 'typeorm'; // ^0.3.0
 
 import { UserRole, DelegateStatus } from '../../../types/delegate.types';
 import { UserModel } from './user.model';
 import { EncryptionService } from '../services/encryption.service';
 import { AuditLogger } from '../services/audit.service';
-import { randomBytes } from 'crypto';
 
 // Initialize services
 const encryptionService = new EncryptionService();
@@ -35,41 +34,41 @@ const auditLogger = new AuditLogger();
 @Index(['role'])
 export class DelegateEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
   @Column({ type: 'uuid', nullable: false })
-  ownerId!: string;
+  ownerId: string;
 
   @Column({ type: 'uuid', nullable: false })
-  delegateId!: string;
+  delegateId: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
     nullable: false
   })
-  role!: UserRole;
+  role: UserRole;
 
   @Column({
     type: 'enum',
     enum: DelegateStatus,
     default: DelegateStatus.PENDING
   })
-  status: DelegateStatus = DelegateStatus.PENDING;
+  status: DelegateStatus;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: false,
     comment: 'Delegate access expiration date'
   })
-  expiresAt!: Date;
+  expiresAt: Date;
 
   @Column({
     type: 'text',
     nullable: true,
     comment: 'Encrypted delegate-specific data'
   })
-  encryptedData!: string;
+  encryptedData: string;
 
   @Column({
     type: 'varchar',
@@ -77,39 +76,39 @@ export class DelegateEntity {
     nullable: false,
     comment: 'Unique access key for delegate'
   })
-  accessKey!: string;
+  accessKey: string;
 
   @CreateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Record creation timestamp'
   })
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Record update timestamp'
   })
-  updatedAt!: Date;
+  updatedAt: Date;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Last successful access timestamp'
   })
-  lastAccessedAt: Date | null = null;
+  lastAccessedAt: Date | null;
 
   @Column({
     type: 'integer',
     default: 0,
     comment: 'Number of successful access attempts'
   })
-  accessCount: number = 0;
+  accessCount: number;
 
   @ManyToOne(() => UserModel, { onDelete: 'CASCADE' })
-  owner!: UserModel;
+  owner: UserModel;
 
   @ManyToOne(() => UserModel, { onDelete: 'CASCADE' })
-  delegate!: UserModel;
+  delegate: UserModel;
 
   /**
    * Creates a new delegate entity with enhanced security features
@@ -129,7 +128,7 @@ export class DelegateEntity {
       }
 
       // Generate unique access key
-      this.accessKey = randomBytes(32).toString('hex');
+      this.accessKey = crypto.randomBytes(32).toString('hex');
     }
   }
 
@@ -257,7 +256,7 @@ export class DelegateEntity {
         );
         this.encryptedData = decrypted;
       } catch (error) {
-        this.encryptedData = '';
+        this.encryptedData = null;
         throw new Error('Failed to decrypt delegate data');
       }
     }

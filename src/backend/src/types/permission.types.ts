@@ -1,5 +1,5 @@
 // @ts-check
-import { UUID } from 'crypto'; // Using crypto UUID directly since it's the source type
+import { UUID } from 'crypto'; // Using UUID directly from crypto
 
 /**
  * Enum defining types of resources that can be accessed in the system.
@@ -33,16 +33,6 @@ export interface Permission {
     accessLevel: AccessLevel;     // Level of access granted
     createdAt: Date;             // Permission creation timestamp
     updatedAt: Date;             // Last modification timestamp
-}
-
-/**
- * Interface defining access control rules and validation.
- * Used for implementing role-based access control (RBAC).
- */
-export interface AccessControl {
-    resourceType: ResourceType;
-    requiredLevel: AccessLevel;
-    validate(permission: Permission): boolean;
 }
 
 /**

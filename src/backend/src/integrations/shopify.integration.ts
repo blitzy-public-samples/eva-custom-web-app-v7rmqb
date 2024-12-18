@@ -20,6 +20,15 @@ import {
   timeouts
 } from '../config/shopify';
 
+// Temporary type declaration until @types/opossum is installed
+declare module 'opossum' {
+  export default class CircuitBreaker {
+    constructor(fn: Function, options: any);
+    fire(data: any): Promise<any>;
+    on(event: string, handler: () => void): void;
+  }
+}
+
 // Interfaces
 interface IShopifyOrder {
   customer: {

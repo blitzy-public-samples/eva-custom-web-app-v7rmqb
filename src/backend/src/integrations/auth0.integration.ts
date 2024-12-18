@@ -1,6 +1,6 @@
 import { ManagementClient, AuthenticationClient } from 'auth0'; // v3.0.0
 import { JwtPayload } from 'jsonwebtoken'; // v9.0.0
-import * as jwksRsa from 'jwks-rsa'; // v3.0.1
+import { createRemoteJWKSet } from 'jwks-rsa'; // v3.0.1
 import rateLimit from 'express-rate-limit'; // v6.0.0
 import { auth0Config, jwtConfig } from '../../config/auth0';
 
@@ -76,23 +76,14 @@ export class Auth0Integration {
   async verifyToken(token: string): Promise<JwtPayload> {
     try {
       // Initialize JWKS client with retry mechanism
-      const jwksClient = jwksRsa({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `https://${auth0Config.domain}/.well-known/jwks.json`
-      });
-
-      // Get signing key
-      const getKey = async (header: any, callback: any) => {
-        try {
-          const key = await jwksClient.getSigningKey(header.kid);
-          const signingKey = key.getPublicKey();
-          callback(null, signingKey);
-        } catch (error) {
-          callback(error, null);
+      const jwksClient = createRemoteJWKSet(
+        new URL(`https://${auth0Config.domain}/.well-known/jwks.json`),
+        {
+          cache: true,
+          rateLimit: true,
+          requestsPerMinute: 5
         }
-      };
+      );
 
       return new Promise((resolve, reject) => {
         const options = {
@@ -101,7 +92,7 @@ export class Auth0Integration {
           audience: jwtConfig.audience
         };
 
-        require('jsonwebtoken').verify(token, getKey, options, (err: any, decoded: JwtPayload) => {
+        require('jsonwebtoken').verify(token, jwksClient, options, (err: any, decoded: JwtPayload) => {
           if (err) {
             reject(new Auth0IntegrationError(
               `Token verification failed: ${err.message}`,

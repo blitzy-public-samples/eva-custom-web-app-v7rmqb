@@ -36,7 +36,7 @@ interface EncryptedDataWithMetadata {
  * Service class providing enterprise-grade encryption operations with enhanced security features
  */
 export class EncryptionService {
-  private readonly kmsClient: AWS.KMS;
+  private kmsClient: AWS.KMS;
   private keyCache: Map<string, CachedKeyData>;
   private readonly KEY_ROTATION_INTERVAL_DAYS: number;
   private readonly MAX_RETRY_ATTEMPTS: number;
@@ -75,7 +75,7 @@ export class EncryptionService {
     // Schedule automatic key rotation checks
     setInterval(() => {
       this.checkKeyRotation().catch(error => {
-        this.logger.error('Key rotation check failed:', { error: error instanceof Error ? error.message : String(error) });
+        this.logger.error('Key rotation check failed:', { error });
       });
     }, 24 * 60 * 60 * 1000); // Daily check
   }
@@ -126,7 +126,7 @@ export class EncryptionService {
 
         return result;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error('Unknown error occurred');
         attempts++;
         
         this.logger.warn('Encryption attempt failed', {
@@ -190,7 +190,7 @@ export class EncryptionService {
 
       return decryptedData;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Decryption failed', {
         keyId,
         error: errorMessage,
@@ -239,7 +239,7 @@ export class EncryptionService {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Key rotation failed', {
         keyId,
         error: errorMessage,
@@ -272,7 +272,7 @@ export class EncryptionService {
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Key rotation check failed', {
         error: errorMessage,
         timestamp: new Date().toISOString()
@@ -326,7 +326,7 @@ export class EncryptionService {
       // Implement secure key deletion logic here
       // Note: Actual implementation would depend on specific security requirements
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to delete old key version', {
         keyId,
         version,

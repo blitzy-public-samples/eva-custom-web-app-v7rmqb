@@ -61,15 +61,15 @@ export const validateAwsConfig = (): void => {
  */
 export const s3Config = {
   region: AWS_REGION,
-  bucket: AWS_S3_BUCKET,
+  bucket: AWS_S3_BUCKET!,
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    accessKeyId: AWS_ACCESS_KEY_ID!,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY!,
   },
   encryption: {
     serverSideEncryption: 'AES256',
     bucketKeyEnabled: true,
-    kmsKeyId: AWS_KMS_KEY_ID,
+    kmsKeyId: AWS_KMS_KEY_ID!,
     enforceSSL: true,
   },
   versioning: true,
@@ -91,6 +91,18 @@ export const s3Config = {
     ignorePublicAcls: true,
     restrictPublicBuckets: true,
   },
+  replication: {
+    role: process.env.AWS_REPLICATION_ROLE!,
+    rules: [
+      {
+        status: 'Enabled',
+        destination: {
+          bucket: process.env.AWS_REPLICATION_BUCKET!,
+          storageClass: 'STANDARD',
+        },
+      },
+    ],
+  },
 } as const;
 
 /**
@@ -99,10 +111,14 @@ export const s3Config = {
 export const awsConfig = {
   region: AWS_REGION,
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    accessKeyId: AWS_ACCESS_KEY_ID!,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY!,
   },
 } as const;
+
+// Export individual config values
+export const region = AWS_REGION;
+export const keyId = AWS_KMS_KEY_ID;
 
 // Validate configuration on module load
 validateAwsConfig();

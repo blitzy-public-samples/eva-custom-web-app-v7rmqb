@@ -213,6 +213,52 @@ export class UserService {
   }
 
   /**
+   * Deletes a user with proper authorization and audit logging
+   * @param id User ID to delete
+   * @param requestingUserRole Role of requesting user
+   * @returns Promise<boolean> Success status
+   */
+  async deleteUser(id: string, requestingUserRole: UserRole): Promise<boolean> {
+    try {
+      // Validate access permissions
+      const hasAccess = await this.validateUserAccess(id, requestingUserRole, 'DELETE');
+      if (!hasAccess) {
+        throw new Error('Unauthorized access');
+      }
+
+      // Retrieve existing user
+      const user = await this.userRepository.findOne({ where: { id } });
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Delete user
+      await this.userRepository.remove(user);
+
+      // Create audit log for deletion
+      await this.auditService.createAuditLog({
+        eventType: AuditEventType.USER_DELETE,
+        severity: AuditSeverity.WARNING,
+        userId: id,
+        resourceId: id,
+        resourceType: 'USER',
+        ipAddress: '0.0.0.0',
+        userAgent: 'SYSTEM',
+        details: {
+          action: 'DELETE_USER',
+          email: user.email,
+          requestingRole: requestingUserRole
+        }
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete user', { error, userId: id });
+      throw error;
+    }
+  }
+
+  /**
    * Validates user access permissions based on role
    * @private
    */

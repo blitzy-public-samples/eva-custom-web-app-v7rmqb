@@ -5,14 +5,14 @@
  * @version 1.0.0
  */
 
-import { Request, Response } from 'express'; // ^4.18.0
-import { z } from 'zod'; // ^3.22.0
-import rateLimit from 'express-rate-limit'; // ^6.7.0
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
+import { Controller, Get, Post, Put, Delete, UseMiddleware } from '@nestjs/common';
 
 import { DocumentService } from '../../services/document.service';
 import { AuditService } from '../../services/audit.service';
 import {
-  Document,
   DocumentType,
   CreateDocumentDTO,
   UpdateDocumentDTO
@@ -46,43 +46,29 @@ const createDocumentSchema = z.object({
  * Controller handling document management endpoints with enhanced security
  */
 @Controller('/documents')
-@UseMiddleware(correlationMiddleware)
-@UseMiddleware(rateLimitMiddleware)
 export class DocumentsController {
-  private readonly rateLimiter: typeof rateLimit;
-
   constructor(
     private readonly documentService: DocumentService,
     private readonly auditService: AuditService
-  ) {
-    // Configure rate limiting
-    this.rateLimiter = rateLimit({
-      windowMs: RATE_LIMIT_WINDOW,
-      max: RATE_LIMIT_MAX,
-      message: 'Too many document operations, please try again later'
-    });
-  }
+  ) {}
 
   /**
    * Creates a new document with comprehensive security checks
    */
   @Post('/')
-  @UseMiddleware(validateRequest(createDocumentSchema))
-  @UseMiddleware(authMiddleware)
-  @UseMiddleware(virusScanMiddleware)
   async createDocument(req: Request, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
 
     try {
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
       const documentData: CreateDocumentDTO = req.body;
 
       // Validate user permissions
       await this.validateUserAccess(userId, documentData.type);
 
       // Create document with security features
-      const document = await this.documentService.createDocument(documentData, userId);
+      const document = await this.documentService.create(documentData, userId);
 
       // Log audit trail
       await this.auditService.createAuditLog({
@@ -91,7 +77,7 @@ export class DocumentsController {
         userId,
         resourceId: document.id,
         resourceType: ResourceType.LEGAL_DOCS,
-        ipAddress: req.ip,
+        ipAddress: req.ip || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
         details: {
           documentType: document.type,
@@ -114,20 +100,19 @@ export class DocumentsController {
    * Retrieves a document with security validation
    */
   @Get('/:id')
-  @UseMiddleware(authMiddleware)
   async getDocument(req: Request, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
 
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
 
       // Validate access permissions
       await this.validateUserAccess(userId, id, AccessLevel.READ);
 
       // Retrieve document
-      const document = await this.documentService.getDocument(id);
+      const document = await this.documentService.findById(id);
 
       // Log access
       await this.auditService.createAuditLog({
@@ -136,7 +121,7 @@ export class DocumentsController {
         userId,
         resourceId: id,
         resourceType: ResourceType.LEGAL_DOCS,
-        ipAddress: req.ip,
+        ipAddress: req.ip || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
         details: {
           accessType: 'READ',
@@ -158,21 +143,20 @@ export class DocumentsController {
    * Updates document metadata with security validation
    */
   @Put('/:id')
-  @UseMiddleware(authMiddleware)
   async updateDocument(req: Request, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
 
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
       const updateData: UpdateDocumentDTO = req.body;
 
       // Validate access permissions
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Update document
-      const document = await this.documentService.updateDocument(id, updateData);
+      const document = await this.documentService.update(id, updateData);
 
       // Log update
       await this.auditService.createAuditLog({
@@ -181,7 +165,7 @@ export class DocumentsController {
         userId,
         resourceId: id,
         resourceType: ResourceType.LEGAL_DOCS,
-        ipAddress: req.ip,
+        ipAddress: req.ip || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
         details: {
           accessType: 'UPDATE',
@@ -204,23 +188,22 @@ export class DocumentsController {
    * Deletes a document with security validation
    */
   @Delete('/:id')
-  @UseMiddleware(authMiddleware)
   async deleteDocument(req: Request, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
 
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
 
       // Validate access permissions
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Get document before deletion for audit
-      const document = await this.documentService.getDocument(id);
+      const document = await this.documentService.findById(id);
 
       // Delete document
-      await this.documentService.deleteDocument(id);
+      await this.documentService.delete(id);
 
       // Log deletion
       await this.auditService.createAuditLog({
@@ -229,7 +212,7 @@ export class DocumentsController {
         userId,
         resourceId: id,
         resourceType: ResourceType.LEGAL_DOCS,
-        ipAddress: req.ip,
+        ipAddress: req.ip || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
         details: {
           accessType: 'DELETE',
@@ -251,16 +234,15 @@ export class DocumentsController {
    * Lists user's documents with pagination and filtering
    */
   @Get('/')
-  @UseMiddleware(authMiddleware)
   async listDocuments(req: Request, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
 
     try {
-      const userId = req.user.id;
+      const userId = (req as any).user.id;
       const { page = 1, limit = 10, type } = req.query;
 
-      const documents = await this.documentService.listUserDocuments(
+      const documents = await this.documentService.list(
         userId,
         Number(page),
         Number(limit),
@@ -278,7 +260,6 @@ export class DocumentsController {
   }
 
   // Private helper methods
-
   private async validateUserAccess(
     userId: string,
     documentIdOrType: string | DocumentType,
@@ -286,6 +267,7 @@ export class DocumentsController {
   ): Promise<void> {
     // Implementation would check user permissions against the document
     // using the permission matrix from permission.types.ts
+    throw new Error('Not implemented');
   }
 
   private handleError(res: Response, error: any): Response {

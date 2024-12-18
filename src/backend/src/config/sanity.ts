@@ -5,8 +5,7 @@
  * with enhanced validation, monitoring, and error handling capabilities.
  */
 
-import createClient from '@sanity/client'; // v6.0.0
-import groq from '@sanity/groq'; // v6.0.0
+import { createClient } from '@sanity/client'; // v6.0.0
 
 // Environment variables validation
 const REQUIRED_ENV_VARS = [
@@ -157,9 +156,6 @@ const createSanityClient = (options: Partial<SanityConfig> = {}) => {
 
 // Create and export pre-configured Sanity client instance
 export const sanityClient = createSanityClient();
-
-// Export GROQ for query composition
-export { groq };
 
 // Export utility functions for external use
 export {

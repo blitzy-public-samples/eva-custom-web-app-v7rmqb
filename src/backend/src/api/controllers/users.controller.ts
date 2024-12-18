@@ -21,7 +21,7 @@ import {
   InternalServerErrorException
 } from '@nestjs/common';
 import { RateLimit } from '@nestjs/throttler';
-import { CorrelationId } from '@nestjs/correlation-id';
+import { CorrelationId } from '@evanion/nestjs-correlation-id';
 import { ApiOperation, ApiResponse, ApiTags, ApiSecurity } from '@nestjs/swagger';
 
 import { UserService } from '../../services/user.service';

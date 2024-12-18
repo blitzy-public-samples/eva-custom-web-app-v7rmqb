@@ -7,7 +7,7 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { retry } from 'retry-typescript'; // ^2.0.0
+import { retry } from 'typescript-retry-decorator';
 import { compress } from 'compression'; // ^1.7.4
 import { S3 } from 'aws-sdk'; // ^2.1.0
 

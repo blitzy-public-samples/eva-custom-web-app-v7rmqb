@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "NodeNext",
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -9,7 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "declaration": true,
     "sourceMap": true,
@@ -20,8 +20,8 @@
       "@/*": ["src/*"]
     },
     "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
+      "./src/types",
+      "./node_modules/@types"
     ],
     "allowJs": false,
     "checkJs": false,
@@ -40,7 +40,7 @@
     "src/**/*.json"
   ],
   "exclude": [
-    "node_modules",
+    "node_modules/**",
     "dist",
     "coverage",
     "tests",

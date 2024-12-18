@@ -6,7 +6,7 @@
  * @version 1.0.0
  */
 
-import { groq } from '@sanity/groq'; // v6.0.0
+import groq from 'groq'; // v6.0.0
 import { rateLimit } from 'express-rate-limit'; // v6.0.0
 import { sanityClient } from '../config/sanity';
 import { logger } from '../utils/logger.util';

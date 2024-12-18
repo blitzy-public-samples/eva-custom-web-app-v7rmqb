@@ -92,8 +92,9 @@ export async function encrypt(data: Buffer, key: Buffer, context?: string): Prom
     };
 
     return encryptedData;
-  } catch (error) {
-    throw new Error(`Encryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Encryption failed: ${errorMessage}`);
   }
 }
 
@@ -125,8 +126,9 @@ export async function decrypt(encryptedData: EncryptedData, key: Buffer): Promis
     ]);
 
     return decrypted;
-  } catch (error) {
-    throw new Error(`Decryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Decryption failed: ${errorMessage}`);
   }
 }
 
@@ -155,8 +157,9 @@ export async function generateEncryptionKey(
       // Generate key locally
       return crypto.randomBytes(KEY_LENGTH);
     }
-  } catch (error) {
-    throw new Error(`Key generation failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Key generation failed: ${errorMessage}`);
   }
 }
 
@@ -206,12 +209,12 @@ export async function deriveKey(
 
 /**
  * Implements secure key rotation with KMS integration
- * @param oldKey - Current encryption key
+ * @param currentKey - Current encryption key
  * @param rotationConfig - Rotation configuration
  * @returns Promise resolving to new key and rotation metadata
  */
 export async function rotateKey(
-  oldKey: Buffer,
+  currentKey: Buffer,
   rotationConfig: RotationConfig = {}
 ): Promise<{ newKey: Buffer; metadata: Record<string, unknown> }> {
   try {
@@ -228,7 +231,8 @@ export async function rotateKey(
     };
 
     return { newKey, metadata };
-  } catch (error) {
-    throw new Error(`Key rotation failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Key rotation failed: ${errorMessage}`);
   }
 }

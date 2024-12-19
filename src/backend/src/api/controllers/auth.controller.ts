@@ -58,7 +58,7 @@ export class AuthController {
         if (error instanceof AuthenticationError || error instanceof Auth0Integration) {
           return res.status(401).json({
             error: (error as AuthenticationError).code,
-            message: (error as Error).message
+            message: error.message
           });
         }
         return res.status(500).json({
@@ -200,7 +200,7 @@ export class AuthController {
    * @param res Express response object
    */
   @AuthController.tryCatch
-  async register(_: Request, __: Response): Promise<void> {
+  async register(): Promise<void> {
     // Registration logic would be implemented here
     // This would typically involve Auth0 user creation and additional security setup
     throw new Error('Registration endpoint not implemented');

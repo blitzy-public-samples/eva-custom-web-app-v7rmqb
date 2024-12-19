@@ -156,7 +156,7 @@ router.post('/webhook/shopify',
 /**
  * Validates Shopify webhook signatures
  */
-function validateShopifyWebhook(req: Request, res: Response, next: NextFunction) {
+function validateShopifyWebhook(req: Request, res: Response, next: NextFunction): void | Response {
   const signature = req.headers['x-shopify-hmac-sha256'];
   const topic = req.headers['x-shopify-topic'];
   

@@ -23,8 +23,8 @@ import {
   BillingCycle
 } from '../../types/subscription.types';
 
-import { UserModel } from './user.model';
-import { AuditLogEntry } from '../../types/audit.types';
+import UserModel from './user.model';
+import { AuditLogEntry, AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 /**
  * TypeORM entity model for subscription management with enhanced audit logging and validation
@@ -203,8 +203,8 @@ export default class SubscriptionModel {
    */
   logAuditEvent(event: string, changes: Record<string, any>, userId: string): void {
     const auditEntry: AuditLogEntry = {
-      eventType: event,
-      severity: 'INFO',
+      eventType: AuditEventType.SUBSCRIPTION_CHANGE,
+      severity: AuditSeverity.INFO,
       userId,
       resourceId: this.id,
       resourceType: 'subscription',

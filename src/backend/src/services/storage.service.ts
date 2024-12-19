@@ -70,7 +70,7 @@ export class StorageService {
       });
 
       // Encrypt document content
-      const encryptedData = await this.encryptionService.encryptSensitiveData(
+      const encryptedData = await this.encryptionService.encryptField(
         fileBuffer,
         process.env.AWS_KMS_KEY_ID!
       );
@@ -117,11 +117,11 @@ export class StorageService {
 
     } catch (error) {
       logger.error('Document upload failed', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         fileName,
         userId
       });
-      throw new Error(`Document upload failed: ${error.message}`);
+      throw new Error(`Document upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -161,19 +161,19 @@ export class StorageService {
       // Convert readable stream to buffer
       const encryptedBuffer = await this.streamToBuffer(encryptedContent);
 
-      // Get encryption metadata from custom metadata
+      // Get encryption metadata
       const encryptionMetadata = {
-        iv: metadata.metadata.iv ? Buffer.from(metadata.metadata.iv, 'base64') : Buffer.alloc(0),
-        authTag: metadata.metadata.authTag ? Buffer.from(metadata.metadata.authTag, 'base64') : Buffer.alloc(0),
-        keyVersion: metadata.metadata.encryptionVersion || '1',
+        iv: Buffer.from(metadata.encryption?.iv || '', 'base64'),
+        authTag: Buffer.from(metadata.encryption?.authTag || '', 'base64'),
+        keyVersion: metadata.encryption?.version || '1',
         metadata: {
-          algorithm: metadata.encryption.algorithm,
+          algorithm: metadata.encryption?.algorithm || 'aes-256-gcm',
           timestamp: Date.now()
         }
       };
 
       // Decrypt document content
-      const decryptedContent = await this.encryptionService.decryptSensitiveData(
+      const decryptedContent = await this.encryptionService.decryptField(
         {
           content: encryptedBuffer,
           ...encryptionMetadata
@@ -191,11 +191,11 @@ export class StorageService {
 
     } catch (error) {
       logger.error('Document download failed', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         documentKey,
         userId
       });
-      throw new Error(`Document download failed: ${error.message}`);
+      throw new Error(`Document download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -241,11 +241,11 @@ export class StorageService {
 
     } catch (error) {
       logger.error('Document deletion failed', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         documentKey,
         userId
       });
-      throw new Error(`Document deletion failed: ${error.message}`);
+      throw new Error(`Document deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -281,10 +281,10 @@ export class StorageService {
         versionId: metadata.versionId,
         lastModified: metadata.lastModified,
         securityContext: {
-          classification: metadata.metadata.securityClassification || 'UNCLASSIFIED',
-          accessLevel: metadata.metadata.accessLevel || 'PRIVATE',
-          retentionPolicy: metadata.metadata.retentionPolicy,
-          encryptionContext: metadata.encryption.keyId
+          classification: metadata.encryption?.classification || 'UNCLASSIFIED',
+          accessLevel: metadata.encryption?.accessLevel || 'PRIVATE',
+          retentionPolicy: metadata.encryption?.retentionPolicy,
+          encryptionContext: metadata.encryption?.keyId
         }
       };
 
@@ -297,10 +297,10 @@ export class StorageService {
 
     } catch (error) {
       logger.error('Failed to retrieve document metadata', {
-        error,
+        error: error instanceof Error ? error.message : 'Unknown error',
         documentKey
       });
-      throw new Error(`Metadata retrieval failed: ${error.message}`);
+      throw new Error(`Metadata retrieval failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -313,8 +313,8 @@ export class StorageService {
     userId: string,
     securityContext: SecurityMetadata
   ): void {
-    const documentUserId = metadata.metadata.userId;
-    const documentAccessLevel = metadata.metadata.accessLevel;
+    const documentUserId = metadata.encryption?.userId;
+    const documentAccessLevel = metadata.encryption?.accessLevel;
 
     if (documentUserId !== userId && 
         securityContext.accessLevel !== 'ADMIN' &&
@@ -328,7 +328,7 @@ export class StorageService {
    * @private
    */
   private validateDeletionPermissions(metadata: any, userId: string): void {
-    const documentUserId = metadata.metadata.userId;
+    const documentUserId = metadata.encryption?.userId;
     if (documentUserId !== userId) {
       throw new Error('Insufficient permissions to delete document');
     }

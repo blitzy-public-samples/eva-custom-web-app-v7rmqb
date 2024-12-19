@@ -47,10 +47,7 @@ export class SendGridService {
     this.sgMail.setApiKey(this.config.apiKey);
 
     // Initialize rate limiter (100 emails per minute)
-    this.rateLimiter = new RateLimiter({
-      tokensPerInterval: 100,
-      interval: 'minute'
-    });
+    this.rateLimiter = new RateLimiter(100, 'minute');
 
     // Log initialization
     logger.info('SendGrid service initialized', {

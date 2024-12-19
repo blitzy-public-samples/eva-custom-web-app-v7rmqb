@@ -62,7 +62,7 @@ export interface AuthState {
     mfaRequired: boolean;        // MFA requirement flag
     sessionExpiry: number | null; // Session expiration timestamp
     lastActivity: number;        // Last user activity timestamp
-    sessionToken: AuthToken | null; // Current session token
+    sessionToken: string | null; // Current session token
 }
 
 /**
@@ -70,19 +70,19 @@ export interface AuthState {
  * Implements JWT token structure with expiration tracking.
  */
 export interface AuthToken {
-    id: string;                 // User ID
-    email: string;              // User email
-    name: string;               // User name
-    province: Province;         // User province
-    phone: string;              // User phone number
+    // id: string;                 // User ID
+    // email: string;              // User email
+    // name: string;               // User name
+    // province: Province;         // User province
+    // phone: string;              // User phone number
     accessToken: string;         // JWT access token
-    idToken: string;            // OpenID Connect ID token
+    // idToken: string;            // OpenID Connect ID token
     expiresAt: number;          // Token expiration timestamp
-    mfaEnabled: boolean;        // MFA status
-    status: {                   // Token status
-        requiresMFA: boolean;
-        mfaVerified: boolean;
-    };
+    // mfaEnabled: boolean;        // MFA status
+    // status: {                   // Token status
+    //     requiresMFA: boolean;
+    //     mfaVerified: boolean;
+    // };
 }
 
 /**

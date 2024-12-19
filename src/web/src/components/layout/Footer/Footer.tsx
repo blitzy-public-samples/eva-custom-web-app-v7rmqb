@@ -14,12 +14,9 @@ interface FooterProps {
 const FooterContainer = styled(Box)(({ theme }) => ({
   backgroundColor: 'var(--color-background-paper)',
   color: 'var(--color-text-primary)',
-  padding: theme.spacing(4, 0),
   marginTop: 'auto',
   borderTop: '1px solid var(--color-neutral)',
   fontSize: theme.typography.fontSize,
-  lineHeight: 1.5,
-  minHeight: '120px',
   role: 'contentinfo',
   '&:focus-visible': {
     outline: '2px solid var(--color-primary)',

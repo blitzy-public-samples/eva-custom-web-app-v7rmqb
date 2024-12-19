@@ -2,7 +2,7 @@ import React from 'react'; // v18.2.0
 import { styled } from '@mui/material/styles'; // v5.11.0
 import ButtonBase from '@mui/material/ButtonBase'; // v5.11.0
 import CircularProgress from '@mui/material/CircularProgress'; // v5.11.0
-import '../../styles/variables.css';
+import { SxProps, Theme } from '@mui/material';
 
 // Interface for button props with comprehensive options
 interface CustomButtonProps {
@@ -19,6 +19,7 @@ interface CustomButtonProps {
   ariaLabel?: string;
   disableRipple?: boolean;
   prefersReducedMotion?: boolean;
+  sx?: SxProps<Theme>;
 }
 
 // Styled button component with comprehensive styling options
@@ -136,6 +137,7 @@ export const Button: React.FC<CustomButtonProps> = ({
   ariaLabel,
   disableRipple = false,
   prefersReducedMotion = false,
+  sx,
   ...props
 }) => {
   // Check if user prefers reduced motion
@@ -161,6 +163,7 @@ export const Button: React.FC<CustomButtonProps> = ({
       aria-disabled={disabled || loading}
       aria-busy={loading}
       role="button"
+      sx={sx}
       {...props}
     >
       {startIcon && !loading && (

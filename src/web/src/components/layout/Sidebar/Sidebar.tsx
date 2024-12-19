@@ -35,7 +35,7 @@ import '../../../styles/variables.css';
 
 // Constants for component configuration
 const DRAWER_WIDTH = 280;
-const MOBILE_DRAWER_WIDTH = '100%';
+const MOBILE_DRAWER_WIDTH = 'auto';
 const TRANSITION_DURATION = 225;
 
 // Interface definitions
@@ -118,7 +118,7 @@ const drawerStyles = {
   width: { sm: DRAWER_WIDTH },
   flexShrink: 0,
   '& .MuiDrawer-paper': {
-    width: { xs: MOBILE_DRAWER_WIDTH, sm: DRAWER_WIDTH },
+    width: 'auto',
     boxSizing: 'border-box',
     backgroundColor: 'var(--color-background)',
     borderRight: '1px solid var(--color-neutral)',
@@ -219,7 +219,6 @@ const Sidebar: React.FC<SidebarProps> = memo(({ open, onClose, className }) => {
       ref={sidebarRef}
       role="navigation"
       aria-label="Main navigation"
-      sx={{ overflow: 'auto' }}
     >
       <List>
         {visibleItems.map((item) => (
@@ -294,7 +293,13 @@ const Sidebar: React.FC<SidebarProps> = memo(({ open, onClose, className }) => {
           open
           sx={{
             '& .MuiDrawer-paper': {
-              width: DRAWER_WIDTH
+              width: DRAWER_WIDTH,
+              marginTop: '84px',
+              height: 'calc(100% - 64px)',
+              [theme.breakpoints.down('sm')]: {
+                marginTop: '56px',
+                height: 'calc(100% - 56px)',
+              }
             }
           }}
         >

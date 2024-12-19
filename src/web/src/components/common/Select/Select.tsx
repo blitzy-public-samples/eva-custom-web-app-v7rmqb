@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { styled } from '@mui/material/styles';
 import { Select as MuiSelect, FormControl, InputLabel, FormHelperText } from '@mui/material';
-import '../../styles/variables.css';
 
 // Interfaces
 interface SelectOption {

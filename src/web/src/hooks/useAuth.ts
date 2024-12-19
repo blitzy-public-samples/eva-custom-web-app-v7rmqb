@@ -9,7 +9,7 @@
  * @package react-redux ^8.0.5
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   login, 
@@ -37,6 +37,40 @@ const SESSION_EXPIRY_BUFFER = 300000; // 5 minutes before expiry
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const authState = useSelector((state: { auth: AuthState }) => state.auth);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('auth');
+    
+    if (storedAuth) {
+      try {
+        const { token, expiresAt, user, isAuthenticated } = JSON.parse(storedAuth);
+        const isExpired = new Date(expiresAt).getTime() <= Date.now();
+
+        if (!isExpired && token) {
+          // Dispatch login success with complete stored data
+          dispatch({
+            type: 'auth/login/fulfilled',
+            payload: {
+              token: {
+                accessToken: token,
+                expiresAt: expiresAt
+              },
+              user: user,
+              isAuthenticated: isAuthenticated
+            }
+          });
+        } else {
+          // Clear expired auth data
+          localStorage.removeItem('auth');
+        }
+      } catch (error) {
+        console.error('Error restoring auth state:', error);
+        localStorage.removeItem('auth');
+      }
+    }
+    setIsInitializing(false);
+  }, []); // Run only on mount
 
   /**
    * Session refresh effect with security monitoring
@@ -48,8 +82,8 @@ export const useAuth = () => {
     const checkAndRefreshSession = async () => {
       try {
         // Check if session is active and needs refresh
-        if (authState.isAuthenticated && authState.sessionToken?.expiresAt) {
-          const timeUntilExpiry = new Date(authState.sessionToken.expiresAt).getTime() - Date.now();
+        if (authState.isAuthenticated && authState.sessionToken && authState.sessionExpiry) {
+          const timeUntilExpiry = new Date(authState.sessionExpiry).getTime() - Date.now();
           
           if (timeUntilExpiry <= SESSION_EXPIRY_BUFFER) {
             await handleSessionRefresh();
@@ -79,7 +113,7 @@ export const useAuth = () => {
         clearInterval(sessionCheckInterval);
       }
     };
-  }, [authState.isAuthenticated, authState.sessionToken?.expiresAt]);
+  }, [authState.isAuthenticated, authState.sessionExpiry]);
 
   /**
    * Enhanced login handler with MFA support and security logging
@@ -262,6 +296,7 @@ export const useAuth = () => {
     isSessionValid: authState.isAuthenticated && !!authState.sessionToken,
     token: authState.sessionToken,
     userRole: authState.user?.role,
+    isInitializing,
 
     // Authentication operations
     login: handleLogin,

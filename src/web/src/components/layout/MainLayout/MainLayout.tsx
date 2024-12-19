@@ -31,26 +31,28 @@ const LayoutContainer = styled(Box)({
   },
 });
 
-const MainContent = styled(Box)({
+const MainContent = styled(Box)(({ theme }) => ({
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
-  padding: '24px',
-  marginTop: '64px', // Header height
-  marginLeft: '0px',
-  transition: 'margin 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
-  minHeight: 'calc(100vh - 128px)', // Account for header and footer
+  padding: theme.spacing(3),
+  paddingTop: '84px',
   position: 'relative',
-  zIndex: 1,
-  '@media (min-width: 600px)': {
+  minHeight: 'calc(100vh - 64px)',
+  width: '100%',
+  marginLeft: 0,
+  transition: 'margin-left 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms, padding 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms',
+  
+  [theme.breakpoints.up('sm')]: {
     marginLeft: '280px',
-    padding: '24px',
   },
-  '@media (max-width: 600px)': {
+
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+    paddingTop: '76px',
     marginLeft: 0,
-    padding: '16px',
-  },
-});
+  }
+}));
 
 // Interface definitions
 interface MainLayoutProps {
@@ -59,6 +61,9 @@ interface MainLayoutProps {
   testId?: string;
 }
 
+const DRAWER_WIDTH = '280px';
+const MOBILE_DRAWER_WIDTH = '100%';
+const TRANSITION_DURATION = 225;
 /**
  * Error fallback component with senior-friendly error message
  */
@@ -135,22 +140,46 @@ export const MainLayout: React.FC<MainLayoutProps> = React.memo(({
         />
 
         {isAuthenticated && (
-          <Sidebar
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
+          <Box component="nav" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <Sidebar
+              open={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </Box>
         )}
 
         <MainContent
           role="main"
           aria-label="Main content"
+          sx={{
+            marginLeft: {
+              xs: 0,
+              sm: isAuthenticated ? DRAWER_WIDTH : 0
+            },
+            width: {
+              xs: '100%',
+              sm: isAuthenticated ? `calc(100% - ${DRAWER_WIDTH})` : '100%'
+            }
+          }}
         >
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             {children}
           </ErrorBoundary>
         </MainContent>
 
-        <Footer ariaLabel="Site footer" />
+        <Box sx={{
+          marginLeft: {
+            xs: 0,
+            sm: isAuthenticated ? DRAWER_WIDTH : 0
+          },
+          width: {
+            xs: '100%',
+            sm: isAuthenticated ? `calc(100% - ${DRAWER_WIDTH})` : '100%'
+          }
+        }}>
+          <Footer ariaLabel="Site footer" />
+        </Box>
+
       </LayoutContainer>
     </ErrorBoundary>
   );

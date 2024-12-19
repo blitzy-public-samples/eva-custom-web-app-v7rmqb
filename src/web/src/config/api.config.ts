@@ -106,8 +106,8 @@ export const SECURITY_HEADERS = {
 
 export const CORS_CONFIG = {
   enabled: true,
-  allowedOrigins: [
-    process.env.REACT_APP_FRONTEND_URL || 'https://estatekit.ca',
+  allowedOrigins: [ 
+    import.meta.env.VITE_APP_FRONTEND_URL || 'https://estatekit.ca',
     'https://staging.estatekit.ca'
   ],
   allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -143,7 +143,7 @@ export const getApiUrl = (environment: string): string => {
 
 // Main API configuration object
 export const apiConfig: ApiConfig = {
-  baseURL: getApiUrl(process.env.REACT_APP_ENV || 'production'),
+  baseURL: getApiUrl(import.meta.env.REACT_APP_ENV || 'production'),
   timeout: API_TIMEOUT,
   headers: {
     ...SECURITY_HEADERS,

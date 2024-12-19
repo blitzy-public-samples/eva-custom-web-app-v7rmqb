@@ -34,7 +34,7 @@ export const login = createAsyncThunk(
   async (credentials: LoginPayload, { rejectWithValue }) => {
     try {
       const response = await AuthService.login(credentials);
-      
+      console.log('response', response)
       // Log successful authentication attempt for audit
       console.info('Authentication attempt:', {
         timestamp: new Date().toISOString(),
@@ -190,11 +190,20 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isAuthenticated = true;
-        state.sessionToken = action.payload;
-        state.sessionExpiry = action.payload.expiresAt;
+        state.sessionToken = action.payload.token.accessToken;
+        state.sessionExpiry = action.payload.token.expiresAt;
+        state.user = action.payload.user;
         state.loading = false;
         state.error = null;
         state.lastActivity = Date.now();
+
+        // Store complete auth info in localStorage
+        localStorage.setItem('auth', JSON.stringify({
+          token: action.payload.token.accessToken,
+          expiresAt: action.payload.token.expiresAt,
+          user: action.payload.user,
+          isAuthenticated: true
+        }));
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -222,6 +231,8 @@ const authSlice = createSlice({
     // Logout reducers
     builder
       .addCase(logout.fulfilled, () => {
+        // Clear all auth data from localStorage
+        localStorage.removeItem('auth');
         return { ...initialState, lastActivity: Date.now() };
       })
 
@@ -247,7 +258,7 @@ const authSlice = createSlice({
     // Token refresh reducers
     builder
       .addCase(refreshToken.fulfilled, (state, action) => {
-        state.sessionToken = action.payload;
+        state.sessionToken = action.payload.accessToken;
         state.sessionExpiry = action.payload.expiresAt;
         state.lastActivity = Date.now();
       })
@@ -258,7 +269,7 @@ const authSlice = createSlice({
     // Session refresh reducers
     builder
       .addCase(refreshSession.fulfilled, (state, action) => {
-        state.sessionToken = action.payload;
+        state.sessionToken = action.payload.accessToken;
         state.sessionExpiry = action.payload.expiresAt;
         state.lastActivity = Date.now();
       })

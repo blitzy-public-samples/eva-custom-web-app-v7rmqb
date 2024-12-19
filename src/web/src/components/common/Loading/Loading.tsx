@@ -1,6 +1,6 @@
 import React from 'react';
-import '../../styles/animations.css';
-import '../../styles/variables.css';
+import '../../../styles/animations.css';
+import '../../../styles/variables.css';
 
 /**
  * Props interface for the Loading component with comprehensive accessibility options

@@ -15,18 +15,18 @@ import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import App from './App';
 import { store } from './redux/store';
-import './styles/global.css';
+import { BrowserRouter } from 'react-router-dom';
 
 /**
  * Initializes application monitoring and error tracking
  */
 const initializeApp = (): void => {
   // Enable React strict mode in development
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.VITE_APP_ENV === 'development') {
     console.info('Development mode enabled:', {
       timestamp: new Date().toISOString(),
-      nodeEnv: process.env.NODE_ENV,
-      version: process.env.VITE_APP_VERSION || '1.0.0'
+      nodeEnv: import.meta.env.VITE_APP_ENV,
+      version: import.meta.env.VITE_APP_VERSION || '1.0.0'
     });
   }
 
@@ -69,9 +69,11 @@ const renderApp = (): void => {
   // Render application with providers
   root.render(
     <React.StrictMode>
-      <Provider store={store}>
-        <App />
-      </Provider>
+      <BrowserRouter>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </BrowserRouter>
     </React.StrictMode>
   );
 

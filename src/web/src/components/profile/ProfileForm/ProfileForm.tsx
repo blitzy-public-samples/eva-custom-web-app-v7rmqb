@@ -1,9 +1,7 @@
 import React from 'react';
-import { Stack } from '@mui/material';
+import { Stack, TextField, MenuItem } from '@mui/material';
 import * as yup from 'yup';
-import Form from '../../common/Form/Form';
-import Input from '../../common/Input/Input';
-import Select from '../../common/Select/Select';
+import Form, { FormRenderProps } from '../../common/Form/Form';
 import { useAuth } from '../../../hooks/useAuth';
 import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
@@ -63,9 +61,7 @@ const validationSchema = yup.object().shape({
   email: yup
     .string()
     .required(VALIDATION_MESSAGES.EMAIL_REQUIRED)
-    .email(VALIDATION_MESSAGES.EMAIL_INVALID)
-    .max(254)
-    .matches(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, VALIDATION_MESSAGES.EMAIL_INVALID),
+    .email(VALIDATION_MESSAGES.EMAIL_INVALID),
   
   phone: yup
     .string()
@@ -114,59 +110,65 @@ const ProfileForm: React.FC<ProfileFormProps> = React.memo(({
       resetLabel="Reset Changes"
       isProtected
       analyticsEvent="profile_update"
-      testId="profile-form"
-      isSubmitting={isSubmitting}
+      data-testid="profile-form"
+      sx={{ width: '100%', margin: '0 auto' }}
     >
-      {(formProps: { values: ProfileFormData; handleChange: (e: React.ChangeEvent<any>) => void; handleBlur: (e: React.FocusEvent<any>) => void }) => (
-        <Stack spacing={3} width="100%">
-          <Input
+      {({ register }: FormRenderProps) => (
+        <Stack 
+          spacing={3} 
+          sx={{ width: '100%' }}
+        >
+          <TextField
+            {...register('name')}
             id={FORM_FIELDS.NAME}
-            name={FORM_FIELDS.NAME}
             label="Full Name"
             type="text"
             required
             autoComplete="name"
             placeholder="Enter your full name"
-            value={formProps.values.name}
-            onChange={formProps.handleChange}
+            fullWidth
+            variant="outlined"
           />
 
-          <Input
+          <TextField
+            {...register('email')}
             id={FORM_FIELDS.EMAIL}
-            name={FORM_FIELDS.EMAIL}
             label="Email Address"
             type="email"
             required
             autoComplete="email"
             placeholder="Enter your email address"
-            value={formProps.values.email}
-            onChange={formProps.handleChange}
+            fullWidth
+            variant="outlined"
           />
 
-          <Input
+          <TextField
+            {...register('phone')}
             id={FORM_FIELDS.PHONE}
-            name={FORM_FIELDS.PHONE}
             label="Phone Number"
             type="tel"
             required
             autoComplete="tel"
             placeholder="Enter your phone number (e.g., 123-456-7890)"
-            value={formProps.values.phone}
-            onChange={formProps.handleChange}
+            fullWidth
+            variant="outlined"
           />
 
-          <Select
-            name={FORM_FIELDS.PROVINCE}
+          <TextField
+            {...register('province')}
+            select
             label="Province"
             required
             placeholder="Select your province"
-            options={PROVINCES.map(province => ({
-              value: province,
-              label: province
-            }))}
-            value={formProps.values.province}
-            onChange={formProps.handleChange}
-          />
+            fullWidth
+            variant="outlined"
+          >
+            {PROVINCES.map((province) => (
+              <MenuItem key={province} value={province}>
+                {province}
+              </MenuItem>
+            ))}
+          </TextField>
         </Stack>
       )}
     </Form>

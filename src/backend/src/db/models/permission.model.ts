@@ -22,9 +22,7 @@ import { AuditService } from '../../services/audit.service';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Initialize audit service for security tracking
-const auditService = new AuditService({
-  auditRepository: null // Will be injected by DI container
-});
+const auditService = new AuditService();
 
 @Entity('permissions')
 @Index('IDX_DELEGATE', ['delegateId'])

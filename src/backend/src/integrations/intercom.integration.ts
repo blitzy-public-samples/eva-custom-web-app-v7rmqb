@@ -106,7 +106,8 @@ export class IntercomService {
 
       // Create or update user in Intercom
       const response = await this.client.contacts.create({
-        user_id: sanitizedData.userId,
+        role: 'user',
+        external_id: sanitizedData.userId,
         email: sanitizedData.email,
         name: sanitizedData.name,
         custom_attributes: sanitizedData.customAttributes

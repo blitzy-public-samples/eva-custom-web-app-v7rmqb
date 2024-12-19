@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express'; // ^4.18.0
 import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
-import { logger } from '../../../utils/logger.util';
+import { logger } from '../../utils/logger.util';
 
 // Security patterns for request/response sanitization
 const SENSITIVE_HEADERS = ['authorization', 'cookie', 'x-api-key'];

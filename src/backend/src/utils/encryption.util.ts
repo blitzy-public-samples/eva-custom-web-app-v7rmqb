@@ -1,6 +1,6 @@
 // @ts-check
 import crypto from 'crypto'; // native - Node.js crypto module
-import * as AWS from 'aws-sdk'; // ^2.1.0 - AWS SDK for KMS integration
+import { KMS } from '@aws-sdk/client-kms'; // ^2.1.0 - AWS SDK for KMS integration
 import { awsConfig } from '../config/aws';
 
 // Constants for encryption configuration
@@ -12,7 +12,7 @@ const MIN_ITERATIONS = 100000;
 const PBKDF2_DIGEST = 'sha512';
 
 // Initialize AWS KMS client
-const kms = new AWS.KMS({ region: awsConfig.region });
+const kms = new KMS({ region: awsConfig.region });
 
 /**
  * Interface for encrypted data structure

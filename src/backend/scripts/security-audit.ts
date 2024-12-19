@@ -10,7 +10,7 @@ import { validatePassword, validateInput, sanitizeInput } from '../src/utils/val
 import snyk from '@snyk/snyk'; // v1.1150.0
 import sonarqube from 'sonarqube-scanner'; // v3.0.1
 import fs from 'fs-extra'; // v11.1.0
-import AWS from 'aws-sdk'; // v2.1450.0
+import { KMS } from '@aws-sdk/client-kms'; // v2.1450.0
 
 // Constants for security requirements
 const SECURITY_CONSTANTS = {
@@ -114,7 +114,7 @@ async function testEncryptionConfig(): Promise<boolean> {
     }
 
     // Test AWS KMS integration
-    const kms = new AWS.KMS({ region: process.env.AWS_REGION });
+    const kms = new KMS({ region: process.env.AWS_REGION });
     await kms.describeKey({ KeyId: process.env.AWS_KMS_KEY_ID }).promise();
 
     logger.info('Encryption configuration tests passed');

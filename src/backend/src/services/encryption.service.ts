@@ -94,7 +94,7 @@ export class EncryptionService {
    * @returns Promise resolving to encrypted data with metadata
    * @throws Error if encryption fails
    */
-  public async encryptSensitiveData(
+  public async encryptField(
     data: Buffer,
     keyId: string
   ): Promise<EncryptedDataWithMetadata> {
@@ -167,7 +167,7 @@ export class EncryptionService {
    * @returns Promise resolving to decrypted data
    * @throws Error if decryption fails
    */
-  public async decryptSensitiveData(
+  public async decryptField(
     encryptedData: EncryptedDataWithMetadata,
     keyId: string
   ): Promise<Buffer> {

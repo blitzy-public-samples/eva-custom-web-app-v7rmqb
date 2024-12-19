@@ -82,8 +82,7 @@ export function createIntercomClient(options: IntercomClientOptions = {}): Clien
   const client = new Client({
     tokenAuth: {
       token: process.env.INTERCOM_ACCESS_TOKEN!
-    },
-    apiVersion: process.env.INTERCOM_API_VERSION || '2.9'
+    }
   });
 
   // Configure client with retry mechanism

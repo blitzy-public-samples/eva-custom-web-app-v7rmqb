@@ -91,19 +91,15 @@ export class SubscriptionService {
         });
 
         // Create subscription record
-        const subscription = new SubscriptionModel({
-          userId: createDTO.userId,
-          plan: createDTO.plan,
-          billingCycle: createDTO.billingCycle,
-          status: SubscriptionStatus.PENDING,
-          startDate: new Date(),
-          autoRenew: createDTO.autoRenew,
-          shopifySubscriptionId: shopifyOrder.id,
-          shopifyCustomerId: createDTO.shopifyCustomerId,
-          shopifyOrderIds: [shopifyOrder.id],
-          cancelReason: null,
-          metadata: {}
-        });
+        const subscription = new SubscriptionModel();
+        subscription.userId = createDTO.userId;
+        subscription.plan = createDTO.plan;
+        subscription.billingCycle = createDTO.billingCycle;
+        subscription.status = SubscriptionStatus.PENDING;
+        subscription.startDate = new Date();
+        subscription.autoRenew = createDTO.autoRenew;
+        subscription.shopifySubscriptionId = shopifyOrder.id;
+        subscription.shopifyCustomerId = createDTO.shopifyCustomerId;
 
         // Validate subscription data
         if (!subscription.validateSubscription()) {
@@ -132,6 +128,7 @@ export class SubscriptionService {
           userId: createDTO.userId
         });
 
+        // Map to ISubscription interface
         return {
           ...savedSubscription,
           shopifyOrderIds: [shopifyOrder.id],
@@ -203,7 +200,13 @@ export class SubscriptionService {
         const updatedSubscription = await queryRunner.manager.save(subscription);
         await queryRunner.commitTransaction();
 
-        return updatedSubscription;
+        // Map to ISubscription interface
+        return {
+          ...updatedSubscription,
+          shopifyOrderIds: [],
+          cancelReason: updateDTO.cancelReason || null,
+          metadata: {}
+        };
       } catch (error) {
         await queryRunner.rollbackTransaction();
         throw error;
@@ -237,7 +240,13 @@ export class SubscriptionService {
         throw new Error('Subscription not found');
       }
 
-      return subscription;
+      // Map to ISubscription interface
+      return {
+        ...subscription,
+        shopifyOrderIds: [],
+        cancelReason: null,
+        metadata: {}
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to retrieve subscription', {
@@ -275,7 +284,6 @@ export class SubscriptionService {
         }
 
         subscription.status = SubscriptionStatus.CANCELLED;
-        subscription.cancelReason = reason;
         subscription.endDate = new Date();
         subscription.autoRenew = false;
 
@@ -292,7 +300,13 @@ export class SubscriptionService {
         const cancelledSubscription = await queryRunner.manager.save(subscription);
         await queryRunner.commitTransaction();
 
-        return cancelledSubscription;
+        // Map to ISubscription interface
+        return {
+          ...cancelledSubscription,
+          shopifyOrderIds: [],
+          cancelReason: reason,
+          metadata: {}
+        };
       } catch (error) {
         await queryRunner.rollbackTransaction();
         throw error;

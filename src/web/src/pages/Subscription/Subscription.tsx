@@ -48,7 +48,7 @@ export const Subscription: React.FC = () => {
       }
 
       await updateSubscription({
-        plan: selectedPlan,
+        plan: selectedPlan.plan,
         billingCycle: selectedPlan.billingCycle,
         autoRenew: true,
         status: SubscriptionStatus.ACTIVE
@@ -174,7 +174,7 @@ export const Subscription: React.FC = () => {
           <SubscriptionCard
             subscription={completeSubscription}
             planDetails={availablePlans.find(
-              plan => plan.id === completeSubscription.plan.id
+              plan => plan.id === completeSubscription.id
             ) || {
               name: 'Loading...',
               price: 0,
@@ -215,7 +215,7 @@ export const Subscription: React.FC = () => {
               <Grid item xs={12} md={4} key={plan.id}>
                 <SubscriptionPlan
                   plan={plan}
-                  isCurrentPlan={currentSubscription?.plan.id === plan.id}
+                  isCurrentPlan={currentSubscription?.id === plan.id}
                   onSelect={handlePlanSelect}
                   isLoading={selectedPlanId === plan.id}
                   error={error.update ? new Error(error.update) : null}

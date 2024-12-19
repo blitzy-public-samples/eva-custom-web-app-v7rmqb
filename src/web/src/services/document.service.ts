@@ -335,6 +335,58 @@ export class DocumentService {
     });
     // In production, this would send to security monitoring service
   }
+
+  /**
+   * Downloads a document securely with proper error handling
+   */
+  public async downloadDocument(documentId: string): Promise<void> {
+    try {
+      // Verify document exists and user has permission
+      const document = await apiService.get<Document>(
+        `${API_BASE_PATH}/${documentId}`
+      );
+
+      // Request the document download
+      const response = await apiService.get<Blob>(
+        `${API_BASE_PATH}/${documentId}/download`,
+        { 
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/octet-stream'
+          }
+        }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(response);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', document.metadata.fileName || 'document');
+      
+      // Trigger download
+      window.document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+      window.URL.revokeObjectURL(url);
+
+      // Log audit trail
+      this.logAuditEvent('DOCUMENT_DOWNLOAD', {
+        documentId,
+        type: document.type
+      });
+    } catch (error: unknown) {
+      // Log security event
+      this.logSecurityEvent('DOWNLOAD_FAILURE', {
+        documentId,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+      throw error;
+    }
+  }
 }
 
 export default DocumentService.getInstance();

@@ -52,7 +52,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = React.memo(({
       setError(null);
 
       // Call service method for secure deletion
-      await DocumentService.getInstance().secureDeleteDocument(document.id);
+      await DocumentService.secureDeleteDocument(document.id);
       
       // Call parent callback if provided
       if (onDelete) {
@@ -77,7 +77,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = React.memo(({
       setError(null);
 
       // Call service method for secure download
-      await DocumentService.getInstance().downloadDocument(document.id);
+      await DocumentService.downloadDocument(document.id);
       
       // Call parent callback if provided
       if (onDownload) {

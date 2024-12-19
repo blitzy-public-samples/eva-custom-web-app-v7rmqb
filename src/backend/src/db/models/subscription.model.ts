@@ -24,7 +24,7 @@ import {
 } from '../../types/subscription.types';
 
 import { UserModel } from './user.model';
-import { AuditLog } from '../../types/audit.types';
+import { AuditLogEntry } from '../../types/audit.types';
 
 /**
  * TypeORM entity model for subscription management with enhanced audit logging and validation
@@ -118,7 +118,7 @@ export default class SubscriptionModel {
     nullable: false,
     default: []
   })
-  auditLogs!: AuditLog[];
+  auditLogs!: AuditLogEntry[];
 
   @CreateDateColumn({
     type: 'timestamp with time zone'
@@ -202,7 +202,7 @@ export default class SubscriptionModel {
    * @param userId - ID of user making changes
    */
   logAuditEvent(event: string, changes: Record<string, any>, userId: string): void {
-    const auditEntry: AuditLog = {
+    const auditEntry: AuditLogEntry = {
       eventType: event,
       severity: 'INFO',
       userId,

@@ -1,6 +1,6 @@
 // @ts-check
 import { DataSource, DataSourceOptions } from 'typeorm'; // ^0.3.0
-import { UserModel } from '../db/models/user.model';
+import UserModel from '../db/models/user.model';
 import DocumentModel from '../db/models/document.model';
 import winston from 'winston'; // ^3.8.0 - For comprehensive logging
 
@@ -136,16 +136,19 @@ export const initializeDatabase = async (): Promise<DataSource> => {
 
     // Set up query performance monitoring using QueryRunner events
     if (process.env.NODE_ENV === 'production') {
-      dataSource.createQueryRunner().afterQuery.subscribe((data: any) => {
-        if (data.executionTime > 1000) { // Log slow queries (>1s)
-          logger.warn('Slow query detected', {
-            query: data.query,
-            parameters: data.parameters,
-            time: data.executionTime,
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
+      const queryRunner = dataSource.createQueryRunner();
+      queryRunner.connection.driver.afterQueriesExecute = (queries: any[]) => {
+        queries.forEach(query => {
+          if (query.executionTime > 1000) { // Log slow queries (>1s)
+            logger.warn('Slow query detected', {
+              query: query.query,
+              parameters: query.parameters,
+              time: query.executionTime,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+      };
     }
 
     // Schedule maintenance tasks for production

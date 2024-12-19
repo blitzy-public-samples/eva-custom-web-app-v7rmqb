@@ -1,6 +1,5 @@
 // @ts-check
 import { UUID } from 'crypto'; // Version: latest - Used for unique identifier types
-export type { UUID }; // Export UUID type for use in other modules
 
 /**
  * Enum defining possible user roles in the system.
@@ -67,7 +66,6 @@ export interface CreateUserDTO {
     email: string;                   // Required email address
     name: string;                    // Required full name
     province: string;                // Required province selection
-    password: string;                // Required password for account creation
 }
 
 /**

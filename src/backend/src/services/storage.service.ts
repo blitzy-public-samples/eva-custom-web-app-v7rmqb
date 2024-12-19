@@ -115,13 +115,13 @@ export class StorageService {
         metadata: documentMetadata
       };
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document upload failed', {
         error,
         fileName,
         userId
       });
-      throw new Error(`Document upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document upload failed: ${error.message}`);
     }
   }
 
@@ -184,13 +184,13 @@ export class StorageService {
 
       return decryptedContent;
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document download failed', {
         error,
         documentKey,
         userId
       });
-      throw new Error(`Document download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document download failed: ${error.message}`);
     }
   }
 
@@ -234,13 +234,13 @@ export class StorageService {
         permanent: deletionMetadata.permanent
       });
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Document deletion failed', {
         error,
         documentKey,
         userId
       });
-      throw new Error(`Document deletion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Document deletion failed: ${error.message}`);
     }
   }
 
@@ -290,12 +290,12 @@ export class StorageService {
 
       return enhancedMetadata;
 
-    } catch (error: unknown) {
+    } catch (error) {
       logger.error('Failed to retrieve document metadata', {
         error,
         documentKey
       });
-      throw new Error(`Metadata retrieval failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Metadata retrieval failed: ${error.message}`);
     }
   }
 

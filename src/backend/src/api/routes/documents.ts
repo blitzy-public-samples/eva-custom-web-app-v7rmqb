@@ -43,7 +43,7 @@ const upload = multer({
   limits: {
     fileSize: MAX_FILE_SIZE_MB * 1024 * 1024,
   },
-  fileFilter: (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  fileFilter: (_req, file, cb) => {
     if (ALLOWED_FILE_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {

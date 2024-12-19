@@ -28,11 +28,62 @@ interface ValidationResult {
   details?: Record<string, any>;
 }
 
+// Decorator for caching validation results
+function Cached(ttlSeconds: number) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const cache = new Map<string, { result: ValidationResult; timestamp: number }>();
+    const originalMethod = descriptor.value;
+
+    descriptor.value = function (...args: any[]) {
+      const key = JSON.stringify(args);
+      const now = Date.now();
+      const cached = cache.get(key);
+
+      if (cached && (now - cached.timestamp) < ttlSeconds * 1000) {
+        return cached.result;
+      }
+
+      const result = originalMethod.apply(this, args);
+      cache.set(key, { result, timestamp: now });
+      return result;
+    };
+  };
+}
+
+// Rate limiting decorator
+function RateLimit(limit: number, window: string) {
+  const attempts = new Map<string, number[]>();
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = function (...args: any[]) {
+      const key = args[1] || 'default'; // userId or default
+      const now = Date.now();
+      const windowMs = window === '1m' ? 60000 : 3600000;
+      
+      const userAttempts = attempts.get(key) || [];
+      const validAttempts = userAttempts.filter(time => (now - time) < windowMs);
+      
+      if (validAttempts.length >= limit) {
+        return {
+          isValid: false,
+          message: 'Rate limit exceeded. Please try again later.'
+        };
+      }
+
+      validAttempts.push(now);
+      attempts.set(key, validAttempts);
+      return originalMethod.apply(this, args);
+    };
+  };
+}
+
 /**
  * Enhanced email validation with domain verification and disposable email checking
  * @param email - Email address to validate
  * @returns ValidationResult object
  */
+@Cached(300)
 export function validateEmail(email: string): ValidationResult {
   try {
     // Sanitize input
@@ -77,9 +128,11 @@ export function validateEmail(email: string): ValidationResult {
 /**
  * Enhanced password validation with HIPAA compliance and pattern detection
  * @param password - Password to validate
+ * @param userId - User ID for rate limiting
  * @returns ValidationResult object
  */
-export function validatePassword(password: string): ValidationResult {
+@RateLimit(10, '1m')
+export function validatePassword(password: string, userId: string): ValidationResult {
   try {
     if (!password) {
       return { isValid: false, message: 'Password is required' };
@@ -164,6 +217,7 @@ export function validateDate(date: string, timezone: string = BUSINESS_HOURS.tim
  * @param uuid - UUID string to validate
  * @returns ValidationResult object
  */
+@Cached(3600)
 export function validateUUID(uuid: string): ValidationResult {
   try {
     if (!uuid || typeof uuid !== 'string') {

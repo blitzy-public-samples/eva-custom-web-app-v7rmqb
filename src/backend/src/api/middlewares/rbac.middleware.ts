@@ -185,3 +185,39 @@ export const rbacMiddleware = async (
     next(error);
   }
 };
+
+/**
+ * RBAC Guard class for enhanced access control
+ */
+export class RBACGuard {
+  private delegateService: DelegateService;
+
+  constructor() {
+    this.delegateService = Container.get(DelegateService);
+  }
+
+  /**
+   * Checks if a delegate has required access to a resource
+   */
+  public async checkAccess(
+    delegateId: string,
+    resourceType: ResourceType,
+    requiredAccess: AccessLevel
+  ): Promise<boolean> {
+    try {
+      return await this.delegateService.verifyDelegateAccess(
+        delegateId,
+        resourceType,
+        requiredAccess
+      );
+    } catch (error) {
+      logger.error('RBAC Guard access check failed', {
+        error,
+        delegateId,
+        resourceType,
+        requiredAccess
+      });
+      return false;
+    }
+  }
+}

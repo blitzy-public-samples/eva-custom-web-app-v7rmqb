@@ -29,7 +29,7 @@ const encryptionService = new EncryptionService();
 @Index(['email'], { unique: true })
 @Index(['status'], { where: "status = 'ACTIVE'" })
 @Index(['role'], { where: "status = 'ACTIVE'" })
-export default class UserModel {
+export class UserModel {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 

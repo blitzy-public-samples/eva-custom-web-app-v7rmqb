@@ -22,7 +22,12 @@ const RATE_LIMIT_WINDOW_MS = 60000;
 const RATE_LIMIT_MAX_REQUESTS = 100;
 
 // Initialize virus scanner
-const clamav = new NodeClam();
+const clamav = new NodeClam({
+  removeInfected: true,
+  quarantineInfected: false,
+  scanLog: null,
+  debugMode: false
+});
 
 /**
  * Enhanced validation schema for document creation
@@ -114,13 +119,19 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
       return sizeValidation;
     }
 
+    // Create temporary file path for virus scanning
+    const tempFilePath = `/tmp/${payload.metadata.fileName}`;
+    await require('fs').promises.writeFile(tempFilePath, payload.file.buffer);
+
     // Perform virus scan
-    const scanResult = await clamav.scanFile(payload.file.buffer);
-    if (!scanResult.isClean) {
+    const { isInfected, viruses } = await clamav.isInfected(tempFilePath);
+    await require('fs').promises.unlink(tempFilePath);
+
+    if (isInfected) {
       return {
         isValid: false,
         message: 'File failed virus scan',
-        details: scanResult.viruses
+        details: { viruses }
       };
     }
 
@@ -128,7 +139,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
     const sanitizedMetadata = {
       ...payload.metadata,
       fileName: sanitizeFileName(payload.metadata.fileName),
-      scanResult: scanResult.summary
+      scanResult: 'Clean'
     };
 
     // Log validation attempt for audit
@@ -136,7 +147,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
       fileName: sanitizedMetadata.fileName,
       fileSize: payload.metadata.fileSize,
       mimeType: payload.metadata.mimeType,
-      scanResult: scanResult.summary
+      scanResult: 'Clean'
     });
 
     return {

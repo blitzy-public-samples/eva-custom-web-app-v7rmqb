@@ -7,26 +7,22 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { retry } from 'typescript-retry-decorator';
+import { retry } from '@nestjs/common';
 import { compress } from 'compression'; // ^1.7.4
-import { S3 } from 'aws-sdk'; // ^2.1.0
+import { S3 } from '@aws-sdk/client-s3'; // ^2.1.0
 
 import {
   Document,
   DocumentType,
   DocumentStatus,
   CreateDocumentDTO,
-  UpdateDocumentDTO,
-  DocumentVersion,
   DocumentMetadata,
   DocumentRetentionPolicy,
-  DocumentStorageDetails,
   EncryptionType
 } from '../types/document.types';
 import { AuditService } from './audit.service';
 import { logger } from '../utils/logger.util';
 import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
-import { UserRole } from '../types/user.types';
 
 // Constants for security and compliance
 const ENCRYPTION_KEY_ROTATION_DAYS = 90;
@@ -44,7 +40,7 @@ export class DocumentService {
   private readonly s3Client: S3;
 
   constructor(
-    @InjectRepository(Document)
+    @InjectRepository('Document')
     private readonly documentRepository: Repository<Document>,
     private readonly auditService: AuditService,
     private readonly encryptionService: EncryptionService,
@@ -61,25 +57,27 @@ export class DocumentService {
    * @param documentId - ID of the document
    * @param versionData - Data for the new version
    * @param userId - ID of the user creating the version
-   * @returns Promise<DocumentVersion>
+   * @returns Promise<Document>
    */
-  @retry({
-    retries: 3,
-    factor: 2,
-    minTimeout: 1000,
-    maxTimeout: 5000
-  })
+  @retry(3)
   async createDocumentVersion(
     documentId: string,
     versionData: CreateDocumentDTO,
     userId: string
-  ): Promise<DocumentVersion> {
+  ): Promise<Document> {
     try {
       // Validate access permissions
       await this.validateUserAccess(userId, documentId, AccessLevel.WRITE);
 
+      // Create metadata with required fields
+      const metadata: DocumentMetadata = {
+        ...versionData.metadata,
+        uploadedAt: new Date(),
+        lastModified: new Date()
+      };
+
       // Validate file metadata
-      this.validateFileMetadata(versionData.metadata);
+      this.validateFileMetadata(metadata);
 
       // Compress document content
       const compressedContent = await this.compressDocument(versionData.file);
@@ -110,10 +108,19 @@ export class DocumentService {
         }
       }).promise();
 
-      // Create version record
-      const version: DocumentVersion = {
-        documentId,
-        versionNumber: await this.getNextVersionNumber(documentId),
+      // Create document record
+      const document: Document = {
+        id: documentId,
+        userId,
+        title: versionData.title,
+        type: versionData.type,
+        status: DocumentStatus.COMPLETED,
+        metadata: {
+          ...metadata,
+          fileName: this.sanitizeFileName(metadata.fileName),
+          fileSize: compressedContent.length,
+          geographicLocation: 'ca-central-1'
+        },
         storageDetails: {
           bucket: process.env.S3_BUCKET_NAME,
           key: s3Key,
@@ -121,39 +128,33 @@ export class DocumentService {
           encryptionType: EncryptionType.KMS_MANAGED,
           kmsKeyId: process.env.KMS_KEY_ID
         },
-        metadata: {
-          ...versionData.metadata,
-          fileName: this.sanitizeFileName(versionData.metadata.fileName),
-          fileSize: compressedContent.length,
-          uploadedAt: new Date(),
-          lastModified: new Date(),
-          geographicLocation: 'ca-central-1'
-        },
-        status: DocumentStatus.COMPLETED,
+        resourceType: ResourceType.LEGAL_DOCS,
+        accessLevel: 'WRITE',
+        lastAccessedAt: new Date(),
+        expiresAt: new Date(Date.now() + versionData.retentionPeriod * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
-        createdBy: userId
+        updatedAt: new Date()
       };
 
-      // Save version to database
-      const savedVersion = await this.documentRepository.save(version);
+      // Save document to database
+      const savedDocument = await this.documentRepository.save(document);
 
       // Log audit trail
       await this.auditService.createAuditLog({
-        eventType: 'DOCUMENT_UPLOAD',
-        severity: 'INFO',
+        eventType: AuditEventType.DOCUMENT_UPLOAD,
+        severity: AuditSeverity.INFO,
         userId,
         resourceId: documentId,
         resourceType: ResourceType.LEGAL_DOCS,
         ipAddress: '0.0.0.0', // Should be passed from controller
         userAgent: 'system',
         details: {
-          versionNumber: version.versionNumber,
           documentType: versionData.type,
-          fileName: version.metadata.fileName
+          fileName: document.metadata.fileName
         }
       });
 
-      return savedVersion;
+      return savedDocument;
     } catch (error) {
       logger.error('Failed to create document version', {
         error,
@@ -182,16 +183,12 @@ export class DocumentService {
       const documentAge = this.calculateDocumentAge(document.metadata.uploadedAt);
 
       if (documentAge > retentionPolicy.retentionPeriod) {
-        if (retentionPolicy.action === 'ARCHIVE') {
-          await this.archiveDocument(document);
-        } else if (retentionPolicy.action === 'DELETE') {
-          await this.deleteDocument(document);
-        }
+        await this.storageService.archiveDocument(document);
 
         // Log retention action
         await this.auditService.createAuditLog({
-          eventType: 'DOCUMENT_RETENTION',
-          severity: 'INFO',
+          eventType: AuditEventType.DOCUMENT_RETENTION,
+          severity: AuditSeverity.INFO,
           userId: 'system',
           resourceId: documentId,
           resourceType: ResourceType.LEGAL_DOCS,
@@ -228,9 +225,9 @@ export class DocumentService {
       throw new Error('Document not found');
     }
 
-    const userPermissions = await this.getUserPermissions(userId, document.type);
+    const hasAccess = await this.storageService.checkUserAccess(userId, document.type, requiredLevel);
     
-    if (!hasPermission(userPermissions, requiredLevel)) {
+    if (!hasAccess) {
       throw new Error('Insufficient permissions');
     }
   }
@@ -249,8 +246,8 @@ export class DocumentService {
     return new Promise((resolve, reject) => {
       compress(content, {
         level: 6
-      }, (error, result) => {
-        if (error) reject(error);
+      }, (err: Error | null, result: Buffer) => {
+        if (err) reject(err);
         resolve(result);
       });
     });
@@ -260,16 +257,6 @@ export class DocumentService {
     return `documents/${userId}/${documentId}/${Date.now()}`;
   }
 
-  private async getNextVersionNumber(documentId: string): Promise<number> {
-    const versions = await this.documentRepository.find({
-      where: { documentId },
-      order: { versionNumber: 'DESC' },
-      take: 1
-    });
-
-    return versions.length ? versions[0].versionNumber + 1 : 1;
-  }
-
   private sanitizeFileName(fileName: string): string {
     return fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
   }
@@ -277,7 +264,6 @@ export class DocumentService {
   private async getDocumentRetentionPolicy(
     documentType: DocumentType
   ): Promise<DocumentRetentionPolicy> {
-    // Implementation would fetch from configuration service
     return {
       retentionPeriod: 730, // 2 years
       action: 'ARCHIVE'

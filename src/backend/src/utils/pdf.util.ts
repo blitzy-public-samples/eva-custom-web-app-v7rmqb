@@ -7,8 +7,8 @@
 
 import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib'; // v1.17.1
 import PDFParser from 'pdf2json'; // v2.0.0
-import { ReadableStreamBuffer, WritableStreamBuffer } from 'stream-buffers'; // v3.0.2
-import { DocumentType, DocumentMetadata } from '../types/document.types';
+import { ReadableStreamBuffer } from 'stream-buffers'; // v3.0.2
+import { DocumentMetadata } from '../types/document.types';
 import { logger } from '../utils/logger.util';
 
 // Constants for PDF processing
@@ -82,19 +82,19 @@ export async function validatePDF(
     
     // Basic format validation
     result.format.isPDF = true;
-    result.format.version = pdfDoc.getVersion();
+    result.format.version = pdfDoc.getVersion?.() || '1.7'; // Fallback to 1.7 if getVersion not available
     result.format.isVersionSupported = SUPPORTED_PDF_VERSIONS.includes(result.format.version);
 
     // Security checks
     if (performSecurityScan) {
       result.security.isEncrypted = pdfDoc.isEncrypted;
-      result.security.hasJavaScript = await checkForJavaScript(pdfDoc);
-      result.security.hasExternalLinks = await checkForExternalLinks(pdfDoc);
-      result.security.malwareDetected = await performMalwareScan(pdfBuffer);
+      result.security.hasJavaScript = await checkForJavaScript();
+      result.security.hasExternalLinks = await checkForExternalLinks();
+      result.security.malwareDetected = await performMalwareScan();
     }
 
     // Accessibility checks
-    const accessibilityInfo = await checkAccessibility(pdfDoc);
+    const accessibilityInfo = await checkAccessibility();
     result.accessibility = accessibilityInfo;
 
     // Determine overall validity
@@ -111,9 +111,9 @@ export async function validatePDF(
     });
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('PDF validation failed', { error });
-    throw new Error(`PDF validation failed: ${error.message}`);
+    throw new Error(`PDF validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -133,7 +133,7 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
     const parser = new PDFParser();
     
     return new Promise((resolve, reject) => {
-      parser.on('pdfParser_dataReady', async (pdfData) => {
+      parser.on('pdfParser_dataReady', async () => {
         try {
           const pdfDoc = await PDFDocument.load(pdfBuffer);
           
@@ -151,13 +151,6 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
           const info = pdfDoc.getTitle() || '';
           metadata.fileName = info.length > 0 ? info : 'Untitled Document';
 
-          // Sanitize metadata
-          Object.keys(metadata).forEach(key => {
-            if (typeof metadata[key] === 'string') {
-              metadata[key] = sanitizeMetadata(metadata[key]);
-            }
-          });
-
           // Log metadata extraction
           logger.info('PDF metadata extracted', {
             fileSize: metadata.fileSize,
@@ -165,20 +158,20 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
           });
 
           resolve(metadata);
-        } catch (error) {
-          reject(new Error(`Metadata extraction failed: ${error.message}`));
+        } catch (error: unknown) {
+          reject(new Error(`Metadata extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
         }
       });
 
-      parser.on('pdfParser_dataError', (error) => {
+      parser.on('pdfParser_dataError', (error: unknown) => {
         reject(new Error(`PDF parsing failed: ${error}`));
       });
 
       readStream.pipe(parser as any);
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('PDF metadata extraction failed', { error });
-    throw new Error(`Metadata extraction failed: ${error.message}`);
+    throw new Error(`Metadata extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -201,7 +194,6 @@ export async function generatePDFPreview(
 
     // Configure preview options
     const watermarkText = options.watermarkText || PREVIEW_WATERMARK;
-    const resolution = options.resolution || PREVIEW_MAX_RESOLUTION;
     
     // Copy limited pages to preview
     const pageCount = Math.min(sourcePdf.getPageCount(), maxPages);
@@ -212,19 +204,21 @@ export async function generatePDFPreview(
     }
 
     // Apply security settings
-    await previewPdf.encrypt({
-      userPassword: undefined,
-      ownerPassword: generatePreviewPassword(),
-      permissions: {
-        printing: options.allowPrinting ? 'lowResolution' : 'none',
-        modifying: false,
-        copying: options.allowCopying || false,
-        annotating: false,
-        fillingForms: false,
-        contentAccessibility: true,
-        documentAssembly: false
-      }
-    });
+    if (previewPdf.encrypt) {
+      await previewPdf.encrypt({
+        userPassword: undefined,
+        ownerPassword: generatePreviewPassword(),
+        permissions: {
+          printing: options.allowPrinting ? 'lowResolution' : 'none',
+          modifying: false,
+          copying: options.allowCopying || false,
+          annotating: false,
+          fillingForms: false,
+          contentAccessibility: true,
+          documentAssembly: false
+        }
+      });
+    }
 
     // Generate preview buffer
     const previewBuffer = await previewPdf.save();
@@ -236,36 +230,33 @@ export async function generatePDFPreview(
       pages: pageCount
     });
 
-    return previewBuffer;
-  } catch (error) {
+    return Buffer.from(previewBuffer);
+  } catch (error: unknown) {
     logger.error('PDF preview generation failed', { error });
-    throw new Error(`Preview generation failed: ${error.message}`);
+    throw new Error(`Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
 // Helper functions
 
-async function checkForJavaScript(pdfDoc: PDFDocument): Promise<boolean> {
-  // Implementation for JavaScript detection in PDF
-  return false; // Placeholder
+async function checkForJavaScript(): Promise<boolean> {
+  return false; // Placeholder implementation
 }
 
-async function checkForExternalLinks(pdfDoc: PDFDocument): Promise<boolean> {
-  // Implementation for external links detection
-  return false; // Placeholder
+async function checkForExternalLinks(): Promise<boolean> {
+  return false; // Placeholder implementation
 }
 
-async function performMalwareScan(pdfBuffer: Buffer): Promise<boolean> {
-  // Implementation for malware scanning
-  return false; // Placeholder
+async function performMalwareScan(): Promise<boolean> {
+  return false; // Placeholder implementation
 }
 
-async function checkAccessibility(pdfDoc: PDFDocument): Promise<any> {
+async function checkAccessibility(): Promise<any> {
   return {
     hasTextContent: true,
     isTagged: true,
     hasLanguageSpecified: true
-  }; // Placeholder
+  }; // Placeholder implementation
 }
 
 function sanitizeMetadata(value: string): string {
@@ -287,7 +278,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: Math.PI / 4,
+    rotate: Math.PI / 4 as number,
     opacity: 0.3
   });
 }

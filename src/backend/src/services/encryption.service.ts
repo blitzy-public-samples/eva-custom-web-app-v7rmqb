@@ -1,12 +1,10 @@
 // @ts-check
-import AWS from 'aws-sdk'; // ^2.1.0
+import { KMS } from '@aws-sdk/client-kms'; // ^2.1.0
 import winston from 'winston'; // ^3.0.0
 import { 
   encrypt, 
   decrypt, 
-  generateEncryptionKey, 
-  generateSalt, 
-  deriveKey 
+  generateEncryptionKey
 } from '../utils/encryption.util';
 import { awsConfig } from '../config/aws';
 
@@ -38,7 +36,7 @@ interface EncryptedDataWithMetadata {
  * Service class providing enterprise-grade encryption operations with enhanced security features
  */
 export class EncryptionService {
-  private KMS: AWS.KMS;
+  private kmsClient: KMS;
   private keyCache: Map<string, CachedKeyData>;
   private readonly KEY_ROTATION_INTERVAL_DAYS: number;
   private readonly MAX_RETRY_ATTEMPTS: number;
@@ -54,7 +52,7 @@ export class EncryptionService {
     maxRetryAttempts: number = 3
   ) {
     // Initialize AWS KMS client with provided configuration
-    this.KMS = new AWS.KMS(awsConfig);
+    this.kmsClient = new KMS(awsConfig);
     
     // Initialize key cache and configuration
     this.keyCache = new Map<string, CachedKeyData>();
@@ -94,7 +92,7 @@ export class EncryptionService {
     keyId: string
   ): Promise<EncryptedDataWithMetadata> {
     let attempts = 0;
-    let lastError: Error;
+    let lastError: Error | null = null;
 
     while (attempts < this.MAX_RETRY_ATTEMPTS) {
       try {
@@ -128,13 +126,13 @@ export class EncryptionService {
 
         return result;
       } catch (error) {
-        lastError = error;
+        lastError = error instanceof Error ? error : new Error('Unknown error occurred');
         attempts++;
         
         this.logger.warn('Encryption attempt failed', {
           keyId,
           attempt: attempts,
-          error: error.message
+          error: lastError.message
         });
 
         if (attempts === this.MAX_RETRY_ATTEMPTS) {
@@ -149,10 +147,10 @@ export class EncryptionService {
     this.logger.error('Encryption failed after maximum retry attempts', {
       keyId,
       maxAttempts: this.MAX_RETRY_ATTEMPTS,
-      error: lastError
+      error: lastError?.message
     });
 
-    throw new Error(`Encryption failed after ${this.MAX_RETRY_ATTEMPTS} attempts: ${lastError.message}`);
+    throw new Error(`Encryption failed after ${this.MAX_RETRY_ATTEMPTS} attempts: ${lastError?.message}`);
   }
 
   /**
@@ -192,13 +190,14 @@ export class EncryptionService {
 
       return decryptedData;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Decryption failed', {
         keyId,
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
 
-      throw new Error(`Decryption failed: ${error.message}`);
+      throw new Error(`Decryption failed: ${errorMessage}`);
     }
   }
 
@@ -240,13 +239,14 @@ export class EncryptionService {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Key rotation failed', {
         keyId,
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
 
-      throw new Error(`Key rotation failed: ${error.message}`);
+      throw new Error(`Key rotation failed: ${errorMessage}`);
     }
   }
 
@@ -272,8 +272,9 @@ export class EncryptionService {
         }
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Key rotation check failed', {
-        error: error.message,
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
     }
@@ -325,10 +326,11 @@ export class EncryptionService {
       // Implement secure key deletion logic here
       // Note: Actual implementation would depend on specific security requirements
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to delete old key version', {
         keyId,
         version,
-        error: error.message
+        error: errorMessage
       });
     }
   }

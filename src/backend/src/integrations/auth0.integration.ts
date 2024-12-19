@@ -1,11 +1,11 @@
 import { ManagementClient, AuthenticationClient } from 'auth0'; // v3.0.0
 import { JwtPayload } from 'jsonwebtoken'; // v9.0.0
-import * as jwksRsa from 'jwks-rsa'; // v3.0.1
+import { JwksClient } from 'jwks-rsa'; // v3.0.1
 import rateLimit from 'express-rate-limit'; // v6.0.0
-import { auth0Config, jwtConfig } from '../../config/auth0';
+import { AUTH0_CONFIG as auth0Config, JWT_CONFIG as jwtConfig } from '../config/auth0';
 
 // Custom error types for better error handling
-class Auth0IntegrationError extends Error {
+export class Auth0IntegrationError extends Error {
   constructor(message: string, public readonly code: string) {
     super(message);
     this.name = 'Auth0IntegrationError';
@@ -76,7 +76,7 @@ export class Auth0Integration {
   async verifyToken(token: string): Promise<JwtPayload> {
     try {
       // Initialize JWKS client with retry mechanism
-      const jwksClient = jwksRsa({
+      const jwksClient = new JwksClient({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,

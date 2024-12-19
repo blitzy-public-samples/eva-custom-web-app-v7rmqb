@@ -38,7 +38,7 @@ const createRateLimiter = (options: RateLimitOptions = {}) => {
     skipFailedRequests: options.skipFailedRequests || false,
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => IP_WHITELIST.includes(req.ip),
+    skip: (req) => IP_WHITELIST.includes(req.ip || ''),
     handler: (req, res) => {
       logger.warn('Rate limit exceeded', {
         ip: req.ip,
@@ -107,7 +107,7 @@ export const checkPermission = (
       }
 
       next();
-    } catch (error) {
+    } catch (error: any) {
       // Log security event for access denial
       logger.logSecurityEvent('ACCESS_DENIED', {
         correlationId,
@@ -126,7 +126,7 @@ export const checkPermission = (
  */
 export const rbacMiddleware = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   const correlationId = req.headers['x-correlation-id'] as string || 
@@ -174,7 +174,7 @@ export const rbacMiddleware = async (
     }
 
     next();
-  } catch (error) {
+  } catch (error: any) {
     // Log security event for access denial
     logger.logSecurityEvent('ACCESS_DENIED', {
       correlationId,

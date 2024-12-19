@@ -165,9 +165,9 @@ export class StorageService {
       const decryptedContent = await this.encryptionService.decryptSensitiveData(
         {
           content: encryptedBuffer,
-          iv: Buffer.from(metadata.metadata.iv || '', 'base64'),
-          authTag: Buffer.from(metadata.metadata.authTag || '', 'base64'),
-          keyVersion: metadata.metadata.encryptionVersion,
+          iv: Buffer.from(metadata.encryption.iv || '', 'base64'),
+          authTag: Buffer.from(metadata.encryption.authTag || '', 'base64'),
+          keyVersion: metadata.encryption.encryptionVersion,
           metadata: {
             algorithm: 'aes-256-gcm',
             timestamp: Date.now()
@@ -276,9 +276,9 @@ export class StorageService {
         versionId: metadata.versionId,
         lastModified: metadata.lastModified,
         securityContext: {
-          classification: metadata.metadata.securityClassification,
-          accessLevel: metadata.metadata.accessLevel,
-          retentionPolicy: metadata.metadata.retentionPolicy,
+          classification: metadata.encryption.securityClassification,
+          accessLevel: metadata.encryption.accessLevel,
+          retentionPolicy: metadata.encryption.retentionPolicy,
           encryptionContext: metadata.encryption.keyId
         }
       };

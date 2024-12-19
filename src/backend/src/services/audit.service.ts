@@ -6,7 +6,7 @@
 
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { InjectRepository } from 'typeorm'; // ^0.3.0
+import { InjectRepository } from '@nestjs/typeorm'; // ^9.0.0
 
 import { AuditModel } from '../db/models/audit.model';
 import { 
@@ -43,7 +43,8 @@ export class AuditService {
       this.validateLogEntry(logEntry);
 
       // Create new audit model instance with compliance metadata
-      const auditLog = this.auditRepository.create({
+      const auditLog = new AuditModel();
+      Object.assign(auditLog, {
         ...logEntry,
         details: {
           ...logEntry.details,

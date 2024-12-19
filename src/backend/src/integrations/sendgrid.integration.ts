@@ -117,8 +117,7 @@ export class SendGridService {
       // Log success
       logger.info('Email sent successfully', {
         template: templateId,
-        recipient: toEmail,
-        messageId: msg.headers['X-Message-Id']
+        recipient: toEmail
       });
 
     } catch (error) {

@@ -19,13 +19,14 @@ import {
 } from '../controllers/subscriptions.controller';
 import { validateRequest } from '../middlewares/validation.middleware';
 import { authMiddleware } from '../middlewares/auth.middleware';
-import { rbacMiddleware } from '../middlewares/rbac.middleware';
+import { checkPermission } from '../middlewares/rbac.middleware';
 import errorHandler from '../middlewares/error.middleware';
 import { 
   createSubscriptionSchema,
   updateSubscriptionSchema,
   subscriptionIdSchema 
 } from '../validators/subscriptions.validator';
+import { ResourceType, AccessLevel } from '../../types/permission.types';
 
 // Initialize router
 const router = Router();
@@ -57,7 +58,7 @@ router.use(cors(CORS_OPTIONS));
 router.post('/',
   rateLimit(RATE_LIMIT_CONFIG.standard),
   authMiddleware,
-  rbacMiddleware(['ADMIN', 'USER']),
+  checkPermission(ResourceType.FINANCIAL_DATA, AccessLevel.WRITE),
   validateRequest(createSubscriptionSchema, {
     resourceType: 'SUBSCRIPTION',
     sensitiveFields: ['shopifyCustomerId'],
@@ -71,7 +72,7 @@ router.post('/',
 router.put('/:subscriptionId',
   rateLimit(RATE_LIMIT_CONFIG.standard),
   authMiddleware,
-  rbacMiddleware(['ADMIN', 'USER']),
+  checkPermission(ResourceType.FINANCIAL_DATA, AccessLevel.WRITE),
   validateRequest(subscriptionIdSchema, {
     resourceType: 'SUBSCRIPTION',
     complianceRequirements: ['PIPEDA']
@@ -89,7 +90,7 @@ router.put('/:subscriptionId',
 router.get('/:subscriptionId',
   rateLimit(RATE_LIMIT_CONFIG.standard),
   authMiddleware,
-  rbacMiddleware(['ADMIN', 'USER']),
+  checkPermission(ResourceType.FINANCIAL_DATA, AccessLevel.READ),
   validateRequest(subscriptionIdSchema, {
     resourceType: 'SUBSCRIPTION',
     complianceRequirements: ['PIPEDA']
@@ -102,7 +103,7 @@ router.get('/:subscriptionId',
 router.get('/user/:userId',
   rateLimit(RATE_LIMIT_CONFIG.standard),
   authMiddleware,
-  rbacMiddleware(['ADMIN', 'USER']),
+  checkPermission(ResourceType.FINANCIAL_DATA, AccessLevel.READ),
   validateRequest(subscriptionIdSchema, {
     resourceType: 'SUBSCRIPTION',
     complianceRequirements: ['PIPEDA']
@@ -115,7 +116,7 @@ router.get('/user/:userId',
 router.delete('/:subscriptionId',
   rateLimit(RATE_LIMIT_CONFIG.standard),
   authMiddleware,
-  rbacMiddleware(['ADMIN', 'USER']),
+  checkPermission(ResourceType.FINANCIAL_DATA, AccessLevel.WRITE),
   validateRequest(subscriptionIdSchema, {
     resourceType: 'SUBSCRIPTION',
     complianceRequirements: ['PIPEDA']

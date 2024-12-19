@@ -25,7 +25,7 @@ import {
   ApiSecurity,
   ApiBearerAuth,
 } from '@nestjs/swagger'; // ^6.0.0
-import { RateLimit } from '@nestjs/throttler'; // ^4.0.0
+import { Throttle } from '@nestjs/throttler'; // ^4.0.0
 
 // Internal service imports
 import { DelegateService } from '../../services/delegate.service';
@@ -38,14 +38,6 @@ import {
 
 // Types and enums
 import { ResourceType, AccessLevel } from '../../types/permission.types';
-import { UserRole } from '../../types/user.types';
-import { DelegateStatus } from '../../types/delegate.types';
-import { AuditEventType, AuditSeverity } from '../../types/audit.types';
-
-// Security guards and interceptors
-import { AuthGuard } from '../guards/auth.guard';
-import { RBACGuard } from '../guards/rbac.guard';
-import { AuditInterceptor } from '../interceptors/audit.interceptor';
 
 @Controller('delegates')
 @ApiTags('Delegates')
@@ -63,7 +55,7 @@ export class DelegatesController {
    * Creates a new delegate relationship with comprehensive security validation
    */
   @Post()
-  @RateLimit({ ttl: 60, limit: 10 })
+  @Throttle({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Create new delegate relationship' })
   @ApiResponse({ status: 201, description: 'Delegate created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid delegate data' })
@@ -74,18 +66,17 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(
-        validatedData.ownerId,
-        validatedData
-      );
+      const delegate = await this.delegateService.createDelegate(validatedData);
 
       // Log delegate creation
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.DELEGATE_INVITE,
-        severity: AuditSeverity.INFO,
-        userId: validatedData.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_INVITE',
+        severity: 'INFO',
+        userId: validatedData.userId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           delegateEmail: validatedData.email,
           role: validatedData.role,
@@ -95,10 +86,8 @@ export class DelegatesController {
 
       return delegate;
     } catch (error) {
-      throw new HttpException(
-        `Failed to create delegate: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to create delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -106,7 +95,7 @@ export class DelegatesController {
    * Updates existing delegate relationship with security validation
    */
   @Put(':id')
-  @RateLimit({ ttl: 60, limit: 20 })
+  @Throttle({ ttl: 60, limit: 20 })
   @ApiOperation({ summary: 'Update delegate relationship' })
   @ApiResponse({ status: 200, description: 'Delegate updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid update data' })
@@ -123,18 +112,17 @@ export class DelegatesController {
       const validatedData = await updateDelegateSchema.parseAsync(updateDelegateDto);
 
       // Update delegate with security checks
-      const updatedDelegate = await this.delegateService.updateDelegate(
-        id,
-        validatedData
-      );
+      const updatedDelegate = await this.delegateService.updateDelegate(id, validatedData);
 
       // Log delegate update
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.INFO,
-        userId: updatedDelegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'PERMISSION_CHANGE',
+        severity: 'INFO',
+        userId: updatedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           changes: validatedData,
           previousState: updatedDelegate
@@ -143,10 +131,8 @@ export class DelegatesController {
 
       return updatedDelegate;
     } catch (error) {
-      throw new HttpException(
-        `Failed to update delegate: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to update delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -154,7 +140,7 @@ export class DelegatesController {
    * Retrieves delegate information with security validation
    */
   @Get(':id')
-  @RateLimit({ ttl: 60, limit: 100 })
+  @Throttle({ ttl: 60, limit: 100 })
   @ApiOperation({ summary: 'Get delegate by ID' })
   @ApiResponse({ status: 200, description: 'Delegate retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -164,28 +150,28 @@ export class DelegatesController {
       await delegateIdSchema.parseAsync({ id });
 
       // Retrieve delegate with security checks
-      const delegate = await this.delegateService.getDelegateById(id);
+      const delegate = await this.delegateService.getDelegate(id);
 
       if (!delegate) {
         throw new HttpException('Delegate not found', HttpStatus.NOT_FOUND);
       }
 
       // Log delegate access
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: AuditSeverity.INFO,
-        userId: delegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: 'INFO',
+        userId: delegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: { accessType: 'READ' }
       });
 
       return delegate;
     } catch (error) {
-      throw new HttpException(
-        `Failed to retrieve delegate: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to retrieve delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -193,32 +179,29 @@ export class DelegatesController {
    * Lists delegates with filtering and security validation
    */
   @Get()
-  @RateLimit({ ttl: 60, limit: 50 })
+  @Throttle({ ttl: 60, limit: 50 })
   @ApiOperation({ summary: 'List delegates' })
   @ApiResponse({ status: 200, description: 'Delegates retrieved successfully' })
   async getDelegates(@Query() query: any) {
     try {
       // Get delegates with security checks
-      const delegates = await this.delegateService.getDelegatesByOwner(
-        query.ownerId,
-        query.status
-      );
+      const delegates = await this.delegateService.getDelegates(query);
 
       // Log delegate list access
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: AuditSeverity.INFO,
-        userId: query.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: 'INFO',
+        userId: query.userId,
         resourceType: 'DELEGATE_LIST',
+        ipAddress: '',
+        userAgent: '',
         details: { filters: query }
       });
 
       return delegates;
     } catch (error) {
-      throw new HttpException(
-        `Failed to list delegates: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to list delegates';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -226,7 +209,7 @@ export class DelegatesController {
    * Revokes delegate access with security validation
    */
   @Delete(':id')
-  @RateLimit({ ttl: 60, limit: 10 })
+  @Throttle({ ttl: 60, limit: 10 })
   @ApiOperation({ summary: 'Revoke delegate access' })
   @ApiResponse({ status: 200, description: 'Delegate access revoked successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -239,12 +222,14 @@ export class DelegatesController {
       const revokedDelegate = await this.delegateService.revokeDelegate(id);
 
       // Log delegate revocation
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.WARNING,
-        userId: revokedDelegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'PERMISSION_CHANGE',
+        severity: 'WARNING',
+        userId: revokedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           action: 'REVOKE',
           previousStatus: revokedDelegate.status
@@ -253,10 +238,8 @@ export class DelegatesController {
 
       return revokedDelegate;
     } catch (error) {
-      throw new HttpException(
-        `Failed to revoke delegate: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to revoke delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -264,7 +247,7 @@ export class DelegatesController {
    * Verifies delegate access permissions with security validation
    */
   @Get('verify-access')
-  @RateLimit({ ttl: 60, limit: 100 })
+  @Throttle({ ttl: 60, limit: 100 })
   @ApiOperation({ summary: 'Verify delegate access permissions' })
   @ApiResponse({ status: 200, description: 'Access verification result' })
   async verifyDelegateAccess(@Query() verifyAccessDto: any) {
@@ -276,11 +259,13 @@ export class DelegatesController {
       );
 
       // Log access verification
-      await this.auditService.logDelegateAction({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: hasAccess ? AuditSeverity.INFO : AuditSeverity.WARNING,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: hasAccess ? 'INFO' : 'WARNING',
         userId: verifyAccessDto.delegateId,
         resourceType: verifyAccessDto.resourceType,
+        ipAddress: '',
+        userAgent: '',
         details: {
           accessLevel: verifyAccessDto.accessLevel,
           accessGranted: hasAccess
@@ -289,10 +274,8 @@ export class DelegatesController {
 
       return { hasAccess };
     } catch (error) {
-      throw new HttpException(
-        `Failed to verify access: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to verify access';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 }

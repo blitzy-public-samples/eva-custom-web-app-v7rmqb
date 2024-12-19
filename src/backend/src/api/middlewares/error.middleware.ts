@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express'; // v4.18.0
 import { logger } from '../../utils/logger.util';
-import { formatErrorResponse, BaseError } from '../../utils/error.util';
+import { formatErrorResponse, BaseError, SecurityImpactLevel } from '../../utils/error.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Error rate monitoring thresholds
@@ -52,13 +52,13 @@ const trackErrorRate = (error: BaseError): void => {
 
   // Update error counts
   errorStats.total++;
-  if (error instanceof BaseError && error.securityLevel === 'CRITICAL') {
+  if (error instanceof BaseError && error.securityLevel === SecurityImpactLevel.CRITICAL) {
     errorStats.critical++;
   }
 
   // Check thresholds and trigger alerts
   if (errorStats.total >= ERROR_MONITORING.THRESHOLD.TOTAL) {
-    logger.securityEvent(AuditEventType.ERROR, {
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
       message: 'Error rate threshold exceeded',
       count: errorStats.total,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -67,7 +67,7 @@ const trackErrorRate = (error: BaseError): void => {
   }
 
   if (errorStats.critical >= ERROR_MONITORING.THRESHOLD.CRITICAL) {
-    logger.securityEvent(AuditEventType.ERROR, {
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
       message: 'Critical error rate threshold exceeded',
       count: errorStats.critical,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -81,7 +81,7 @@ const trackErrorRate = (error: BaseError): void => {
  * @param req - Express request object
  * @param error - The error being processed
  */
-const createSecurityContext = (req: Request, error: Error) => ({
+const createSecurityContext = (req: Request & { user?: { id: string } }, error: Error) => ({
   userId: req.user?.id,
   ipAddress: req.ip,
   userAgent: req.headers['user-agent'],
@@ -97,9 +97,9 @@ const createSecurityContext = (req: Request, error: Error) => ({
  */
 const errorMiddleware = (
   error: Error,
-  req: Request,
+  req: Request & { user?: { id: string } },
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
   try {
     // Create security context for error tracking
@@ -111,7 +111,7 @@ const errorMiddleware = (
       500,
       'INTERNAL_ERROR',
       {},
-      { impactLevel: 'MEDIUM' }
+      { impactLevel: SecurityImpactLevel.MEDIUM }
     );
 
     // Track error rates
@@ -125,9 +125,9 @@ const errorMiddleware = (
     });
 
     // Create audit log entry
-    logger.auditLog({
-      eventType: AuditEventType.ERROR,
-      severity: baseError.securityLevel === 'CRITICAL' ? 
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
+      eventType: AuditEventType.PERMISSION_CHANGE,
+      severity: baseError.securityLevel === SecurityImpactLevel.CRITICAL ? 
         AuditSeverity.CRITICAL : AuditSeverity.ERROR,
       userId: securityContext.userId || 'SYSTEM',
       resourceId: null,

@@ -28,8 +28,8 @@ import {
   ApiBearerAuth
 } from '@nestjs/swagger'; // ^7.0.0
 
-import { JwtAuthGuard, RolesGuard } from '@nestjs/passport'; // ^10.0.0
-import { RateLimit } from '@nestjs/throttler'; // ^5.0.0
+import { AuthGuard } from '@nestjs/passport'; // ^10.0.0
+import { ThrottlerGuard } from '@nestjs/throttler'; // ^5.0.0
 
 // Internal imports
 import { SubscriptionService } from '../../services/subscription.service';
@@ -47,7 +47,7 @@ import {
  */
 @Controller('subscriptions')
 @ApiTags('Subscriptions')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AuthGuard('jwt'), ThrottlerGuard)
 @UseInterceptors(LoggingInterceptor)
 @ApiBearerAuth()
 export class SubscriptionsController {
@@ -60,7 +60,7 @@ export class SubscriptionsController {
    */
   @Post()
   @Roles('admin', 'user')
-  @RateLimit({ ttl: 60, limit: 10 })
+  @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Create new subscription' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
@@ -87,8 +87,23 @@ export class SubscriptionsController {
 
       this.logger.log(`Successfully created subscription: ${subscription.id}`);
 
-      return subscription;
-    } catch (error) {
+      return {
+        subscription,
+        planDetails: {
+          id: subscription.id,
+          name: subscription.plan,
+          description: `${subscription.plan} Plan`,
+          price: 0, // To be populated from plan configuration
+          billingCycle: subscription.billingCycle,
+          features: [],
+          shopifyProductId: subscription.shopifySubscriptionId,
+          shopifyPriceId: '', // To be populated from Shopify
+          trialDays: 0,
+          compareAtPrice: null
+        },
+        usage: {}
+      };
+    } catch (error: any) {
       this.logger.error(`Failed to create subscription: ${error.message}`, error.stack);
       throw new HttpException(
         error.message,
@@ -131,7 +146,7 @@ export class SubscriptionsController {
       });
 
       this.logger.log('Successfully processed Shopify webhook');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to process Shopify webhook: ${error.message}`, error.stack);
       throw new HttpException(
         error.message,
@@ -145,7 +160,7 @@ export class SubscriptionsController {
    */
   @Put(':subscriptionId')
   @Roles('admin', 'user')
-  @RateLimit({ ttl: 60, limit: 10 })
+  @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Update subscription' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -165,8 +180,23 @@ export class SubscriptionsController {
 
       this.logger.log(`Successfully updated subscription: ${subscriptionId}`);
 
-      return subscription;
-    } catch (error) {
+      return {
+        subscription,
+        planDetails: {
+          id: subscription.id,
+          name: subscription.plan,
+          description: `${subscription.plan} Plan`,
+          price: 0, // To be populated from plan configuration
+          billingCycle: subscription.billingCycle,
+          features: [],
+          shopifyProductId: subscription.shopifySubscriptionId,
+          shopifyPriceId: '', // To be populated from Shopify
+          trialDays: 0,
+          compareAtPrice: null
+        },
+        usage: {}
+      };
+    } catch (error: any) {
       this.logger.error(`Failed to update subscription: ${error.message}`, error.stack);
       throw new HttpException(
         error.message,
@@ -193,8 +223,23 @@ export class SubscriptionsController {
 
       const subscription = await this.subscriptionService.getSubscription(subscriptionId);
 
-      return subscription;
-    } catch (error) {
+      return {
+        subscription,
+        planDetails: {
+          id: subscription.id,
+          name: subscription.plan,
+          description: `${subscription.plan} Plan`,
+          price: 0, // To be populated from plan configuration
+          billingCycle: subscription.billingCycle,
+          features: [],
+          shopifyProductId: subscription.shopifySubscriptionId,
+          shopifyPriceId: '', // To be populated from Shopify
+          trialDays: 0,
+          compareAtPrice: null
+        },
+        usage: {}
+      };
+    } catch (error: any) {
       this.logger.error(`Failed to retrieve subscription: ${error.message}`, error.stack);
       throw new HttpException(
         error.message,
@@ -222,7 +267,7 @@ export class SubscriptionsController {
       await this.subscriptionService.cancelSubscription(subscriptionId);
 
       this.logger.log(`Successfully cancelled subscription: ${subscriptionId}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to cancel subscription: ${error.message}`, error.stack);
       throw new HttpException(
         error.message,

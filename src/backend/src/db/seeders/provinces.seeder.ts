@@ -1,19 +1,19 @@
 // @ts-check
-import { DataSource, QueryRunner } from 'typeorm'; // ^0.3.0
-import { Logger } from 'winston'; // ^3.0.0
+import { QueryRunner } from 'typeorm'; // ^0.3.0
+import winston from 'winston'; // ^3.0.0
 import { dataSource } from '../../config/database';
 import crypto from 'crypto';
 
 // Initialize logger for seeding operations
-const logger = new Logger({
+const logger = winston.createLogger({
   level: 'info',
-  format: Logger.format.combine(
-    Logger.format.timestamp(),
-    Logger.format.json()
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
   ),
   transports: [
-    new Logger.transports.File({ filename: 'province-seeder.log' }),
-    new Logger.transports.Console()
+    new winston.transports.File({ filename: 'province-seeder.log' }),
+    new winston.transports.Console()
   ]
 });
 
@@ -80,16 +80,18 @@ const PROVINCES = [
   // Additional provinces...
 ];
 
+type Province = typeof PROVINCES[0];
+
 /**
  * Validates province data integrity before seeding
  * @param provinces - Array of province data to validate
  * @returns Promise<boolean> - Validation result
  */
-export async function validateProvinceData(provinces: typeof PROVINCES): Promise<boolean> {
+export async function validateProvinceData(provinces: Province[]): Promise<boolean> {
   try {
     // Check for required fields
-    const requiredFields = ['code', 'name', 'metadata'];
-    const requiredMetadata = ['estateLaws', 'probateRequired', 'version', 'lastUpdated', 'legalRequirements'];
+    const requiredFields = ['code', 'name', 'metadata'] as const;
+    const requiredMetadata = ['estateLaws', 'probateRequired', 'version', 'lastUpdated', 'legalRequirements'] as const;
 
     for (const province of provinces) {
       // Validate basic structure
@@ -122,7 +124,7 @@ export async function validateProvinceData(provinces: typeof PROVINCES): Promise
 
     return true;
   } catch (error) {
-    logger.error('Province data validation failed:', { error: error.message });
+    logger.error('Province data validation failed:', { error: (error as Error).message });
     return false;
   }
 }
@@ -153,7 +155,7 @@ export async function seedProvinces(): Promise<void> {
 
     // Backup existing data if enabled
     if (DATA_INTEGRITY_CONFIG.backupEnabled) {
-      const existingData = await queryRunner.manager.query('SELECT * FROM provinces');
+      await queryRunner.manager.query('SELECT * FROM provinces');
       await queryRunner.manager.query(
         'INSERT INTO provinces_backup SELECT *, NOW() as backup_date FROM provinces'
       );
@@ -196,7 +198,7 @@ export async function seedProvinces(): Promise<void> {
     }
 
     logger.error('Province data seeding failed:', {
-      error: error.message,
+      error: (error as Error).message,
       timestamp: new Date().toISOString()
     });
 

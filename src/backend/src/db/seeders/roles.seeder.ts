@@ -1,8 +1,8 @@
 // @ts-check
 import { DataSource } from 'typeorm'; // Version: ^0.3.0
-import { UserRole } from '../../../types/user.types';
-import { ResourceType, AccessLevel } from '../../../types/permission.types';
-import { Logger } from '../../utils/logger'; // Assumed logger utility
+import { UserRole } from '../../types/user.types';
+import { ResourceType, AccessLevel } from '../../types/permission.types';
+import { Logger } from '../../utils/logger.util'; // Updated logger path
 
 /**
  * Default role permission matrix defining access levels and metadata for each role
@@ -160,10 +160,10 @@ export async function seedRoles(dataSource: DataSource): Promise<void> {
         await queryRunner.commitTransaction();
         logger.info('Successfully completed roles and permissions seeding');
 
-    } catch (error) {
+    } catch (error: unknown) {
         await queryRunner.rollbackTransaction();
         logger.error('Failed to seed roles and permissions', { error });
-        throw new Error(`Failed to seed roles and permissions: ${error.message}`);
+        throw new Error(`Failed to seed roles and permissions: ${(error as Error).message}`);
 
     } finally {
         await queryRunner.release();

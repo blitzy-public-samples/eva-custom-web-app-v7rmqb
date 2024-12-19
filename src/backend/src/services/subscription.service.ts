@@ -6,20 +6,20 @@
 
 import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { RateLimiter } from 'rate-limiter-flexible'; // ^2.4.1
+import { RateLimiterMemory } from 'rate-limiter-flexible'; // ^2.4.1
 import { Logger } from 'winston';
 
 // Internal imports
-import { SubscriptionModel } from '../db/models/subscription.model';
+import SubscriptionModel from '../db/models/subscription.model';
 import { 
   ISubscription, 
   ISubscriptionCreateDTO,
   SubscriptionStatus,
-  SubscriptionPlan 
+  SubscriptionPlan,
+  BillingCycle 
 } from '../types/subscription.types';
 import { ShopifyIntegration } from '../integrations/shopify.integration';
-import { AuditEventType, AuditSeverity } from '../types/audit.types';
-import { EncryptionService } from '../services/encryption.service';
+import { AuditEventType } from '../types/audit.types';
 
 /**
  * Enhanced service class for managing user subscriptions with comprehensive
@@ -27,8 +27,7 @@ import { EncryptionService } from '../services/encryption.service';
  */
 @Service()
 export class SubscriptionService {
-  private readonly rateLimiter: RateLimiter;
-  private readonly encryptionService: EncryptionService;
+  private readonly rateLimiter: RateLimiterMemory;
   private readonly logger: Logger;
 
   constructor(
@@ -37,13 +36,12 @@ export class SubscriptionService {
     logger: Logger
   ) {
     // Initialize rate limiter for subscription operations
-    this.rateLimiter = new RateLimiter({
+    this.rateLimiter = new RateLimiterMemory({
       points: 100, // Number of operations
       duration: 60, // Per 60 seconds
       blockDuration: 120 // Block for 2 minutes if exceeded
     });
 
-    this.encryptionService = new EncryptionService();
     this.logger = logger;
   }
 
@@ -82,7 +80,13 @@ export class SubscriptionService {
             quantity: 1,
             variantId: this.getPlanVariantId(createDTO.plan, createDTO.billingCycle)
           }],
-          billingAddress: {} // To be populated from user service
+          billingAddress: {
+            address1: 'TBD',
+            city: 'TBD',
+            province: 'TBD',
+            country: 'CA',
+            zip: 'TBD'
+          }
         });
 
         // Create subscription record
@@ -134,8 +138,9 @@ export class SubscriptionService {
         await queryRunner.release();
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to create subscription', {
-        error: error.message,
+        error: errorMessage,
         userId: createDTO.userId
       });
       throw error;
@@ -149,7 +154,7 @@ export class SubscriptionService {
   public async handleShopifyWebhook(webhookEvent: any): Promise<void> {
     try {
       // Verify webhook signature
-      const isValid = this.shopifyIntegration.validateWebhookSignature(
+      const isValid = await this.shopifyIntegration.verifyWebhookSignature(
         webhookEvent.signature,
         JSON.stringify(webhookEvent.payload),
         webhookEvent.timestamp
@@ -214,8 +219,9 @@ export class SubscriptionService {
         await queryRunner.release();
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to process subscription webhook', {
-        error: error.message,
+        error: errorMessage,
         topic: webhookEvent.topic
       });
       throw error;
@@ -245,7 +251,7 @@ export class SubscriptionService {
    * @returns Shopify variant ID
    * @private
    */
-  private getPlanVariantId(plan: SubscriptionPlan, billingCycle: string): string {
+  private getPlanVariantId(plan: SubscriptionPlan, billingCycle: BillingCycle): string {
     // Implementation would map plans and billing cycles to actual Shopify variant IDs
     const variantMap: Record<string, string> = {
       'FREE_MONTHLY': 'free-monthly-id',

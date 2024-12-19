@@ -98,15 +98,16 @@ export class IntercomService {
       const sanitizedData = this.sanitizeUserData(userData);
 
       // Log security event for user operation
-      logger.securityEvent(AuditEventType.USER_LOGIN, {
+      logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
         userId: userData.userId,
         action: 'intercom_user_update',
         severity: AuditSeverity.INFO
       });
 
       // Create or update user in Intercom
-      const response = await this.client.users.create({
-        user_id: sanitizedData.userId,
+      const response = await this.client.contacts.create({
+        role: 'user',
+        external_id: sanitizedData.userId,
         email: sanitizedData.email,
         name: sanitizedData.name,
         custom_attributes: sanitizedData.customAttributes
@@ -140,7 +141,7 @@ export class IntercomService {
 
       // Check for sensitive data in message
       if (this.containsSensitiveData(conversationData.message)) {
-        logger.security('Sensitive data detected in conversation', {
+        logger.warn('Sensitive data detected in conversation', {
           userId,
           severity: AuditSeverity.WARNING
         });
@@ -149,7 +150,7 @@ export class IntercomService {
       // Create conversation in Intercom
       const response = await this.client.messages.create({
         from: {
-          type: 'user',
+          type: 'contact',
           id: userId
         },
         body: conversationData.message,
@@ -185,7 +186,7 @@ export class IntercomService {
 
       // Track event in Intercom
       await this.client.events.create({
-        event_name: eventName,
+        eventName: eventName,
         user_id: userId,
         created_at: metadata?.createdAt || Math.floor(Date.now() / 1000),
         metadata: metadata?.metadata

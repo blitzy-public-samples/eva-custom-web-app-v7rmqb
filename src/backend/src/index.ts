@@ -11,20 +11,18 @@ import helmet from 'helmet'; // ^7.0.0
 import compression from 'compression'; // ^1.7.4
 import cors from 'cors'; // ^2.8.5
 import rateLimit from 'express-rate-limit'; // ^7.0.0
-import { OpenTelemetry } from '@opentelemetry/api'; // ^1.4.0
-import winston from 'winston'; // ^3.8.2
+import * as opentelemetry from '@opentelemetry/api'; // ^1.4.0
 
 // Internal imports
 import { dataSource } from './config/database';
 import redisClient from './config/redis';
 import router from './api/routes';
-import { errorMiddleware } from './api/middlewares/error.middleware';
+import errorMiddleware from './api/middlewares/error.middleware';
 import { requestLogger } from './api/middlewares/logging.middleware';
 import { logger } from './utils/logger.util';
-import { AuditEventType, AuditSeverity } from './types/audit.types';
 
 // Initialize OpenTelemetry for distributed tracing
-const tracer = OpenTelemetry.trace.getTracer('estate-kit-backend');
+const tracer = opentelemetry.trace.getTracer('estate-kit-backend');
 
 /**
  * Initializes and configures the Express server with enhanced security
@@ -67,7 +65,7 @@ async function initializeServer(): Promise<Express> {
     legacyHeaders: false,
     skip: (req: express.Request) => {
       const trustedIPs = process.env.TRUSTED_IPS?.split(',') || [];
-      return trustedIPs.includes(req.ip);
+      return trustedIPs.length > 0 && trustedIPs.includes(req.ip || '');
     }
   };
 

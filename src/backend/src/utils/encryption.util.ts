@@ -1,7 +1,7 @@
 // @ts-check
 import crypto from 'crypto'; // native - Node.js crypto module
-import AWS from 'aws-sdk'; // ^2.1.0 - AWS SDK for KMS integration
-import { keyId, region } from '../config/aws';
+import * as AWS from 'aws-sdk'; // ^2.1.0 - AWS SDK for KMS integration
+import { awsConfig } from '../config/aws';
 
 // Constants for encryption configuration
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
@@ -12,7 +12,7 @@ const MIN_ITERATIONS = 100000;
 const PBKDF2_DIGEST = 'sha512';
 
 // Initialize AWS KMS client
-const kms = new AWS.KMS({ region });
+const kms = new AWS.KMS({ region: awsConfig.region });
 
 /**
  * Interface for encrypted data structure
@@ -141,10 +141,10 @@ export async function generateEncryptionKey(
   options: { keySpec?: string } = {}
 ): Promise<Buffer> {
   try {
-    if (keyType === 'kms' && keyId) {
+    if (keyType === 'kms' && awsConfig.credentials.accessKeyId) {
       // Generate key using KMS
       const params = {
-        KeyId: keyId,
+        KeyId: awsConfig.credentials.accessKeyId,
         NumberOfBytes: KEY_LENGTH,
         KeySpec: options.keySpec || 'AES_256'
       };

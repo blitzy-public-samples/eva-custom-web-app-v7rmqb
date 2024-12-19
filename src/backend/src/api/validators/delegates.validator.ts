@@ -84,11 +84,15 @@ function validatePermissionMatrix(permissions: Array<{
       [ResourceType.MEDICAL_DATA]: [AccessLevel.NONE],
       [ResourceType.LEGAL_DOCS]: [AccessLevel.READ]
     }
-  };
+  } as const;
+
+  if (!(role in rolePermissions)) {
+    return false;
+  }
 
   return permissions.every(permission => {
     const allowedLevels = rolePermissions[role][permission.resourceType];
-    return allowedLevels.includes(permission.accessLevel);
+    return allowedLevels?.includes(permission.accessLevel) ?? false;
   });
 }
 
@@ -111,12 +115,15 @@ export const createDelegateSchema = z.object({
     .max(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), 'Expiration date cannot be more than 1 year in the future'),
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
-    .refine(
-      (permissions, ctx) => validatePermissionMatrix(permissions, ctx.role),
-      {
-        message: 'Invalid permission matrix for specified role'
+    .superRefine((permissions, ctx) => {
+      const role = (ctx.parent as { role: UserRole }).role;
+      if (!validatePermissionMatrix(permissions, role)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Invalid permission matrix for specified role'
+        });
       }
-    ),
+    }),
   businessHours: businessHoursSchema
 });
 
@@ -144,12 +151,15 @@ export const updateDelegateSchema = z.object({
     .optional(),
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
-    .refine(
-      (permissions, ctx) => validatePermissionMatrix(permissions, ctx.role || UserRole.EXECUTOR),
-      {
-        message: 'Invalid permission matrix for specified role'
+    .superRefine((permissions, ctx) => {
+      const role = (ctx.parent as { role?: UserRole }).role || UserRole.EXECUTOR;
+      if (!validatePermissionMatrix(permissions, role)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Invalid permission matrix for specified role'
+        });
       }
-    )
+    })
     .optional(),
   businessHours: businessHoursSchema.optional()
 }).refine(data => Object.keys(data).length > 0, {

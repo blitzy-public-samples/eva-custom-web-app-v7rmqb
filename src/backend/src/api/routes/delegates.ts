@@ -7,9 +7,12 @@
 
 import { Router } from 'express'; // ^4.18.2
 import rateLimit from 'express-rate-limit'; // ^6.7.0
+import { Container } from 'typedi';
 
 // Internal imports
 import { DelegatesController } from '../controllers/delegates.controller';
+import { DelegateService } from '../../services/delegate.service';
+import { AuditService } from '../../services/audit.service';
 import { authMiddleware } from '../middlewares/auth.middleware';
 import { rbacMiddleware, checkPermission } from '../middlewares/rbac.middleware';
 import { validateRequest } from '../middlewares/validation.middleware';
@@ -45,7 +48,9 @@ delegatesRouter.post('/',
   }),
   async (req, res, next) => {
     try {
-      const controller = new DelegatesController();
+      const delegateService = Container.get(DelegateService);
+      const auditService = Container.get(AuditService);
+      const controller = new DelegatesController(delegateService, auditService);
       const result = await controller.createDelegate(req.validatedData);
 
       logger.info('Delegate created successfully', {
@@ -74,7 +79,9 @@ delegatesRouter.get('/',
   checkPermission(ResourceType.PERSONAL_INFO, AccessLevel.READ),
   async (req, res, next) => {
     try {
-      const controller = new DelegatesController();
+      const delegateService = Container.get(DelegateService);
+      const auditService = Container.get(AuditService);
+      const controller = new DelegatesController(delegateService, auditService);
       const { page = 1, limit = 10, status, role } = req.query;
       
       const result = await controller.getDelegates({
@@ -82,7 +89,7 @@ delegatesRouter.get('/',
         limit: Number(limit),
         status,
         role,
-        ownerId: req.user?.sub
+        ownerId: (req as any).user?.sub
       });
 
       res.status(200).json({
@@ -112,7 +119,9 @@ delegatesRouter.get('/:id',
   validateRequest(delegateIdSchema),
   async (req, res, next) => {
     try {
-      const controller = new DelegatesController();
+      const delegateService = Container.get(DelegateService);
+      const auditService = Container.get(AuditService);
+      const controller = new DelegatesController(delegateService, auditService);
       const result = await controller.getDelegate(req.params.id);
 
       if (!result) {
@@ -150,7 +159,9 @@ delegatesRouter.put('/:id',
   }),
   async (req, res, next) => {
     try {
-      const controller = new DelegatesController();
+      const delegateService = Container.get(DelegateService);
+      const auditService = Container.get(AuditService);
+      const controller = new DelegatesController(delegateService, auditService);
       const result = await controller.updateDelegate(
         req.params.id,
         req.validatedData
@@ -183,14 +194,16 @@ delegatesRouter.delete('/:id',
   validateRequest(delegateIdSchema),
   async (req, res, next) => {
     try {
-      const controller = new DelegatesController();
+      const delegateService = Container.get(DelegateService);
+      const auditService = Container.get(AuditService);
+      const controller = new DelegatesController(delegateService, auditService);
       await controller.revokeDelegate(req.params.id);
 
-      logger.securityEvent(AuditEventType.DELEGATE_ACCESS, {
+      logger.logSecurityEvent(AuditEventType.DELEGATE_ACCESS, {
         severity: AuditSeverity.WARNING,
         message: 'Delegate access revoked',
         delegateId: req.params.id,
-        userId: req.user?.sub,
+        userId: (req as any).user?.sub,
         correlationId: req.headers['x-correlation-id']
       });
 
@@ -205,7 +218,7 @@ delegatesRouter.delete('/:id',
 );
 
 // Error handling middleware
-delegatesRouter.use((error: any, req: any, res: any, next: any) => {
+delegatesRouter.use((error: any, req: any, res: any, _next: any) => {
   logger.error('Delegate router error', {
     error: error.message,
     stack: error.stack,

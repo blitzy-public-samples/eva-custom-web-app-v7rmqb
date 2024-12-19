@@ -24,8 +24,6 @@ import { logger } from '../utils/logger.util';
 @Service()
 export class UserService {
   // Security constants
-  private readonly MAX_LOGIN_ATTEMPTS = 5;
-  private readonly PASSWORD_EXPIRY_DAYS = 90;
   private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'];
 
   constructor(
@@ -268,6 +266,7 @@ export class UserService {
                 content: Buffer.from(user.profile[field], 'base64'),
                 iv: Buffer.alloc(16),
                 authTag: Buffer.alloc(16),
+                keyVersion: '1', // Added required keyVersion property
                 metadata: {
                   algorithm: 'aes-256-gcm',
                   timestamp: Date.now()

@@ -21,10 +21,10 @@ import {
   SubscriptionPlan,
   SubscriptionStatus,
   BillingCycle
-} from '../types/subscription.types';
+} from '../../types/subscription.types';
 
 import { UserModel } from './user.model';
-import { AuditLog } from '../types/audit.types';
+import { AuditLog } from '../../types/audit.types';
 
 /**
  * TypeORM entity model for subscription management with enhanced audit logging and validation
@@ -38,53 +38,53 @@ import { AuditLog } from '../types/audit.types';
 @Index(['nextBillingDate'])
 export default class SubscriptionModel {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', nullable: false })
-  userId: string;
+  userId!: string;
 
   @ManyToOne(() => UserModel, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: UserModel;
+  user!: UserModel;
 
   @Column({
     type: 'enum',
     enum: SubscriptionPlan,
     default: SubscriptionPlan.FREE
   })
-  plan: SubscriptionPlan;
+  plan!: SubscriptionPlan;
 
   @Column({
     type: 'enum',
     enum: SubscriptionStatus,
     default: SubscriptionStatus.PENDING
   })
-  status: SubscriptionStatus;
+  status!: SubscriptionStatus;
 
   @Column({
     type: 'enum',
     enum: BillingCycle,
     nullable: false
   })
-  billingCycle: BillingCycle;
+  billingCycle!: BillingCycle;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: false
   })
-  startDate: Date;
+  startDate!: Date;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true
   })
-  endDate: Date | null;
+  endDate!: Date | null;
 
   @Column({
     type: 'boolean',
     default: true
   })
-  autoRenew: boolean;
+  autoRenew!: boolean;
 
   @Column({
     type: 'varchar',
@@ -92,43 +92,43 @@ export default class SubscriptionModel {
     unique: true,
     nullable: false
   })
-  shopifySubscriptionId: string;
+  shopifySubscriptionId!: string;
 
   @Column({
     type: 'varchar',
     length: 255,
     nullable: false
   })
-  shopifyCustomerId: string;
+  shopifyCustomerId!: string;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true
   })
-  lastBillingDate: Date | null;
+  lastBillingDate!: Date | null;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true
   })
-  nextBillingDate: Date | null;
+  nextBillingDate!: Date | null;
 
   @Column({
     type: 'jsonb',
     nullable: false,
     default: []
   })
-  auditLogs: AuditLog[];
+  auditLogs!: AuditLog[];
 
   @CreateDateColumn({
     type: 'timestamp with time zone'
   })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({
     type: 'timestamp with time zone'
   })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   /**
    * Creates a new subscription instance with comprehensive validation

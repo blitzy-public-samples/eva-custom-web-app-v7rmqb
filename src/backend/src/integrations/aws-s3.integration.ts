@@ -5,13 +5,13 @@
  * @version 1.0.0
  */
 
-import { S3, 
-         PutObjectCommand, 
-         GetObjectCommand, 
-         DeleteObjectCommand, 
-         HeadObjectCommand,
-         S3Client,
-         GetObjectCommandOutput } from '@aws-sdk/client-s3'; // ^3.0.0
+import { 
+  S3Client,
+  PutObjectCommand, 
+  GetObjectCommand, 
+  DeleteObjectCommand, 
+  HeadObjectCommand,
+  GetObjectCommandOutput } from '@aws-sdk/client-s3'; // ^3.0.0
 import { injectable } from 'tsyringe'; // ^4.7.0
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
@@ -40,27 +40,27 @@ interface EnhancedMetadata {
 
 @injectable()
 export class S3Integration {
-  private s3Client: S3;
+  private s3Client: S3Client;
   private readonly bucket: string;
   private readonly encryptionConfig: typeof s3Config.encryption;
-  private readonly replicationConfig: typeof s3Config.replication;
 
   constructor() {
+    if (!s3Config.bucket) {
+      throw new Error('S3 bucket name is required');
+    }
+
     // Initialize S3 client with enhanced configuration
     this.s3Client = new S3Client({
       region: s3Config.region,
-      credentials: s3Config.credentials,
-      maxAttempts: 3,
-      requestHandler: {
-        abortSignal: undefined,
-        connectionTimeout: 5000,
-        socketTimeout: 10000
-      }
+      credentials: {
+        accessKeyId: s3Config.credentials.accessKeyId || '',
+        secretAccessKey: s3Config.credentials.secretAccessKey || ''
+      },
+      maxAttempts: 3
     });
 
     this.bucket = s3Config.bucket;
     this.encryptionConfig = s3Config.encryption;
-    this.replicationConfig = s3Config.replication;
 
     // Validate S3 configuration
     this.validateConfiguration();

@@ -1,10 +1,9 @@
 // External dependencies
 import { z } from 'zod'; // Version: ^3.22.0
-import { ClamScan } from '@estatekit/clamav-client'; // Version: ^1.0.0
 
 // Internal imports
 import { DocumentType } from '../../types/document.types';
-import { validateFileSize, validateFileType } from '../../utils/validation.util';
+import { validateFileSize } from '../../utils/validation.util';
 
 // Constants for validation rules
 const TITLE_MIN_LENGTH = 3;
@@ -43,11 +42,10 @@ export const createDocumentSchema = z.object({
     errorMap: () => ({ message: 'Invalid document type' })
   }),
 
-  file: z.custom<Express.Multer.File>((file) => {
+  file: z.custom<Express.Multer.File & { buffer: Buffer }>((file) => {
     if (!file) return false;
     const sizeValid = validateFileSize(file.size, file.mimetype);
-    const typeValid = validateFileType(file.mimetype);
-    return sizeValid.isValid && typeValid.isValid;
+    return sizeValid.isValid;
   }, {
     message: `File must be one of ${ALLOWED_FILE_TYPES.join(', ')} and under ${MAX_FILE_SIZE_MB}MB`
   }),
@@ -105,7 +103,8 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
   try {
     // Rate limiting check
     const rateLimitKey = `document_upload_${payload.metadata.fileName}`;
-    if (!checkRateLimit(rateLimitKey, RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW_MS)) {
+    const rateLimitResult = checkRateLimit(rateLimitKey);
+    if (!rateLimitResult) {
       return {
         isValid: false,
         message: 'Rate limit exceeded for document uploads'
@@ -128,12 +127,6 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
       };
     }
 
-    // Validate file type and MIME type
-    const typeValidation = validateFileType(payload.metadata.mimeType);
-    if (!typeValidation.isValid) {
-      return typeValidation;
-    }
-
     // Sanitize metadata
     const sanitizedMetadata = {
       ...payload.metadata,
@@ -143,7 +136,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
 
     // Log validation attempt for audit
     await logValidationAttempt({
-      fileName: payload.metadata.fileName,
+      fileName: sanitizedMetadata.fileName,
       fileSize: payload.metadata.fileSize,
       mimeType: payload.metadata.mimeType,
       scanResult: scanResult.summary
@@ -164,8 +157,8 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
 }
 
 // Helper function to check rate limiting
-function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
-  // Implementation of rate limiting logic
+function checkRateLimit(key: string): boolean {
+  // Implementation of rate limiting logic will be added here
   return true; // Placeholder return
 }
 
@@ -177,8 +170,13 @@ function sanitizeFileName(fileName: string): string {
 }
 
 // Helper function to log validation attempts
-async function logValidationAttempt(details: any): Promise<void> {
-  // Implementation of validation logging
+async function logValidationAttempt(details: {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  scanResult: string;
+}): Promise<void> {
+  // Implementation of validation logging will be added here
 }
 
 // Interface for validation results

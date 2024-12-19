@@ -20,8 +20,8 @@ import {
   NotFoundException,
   InternalServerErrorException
 } from '@nestjs/common';
-import { RateLimit } from '@nestjs/throttler';
-import { CorrelationId } from '@evanion/nestjs-correlation-id';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { CorrelationIdInterceptor } from '@evanion/nestjs-correlation-id';
 import { ApiOperation, ApiResponse, ApiTags, ApiSecurity } from '@nestjs/swagger';
 
 import { UserService } from '../../services/user.service';
@@ -51,7 +51,7 @@ import {
 @Controller('users')
 @UseGuards(JwtAuthGuard, RoleGuard)
 @UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor)
-@RateLimit({ ttl: 60, limit: 100 })
+@UseGuards(ThrottlerGuard)
 export class UsersController {
   constructor(
     private readonly userService: UserService,
@@ -71,7 +71,7 @@ export class UsersController {
     @Body() userData: CreateUserDTO,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @CorrelationId() correlationId: string
+    @Headers('x-correlation-id') correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -96,9 +96,12 @@ export class UsersController {
       });
 
       return user;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('User creation failed', { error, email: userData.email });
-      throw new BadRequestException(error.message);
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('User creation failed');
     }
   }
 
@@ -115,7 +118,7 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @CorrelationId() correlationId: string
+    @Headers('x-correlation-id') correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -142,12 +145,15 @@ export class UsersController {
       });
 
       return user;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('User retrieval failed', { error, userId: id });
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException(error.message);
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+      throw new InternalServerErrorException('User retrieval failed');
     }
   }
 
@@ -165,7 +171,7 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @CorrelationId() correlationId: string
+    @Headers('x-correlation-id') correlationId: string
   ): Promise<User> {
     try {
       logger.addCorrelationId(correlationId);
@@ -194,12 +200,15 @@ export class UsersController {
       });
 
       return updatedUser;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('User update failed', { error, userId: id });
-      if (error.message === 'Unauthorized access') {
-        throw new UnauthorizedException(error.message);
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized access') {
+          throw new UnauthorizedException(error.message);
+        }
+        throw new InternalServerErrorException(error.message);
       }
-      throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('User update failed');
     }
   }
 
@@ -216,7 +225,7 @@ export class UsersController {
     @Headers('user-role') userRole: UserRole,
     @Headers('user-agent') userAgent: string,
     @Headers('x-forwarded-for') ipAddress: string,
-    @CorrelationId() correlationId: string
+    @Headers('x-correlation-id') correlationId: string
   ): Promise<void> {
     try {
       logger.addCorrelationId(correlationId);
@@ -238,12 +247,15 @@ export class UsersController {
           correlationId
         }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('User deletion failed', { error, userId: id });
-      if (error.message === 'Unauthorized access') {
-        throw new UnauthorizedException(error.message);
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized access') {
+          throw new UnauthorizedException(error.message);
+        }
+        throw new InternalServerErrorException(error.message);
       }
-      throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('User deletion failed');
     }
   }
 }

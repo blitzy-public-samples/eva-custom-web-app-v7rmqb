@@ -1,7 +1,7 @@
 // @ts-check
 import { DataSource, DataSourceOptions } from 'typeorm'; // ^0.3.0
 import { UserModel } from '../db/models/user.model';
-import { DocumentModel } from '../db/models/document.model';
+import DocumentModel from '../db/models/document.model';
 import winston from 'winston'; // ^3.8.0 - For comprehensive logging
 
 // Initialize logger for database operations
@@ -69,13 +69,9 @@ export const getDataSourceOptions = (): DataSourceOptions => {
       rejectUnauthorized: true
     },
 
-    // Optimized connection pool settings
-    pool: {
-      min: 2,
-      max: isProduction ? 10 : 5,
-      idleTimeoutMillis: 30000,
-      acquireTimeoutMillis: 20000
-    },
+    // Connection pool settings
+    connectTimeoutMS: 20000,
+    maxQueryExecutionTime: 10000,
 
     // Cache configuration for performance
     cache: {
@@ -121,7 +117,7 @@ export const initializeDatabase = async (): Promise<DataSource> => {
         if (retries === 0) throw error;
         
         logger.warn(`Database connection failed, retrying... (${retries} attempts left)`, {
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         });
         
@@ -129,8 +125,8 @@ export const initializeDatabase = async (): Promise<DataSource> => {
       }
     }
 
-    // Set up connection event listeners
-    dataSource.driver.afterConnect(() => {
+    // Set up connection monitoring
+    dataSource.initialize().then(() => {
       logger.info('Database connected successfully', {
         timestamp: new Date().toISOString(),
         host: process.env.DB_HOST,
@@ -138,16 +134,9 @@ export const initializeDatabase = async (): Promise<DataSource> => {
       });
     });
 
-    dataSource.driver.afterDisconnect(() => {
-      logger.warn('Database disconnected', {
-        timestamp: new Date().toISOString(),
-        host: process.env.DB_HOST
-      });
-    });
-
     // Set up query performance monitoring
     if (process.env.NODE_ENV === 'production') {
-      dataSource.driver.afterQueryExecute((query) => {
+      dataSource.driver.on('query', (query: any) => {
         if (query.time > 1000) { // Log slow queries (>1s)
           logger.warn('Slow query detected', {
             query: query.query,
@@ -170,8 +159,9 @@ export const initializeDatabase = async (): Promise<DataSource> => {
           });
         } catch (error) {
           logger.error('Maintenance operation failed', {
-            error: error.message,
-            timestamp: new Date().toISOString()
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString(),
+            stack: error instanceof Error ? error.stack : undefined
           });
         }
       }, 24 * 60 * 60 * 1000); // Daily maintenance
@@ -180,9 +170,9 @@ export const initializeDatabase = async (): Promise<DataSource> => {
     return dataSource;
   } catch (error) {
     logger.error('Failed to initialize database', {
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     throw error;
   }

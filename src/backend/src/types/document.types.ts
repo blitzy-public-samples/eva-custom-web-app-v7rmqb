@@ -1,7 +1,6 @@
 // @ts-check
-import { UUID } from './user.types';  // Internal import for UUID type
-import { ResourceType, AccessControl } from './permission.types';  // Internal import for permission types
-import { UUID as CryptoUUID } from 'crypto';  // Version: latest - Used for unique identifier types
+import { UUID } from 'crypto';  // Import UUID directly from crypto
+import { ResourceType } from './permission.types';  // Import only ResourceType since AccessControl isn't exported
 
 /**
  * Enum defining types of documents stored in the system.
@@ -73,7 +72,7 @@ export interface Document {
     metadata: DocumentMetadata; // Extended metadata
     storageDetails: DocumentStorageDetails; // Storage information
     resourceType: ResourceType; // Permission resource type
-    accessControl: AccessControl; // Access control settings
+    accessLevel: string;        // Access level for the document
     lastAccessedAt: Date;       // Last access timestamp
     expiresAt: Date;           // Document expiration date
     createdAt: Date;           // Creation timestamp
@@ -99,6 +98,6 @@ export interface CreateDocumentDTO {
 export interface UpdateDocumentDTO {
     title?: string;             // Optional title update
     type?: DocumentType;        // Optional type update
-    accessControl?: Partial<AccessControl>; // Optional access control updates
+    accessLevel?: string;       // Optional access level update
     retentionPeriod?: number;   // Optional retention period update
 }

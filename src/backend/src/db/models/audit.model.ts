@@ -15,7 +15,7 @@ import {
 import { 
   AuditEventType, 
   AuditSeverity 
-} from '../types/audit.types';
+} from '../../types/audit.types';
 
 /**
  * Entity model for storing comprehensive system audit logs

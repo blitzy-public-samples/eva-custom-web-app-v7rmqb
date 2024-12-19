@@ -104,5 +104,9 @@ export const awsConfig = {
   },
 } as const;
 
+// Export region and keyId for encryption utilities
+export const region = AWS_REGION;
+export const keyId = AWS_KMS_KEY_ID;
+
 // Validate configuration on module load
 validateAwsConfig();

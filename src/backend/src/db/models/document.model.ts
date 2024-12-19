@@ -17,9 +17,9 @@ import {
   DocumentMetadata
 } from '../types/document.types';
 
-import UserModel from './user.model';
+import { UserModel } from './user.model';
 import { EncryptionService } from '../services/encryption.service';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 
 // Initialize encryption service for document content encryption
 const encryptionService = new EncryptionService();
@@ -232,7 +232,7 @@ export default class DocumentModel {
         timestamp: new Date()
       });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new Error(`Failed to encrypt storage details: ${errorMessage}`);
     }
   }

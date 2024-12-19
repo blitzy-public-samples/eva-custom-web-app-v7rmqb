@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
-import { RateLimiterRes } from 'rate-limiter-flexible'; // ^2.3.0
+import { RateLimiter } from 'rate-limiter-flexible'; // ^2.3.0
 import { CloudWatch } from '@aws-sdk/client-cloudwatch'; // ^3.0.0
 
 import { DelegateEntity } from '../db/models/delegate.model';
@@ -25,7 +25,7 @@ const RATE_LIMIT_DURATION = 60; // seconds
 
 @Injectable()
 export class DelegateService {
-  private rateLimiter: RateLimiterRes;
+  private rateLimiter: RateLimiter;
   private cloudWatch: CloudWatch;
 
   constructor(
@@ -35,7 +35,7 @@ export class DelegateService {
     private readonly auditService: AuditService
   ) {
     // Initialize rate limiter
-    this.rateLimiter = new RateLimiterRes({
+    this.rateLimiter = new RateLimiter({
       points: RATE_LIMIT_POINTS,
       duration: RATE_LIMIT_DURATION
     });

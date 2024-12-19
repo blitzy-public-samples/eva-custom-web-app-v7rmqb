@@ -17,7 +17,7 @@ import {
   DocumentMetadata
 } from '../../types/document.types';
 
-import { UserModel } from './user.model';
+import UserModel from './user.model';
 import { EncryptionService } from '../../services/encryption.service';
 import crypto from 'crypto';
 
@@ -208,7 +208,7 @@ export default class DocumentModel {
 
     try {
       // Encrypt storage details
-      const encryptedData = await encryptionService.encryptSensitiveData(
+      const encryptedData = await encryptionService.encryptField(
         Buffer.from(JSON.stringify(this.encryptedStorageDetails)),
         process.env.ENCRYPTION_KEY as string
       );

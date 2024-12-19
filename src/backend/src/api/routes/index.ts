@@ -64,7 +64,7 @@ export function configureApiRoutes(): Router {
 
   // Global error handler for unhandled routes
   router.use((req, res) => {
-    logger.logSecurityEvent(AuditEventType.UNAUTHORIZED_ACCESS, {
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
       severity: AuditSeverity.WARNING,
       message: 'Attempted access to non-existent route',
       path: req.path,
@@ -84,7 +84,7 @@ export function configureApiRoutes(): Router {
   });
 
   // Global error handler for uncaught exceptions
-  router.use((error: Error, req: any, res: any, next: any) => {
+  router.use((error: Error, req: any, res: any, _next: any) => {
     logger.error('Uncaught exception in API routes', {
       error: error.message,
       stack: error.stack,
@@ -101,8 +101,6 @@ export function configureApiRoutes(): Router {
         correlationId: req.headers['x-correlation-id']
       }
     });
-    
-    next(error);
   });
 
   return router;

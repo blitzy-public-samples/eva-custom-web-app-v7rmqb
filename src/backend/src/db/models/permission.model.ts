@@ -18,10 +18,10 @@ import {
 
 import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { DelegateEntity } from './delegate.model';
-import { AuditLogger } from '../../services/audit.service';
+import { AuditService } from '../../services/audit.service';
 
-// Initialize audit logger for security tracking
-const auditLogger = new AuditLogger();
+// Initialize audit service for security tracking
+const auditService = new AuditService();
 
 @Entity('permissions')
 @Index('IDX_DELEGATE', ['delegateId'])
@@ -168,23 +168,36 @@ export class PermissionEntity {
       }
 
       // Log access attempt
-      await auditLogger.logDelegateAccess({
-        delegateId: this.delegateId,
-        accessType: 'PERMISSION_CHECK',
+      await auditService.createAuditLog({
+        eventType: 'PERMISSION_CHECK',
+        severity: 'INFO',
+        userId: this.delegateId,
+        resourceId: this.id,
         resourceType: this.resourceType,
-        accessLevel: this.accessLevel,
-        requiredLevel,
-        granted: this.accessLevel >= requiredLevel
+        ipAddress: '0.0.0.0',
+        userAgent: 'system',
+        details: {
+          accessType: 'PERMISSION_CHECK',
+          requiredLevel,
+          granted: this.accessLevel >= requiredLevel
+        }
       });
 
       // Check access level
       return this.accessLevel >= requiredLevel;
     } catch (error) {
-      await auditLogger.logDelegateAccess({
-        delegateId: this.delegateId,
-        accessType: 'PERMISSION_CHECK_ERROR',
+      await auditService.createAuditLog({
+        eventType: 'PERMISSION_CHECK',
+        severity: 'ERROR',
+        userId: this.delegateId,
+        resourceId: this.id,
         resourceType: this.resourceType,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        ipAddress: '0.0.0.0',
+        userAgent: 'system',
+        details: {
+          accessType: 'PERMISSION_CHECK_ERROR',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
       });
       return false;
     }

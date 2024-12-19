@@ -7,7 +7,6 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { Retryable } from '@nestjs/common';
 import { gzip } from 'zlib';
 import { S3 } from '@aws-sdk/client-s3'; // ^2.1.0
 import { promisify } from 'util';
@@ -25,6 +24,8 @@ import { logger } from '../utils/logger.util';
 import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
 import { EncryptionService } from './encryption.service';
 import { StorageService } from './storage.service';
+import { DocumentModel } from '../db/models/document.model';
+import { AuditEventType, AuditSeverity } from '../types/audit.types';
 
 // Constants for security and compliance
 const ENCRYPTION_KEY_ROTATION_DAYS = 90;
@@ -43,8 +44,8 @@ export class DocumentService {
   private readonly gzipAsync = promisify(gzip);
 
   constructor(
-    @InjectRepository(Document)
-    private readonly documentRepository: Repository<Document>,
+    @InjectRepository(DocumentModel)
+    private readonly documentRepository: Repository<DocumentModel>,
     private readonly auditService: AuditService,
     private readonly encryptionService: EncryptionService,
     private readonly storageService: StorageService
@@ -62,7 +63,6 @@ export class DocumentService {
    * @param userId - ID of the user creating the version
    * @returns Promise<Document>
    */
-  @Retryable({ maxAttempts: 3 })
   async createDocumentVersion(
     documentId: string,
     versionData: CreateDocumentDTO,
@@ -112,8 +112,8 @@ export class DocumentService {
       });
 
       // Create document record
-      const document = this.documentRepository.create({
-        id: documentId,
+      const document = new DocumentModel();
+      Object.assign(document, {
         userId,
         title: versionData.title,
         type: versionData.type,
@@ -144,8 +144,8 @@ export class DocumentService {
 
       // Log audit trail
       await this.auditService.createAuditLog({
-        eventType: 'DOCUMENT_UPLOAD',
-        severity: 'INFO',
+        eventType: AuditEventType.DOCUMENT_UPLOAD,
+        severity: AuditSeverity.INFO,
         userId,
         resourceId: documentId,
         resourceType: ResourceType.LEGAL_DOCS,
@@ -190,8 +190,8 @@ export class DocumentService {
 
         // Log retention action
         await this.auditService.createAuditLog({
-          eventType: 'DOCUMENT_RETENTION',
-          severity: 'INFO',
+          eventType: AuditEventType.DOCUMENT_ACCESS,
+          severity: AuditSeverity.INFO,
           userId: 'system',
           resourceId: documentId,
           resourceType: ResourceType.LEGAL_DOCS,

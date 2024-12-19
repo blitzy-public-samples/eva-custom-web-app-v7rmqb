@@ -276,3 +276,12 @@ export class SubscriptionsController {
     }
   }
 }
+
+// Export standalone functions for use in routes
+export const {
+  createSubscription,
+  handleShopifyWebhook,
+  updateSubscription,
+  getSubscription,
+  cancelSubscription
+} = SubscriptionsController.prototype;

@@ -5,9 +5,9 @@
  * @version 1.0.0
  */
 
-import { Container } from 'typedi'; // ^0.10.0
-import { Request, Response, NextFunction } from 'express'; // ^4.18.0
-import rateLimit from 'express-rate-limit'; // ^6.7.0
+import { Container } from 'typedi';
+import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 
 import { DelegateService } from '../../services/delegate.service';
 import { AuthorizationError } from '../../utils/error.util';

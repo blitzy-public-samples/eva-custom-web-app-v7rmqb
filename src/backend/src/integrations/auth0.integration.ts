@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit'; // v6.0.0
 import { AUTH0_CONFIG as auth0Config, JWT_CONFIG as jwtConfig } from '../../config/auth0';
 
 // Custom error types for better error handling
-class Auth0IntegrationError extends Error {
+export class Auth0IntegrationError extends Error {
   constructor(message: string, public readonly code: string) {
     super(message);
     this.name = 'Auth0IntegrationError';

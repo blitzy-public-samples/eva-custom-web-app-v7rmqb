@@ -32,16 +32,6 @@ interface EmailOptions {
 }
 
 /**
- * Interface for email message headers
- */
-interface EmailHeaders {
-  'X-Estate-Kit-Sender': string;
-  'X-Estate-Kit-Template': string;
-  'X-Message-Id'?: string;
-  [key: string]: string | undefined;
-}
-
-/**
  * Service class for handling all email communications through SendGrid
  */
 export class SendGridService {
@@ -110,7 +100,7 @@ export class SendGridService {
           'X-Estate-Kit-Sender': 'system',
           'X-Estate-Kit-Template': templateId,
           ...options.customArgs
-        } as EmailHeaders,
+        },
         trackingSettings: {
           openTracking: { enable: this.config.emailDefaults.tracking.openTracking },
           clickTracking: { enable: this.config.emailDefaults.tracking.clickTracking },
@@ -124,8 +114,7 @@ export class SendGridService {
       // Log success
       logger.info('Email sent successfully', {
         template: templateId,
-        recipient: toEmail,
-        messageId: msg.headers['X-Message-Id']
+        recipient: toEmail
       });
 
     } catch (error) {

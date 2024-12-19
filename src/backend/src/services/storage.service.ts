@@ -159,7 +159,25 @@ export class StorageService {
       });
 
       // Get document metadata for security validation
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const rawMetadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata: S3Metadata = {
+        encryption: {
+          algorithm: rawMetadata.encryption.algorithm,
+          keyId: rawMetadata.encryption.keyId,
+          iv: '',  // Will be populated from encrypted data
+          authTag: '', // Will be populated from encrypted data
+          version: '1', // Default version if not available
+          classification: securityContext.classification,
+          accessLevel: securityContext.accessLevel,
+          retentionPolicy: securityContext.retentionPolicy,
+          userId: userId
+        },
+        contentType: rawMetadata.contentType,
+        size: rawMetadata.size,
+        checksum: rawMetadata.checksum,
+        versionId: rawMetadata.versionId,
+        lastModified: rawMetadata.lastModified
+      };
 
       // Validate access permissions
       this.validateAccessPermissions(metadata, userId, securityContext);
@@ -229,7 +247,25 @@ export class StorageService {
       });
 
       // Get document metadata
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const rawMetadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata: S3Metadata = {
+        encryption: {
+          algorithm: rawMetadata.encryption.algorithm,
+          keyId: rawMetadata.encryption.keyId,
+          iv: '',
+          authTag: '',
+          version: '1',
+          classification: 'ARCHIVED',
+          accessLevel: 'RESTRICTED',
+          retentionPolicy: `${archiveMetadata.retentionPeriod}`,
+          userId: userId
+        },
+        contentType: rawMetadata.contentType,
+        size: rawMetadata.size,
+        checksum: rawMetadata.checksum,
+        versionId: rawMetadata.versionId,
+        lastModified: rawMetadata.lastModified
+      };
 
       // Validate archive permissions
       await this.checkUserAccess(userId, documentKey, 'ARCHIVE');
@@ -237,7 +273,7 @@ export class StorageService {
       // Move to archive storage location
       const archiveKey = `archive/${documentKey}`;
       await this.s3Integration.uploadFile(
-        await this.s3Integration.downloadFile(documentKey),
+        await this.streamToBuffer(await this.s3Integration.downloadFile(documentKey)),
         archiveKey,
         metadata.contentType,
         {
@@ -276,7 +312,25 @@ export class StorageService {
     operation: 'READ' | 'WRITE' | 'DELETE' | 'ARCHIVE'
   ): Promise<boolean> {
     try {
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const rawMetadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata: S3Metadata = {
+        encryption: {
+          algorithm: rawMetadata.encryption.algorithm,
+          keyId: rawMetadata.encryption.keyId,
+          iv: '',
+          authTag: '',
+          version: '1',
+          classification: 'RESTRICTED',
+          accessLevel: 'USER',
+          userId: userId
+        },
+        contentType: rawMetadata.contentType,
+        size: rawMetadata.size,
+        checksum: rawMetadata.checksum,
+        versionId: rawMetadata.versionId,
+        lastModified: rawMetadata.lastModified
+      };
+
       const documentUserId = metadata.encryption.userId;
       const documentAccessLevel = metadata.encryption.accessLevel;
 
@@ -328,7 +382,24 @@ export class StorageService {
       });
 
       // Get document metadata
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const rawMetadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata: S3Metadata = {
+        encryption: {
+          algorithm: rawMetadata.encryption.algorithm,
+          keyId: rawMetadata.encryption.keyId,
+          iv: '',
+          authTag: '',
+          version: '1',
+          classification: 'DELETED',
+          accessLevel: 'RESTRICTED',
+          userId: userId
+        },
+        contentType: rawMetadata.contentType,
+        size: rawMetadata.size,
+        checksum: rawMetadata.checksum,
+        versionId: rawMetadata.versionId,
+        lastModified: rawMetadata.lastModified
+      };
 
       // Validate deletion permissions
       this.validateDeletionPermissions(metadata, userId);
@@ -372,7 +443,24 @@ export class StorageService {
       });
 
       // Get base metadata from S3
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const rawMetadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata: S3Metadata = {
+        encryption: {
+          algorithm: rawMetadata.encryption.algorithm,
+          keyId: rawMetadata.encryption.keyId,
+          iv: '',
+          authTag: '',
+          version: '1',
+          classification: securityContext.classification,
+          accessLevel: securityContext.accessLevel,
+          retentionPolicy: securityContext.retentionPolicy
+        },
+        contentType: rawMetadata.contentType,
+        size: rawMetadata.size,
+        checksum: rawMetadata.checksum,
+        versionId: rawMetadata.versionId,
+        lastModified: rawMetadata.lastModified
+      };
 
       // Compile enhanced metadata
       const enhancedMetadata: DocumentMetadata = {

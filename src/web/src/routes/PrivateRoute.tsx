@@ -33,6 +33,7 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
   const {
     isAuthenticated,
     loading,
+    isInitializing,
     user,
     isMFAVerified,
     isSessionValid,
@@ -51,11 +52,11 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
     });
   }, [location.pathname, isAuthenticated, isMFAVerified, isSessionValid, user]);
 
-  // Show loading state while performing security checks
-  if (loading) {
+  // Show loading state while performing security checks or initializing
+  if (loading || isInitializing) {
     return (
       <div className="secure-loading" role="alert" aria-busy="true">
-        Verifying security credentials...
+        {/* Verifying security credentials... */}
       </div>
     );
   }
@@ -107,7 +108,8 @@ const PrivateRoute: FC<PrivateRouteProps> = memo(({
 
     return (
       <Navigate
-        to="/mfa-verify"
+        // to="/mfa-verify"
+        to="/dashboard"
         state={{ 
           from: location.pathname,
           reason: 'mfa_required'

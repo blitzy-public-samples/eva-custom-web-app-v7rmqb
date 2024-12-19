@@ -63,7 +63,7 @@ class AuthService {
   /**
    * Authenticates user with enhanced security including MFA verification
    */
-  public async login(credentials: LoginPayload): Promise<AuthToken> {
+  public async login(credentials: LoginPayload): Promise<any> {
     try {
       // Check rate limiting
       this.checkRateLimit();
@@ -72,7 +72,7 @@ class AuthService {
       this.validateLoginPayload(credentials);
 
       // Attempt authentication with Auth0
-      await auth0Client.loginWithRedirect({
+      await auth0Client.loginWithPopup({
         authorizationParams: {
           prompt: this.MFA_REQUIRED ? 'login' : 'login'
         }
@@ -80,6 +80,7 @@ class AuthService {
 
       // Get tokens after successful authentication
       const token = await this.getSecureToken();
+      const user = await auth0Client.getUser();
 
       // Reset rate limiting on successful login
       this.resetRateLimiter();
@@ -87,7 +88,7 @@ class AuthService {
       // Log successful authentication
       this.logAuthEvent('login_success', credentials.email);
 
-      return token;
+      return { token, user };
     } catch (error) {
       this.handleAuthError(error, credentials.email);
       throw error;
@@ -265,15 +266,15 @@ class AuthService {
   private processToken(token: string): AuthToken {
     const decodedToken = this.decodeToken(token);
     return {
-      id: decodedToken.sub,
-      email: decodedToken.email,
-      name: decodedToken.name,
-      province: decodedToken.province,
-      phone: decodedToken.phone || null,
-      mfaEnabled: decodedToken.mfa_enabled || false,
-      status: decodedToken.status || 'active',
+      // id: decodedToken.sub,
+      // email: decodedToken.email,
+      // name: decodedToken.name,
+      // province: decodedToken.province,
+      // phone: decodedToken.phone || null,
+      // mfaEnabled: decodedToken.mfa_enabled || false,
+      // status: decodedToken.status || 'active',
       accessToken: token,
-      idToken: decodedToken.idToken,
+      // idToken: decodedToken.idToken,
       expiresAt: decodedToken.exp * 1000
     };
   }

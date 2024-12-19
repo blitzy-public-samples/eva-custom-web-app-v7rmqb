@@ -58,7 +58,7 @@ const errorMiddleware: Middleware = () => (next) => (action) => {
 // Security middleware for development tools
 const securityMiddleware: Middleware = () => (next) => (action) => {
   // Prevent certain actions in production
-  if (process.env.NODE_ENV === 'production' && action.type.includes('@@INIT')) {
+  if (import.meta.env.NODE_ENV === 'production' && action.type.includes('@@INIT')) {
     return next(action);
   }
   return next(action);
@@ -88,7 +88,7 @@ export const store = configureStore({
       errorMiddleware,
       securityMiddleware
     ]),
-  devTools: process.env.NODE_ENV !== 'production' && {
+  devTools: import.meta.env.NODE_ENV !== 'production' && {
     name: 'Estate Kit',
     trace: true,
     traceLimit: 25,

@@ -1,6 +1,6 @@
 import React from 'react'; // v18.2+
 import { FormProvider, useForm } from 'react-hook-form'; // v7.0.0
-import { Box, Stack, Alert } from '@mui/material'; // v5.11+
+import { Box, Stack, Alert, SxProps, Theme } from '@mui/material'; // v5.11+
 import { useAuth0, User } from '@auth0/auth0-react'; // v2.0.0
 import * as yup from 'yup';
 import { Button } from '../Button/Button';
@@ -41,6 +41,12 @@ const ANALYTICS_EVENTS = {
 export interface FormRenderProps {
   values: Record<string, any>;
   setFieldValue: (field: string, value: any) => void;
+  register: (name: string) => {
+    name: string;
+    onChange: (e: React.ChangeEvent<any>) => void;
+    onBlur: (e: React.FocusEvent<any>) => void;
+    ref: React.Ref<any>;
+  };
 }
 
 // Update the Form component props interface to include children as a render prop
@@ -56,6 +62,7 @@ export interface FormProps {
   analyticsEvent?: string;
   'data-testid'?: string;
   children: (props: FormRenderProps) => React.ReactElement;
+  sx?: SxProps<Theme>;
 }
 
 declare global {
@@ -79,8 +86,9 @@ const Form: React.FC<FormProps> = React.memo(({
   showReset = false,
   isProtected = false,
   analyticsEvent,
-  testId,
-  validationSchema
+  'data-testid': testId,
+  validationSchema,
+  sx
 }) => {
   // Auth0 integration
   const auth0Context = useAuth0();
@@ -222,14 +230,19 @@ const Form: React.FC<FormProps> = React.memo(({
           padding: {
             xs: FORM_STYLES.MOBILE_PADDING,
             sm: FORM_STYLES.PADDING
-          }
+          },
+          ...sx
         }}
         data-testid={testId}
         role="form"
         aria-label={ARIA_LABELS.FORM}
       >
         <Stack spacing={FORM_STYLES.GAP}>
-          {children}
+          {children({
+            values: methods.getValues(),
+            setFieldValue: methods.setValue,
+            register: methods.register
+          })}
 
           {/* Error Message */}
           {submitError && (

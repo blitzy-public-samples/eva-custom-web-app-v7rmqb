@@ -23,8 +23,8 @@ import {
  * Configuration for Shopify client
  */
 const SHOPIFY_CONFIG = {
-  domain: process.env.VITE_SHOPIFY_DOMAIN || '',
-  storefrontAccessToken: process.env.VITE_SHOPIFY_STOREFRONT_TOKEN || '',
+  domain: import.meta.env.VITE_SHOPIFY_DOMAIN || '',
+  storefrontAccessToken: import.meta.env.VITE_SHOPIFY_STOREFRONT_TOKEN || '',
   apiVersion: '2024-01' // Latest stable API version
 };
 

@@ -21,16 +21,16 @@ const requiredEnvVars = [
 ] as const;
 
 requiredEnvVars.forEach(varName => {
-  if (!process.env[varName]) {
+  if (!import.meta.env[varName]) {
     throw new Error(`Missing required environment variable: ${varName}`);
   }
 });
 
 // Auth0 Configuration Constants
-export const AUTH0_DOMAIN = process.env.VITE_AUTH0_DOMAIN as string;
-export const AUTH0_CLIENT_ID = process.env.VITE_AUTH0_CLIENT_ID as string;
-export const AUTH0_AUDIENCE = process.env.VITE_AUTH0_AUDIENCE as string;
-export const AUTH0_REDIRECT_URI = process.env.VITE_AUTH0_REDIRECT_URI as string;
+export const AUTH0_DOMAIN = import.meta.env.VITE_AUTH0_DOMAIN as string;
+export const AUTH0_CLIENT_ID = import.meta.env.VITE_AUTH0_CLIENT_ID as string;
+export const AUTH0_AUDIENCE = import.meta.env.VITE_AUTH0_AUDIENCE as string;
+export const AUTH0_REDIRECT_URI = import.meta.env.VITE_AUTH0_REDIRECT_URI as string;
 
 // Security and Scope Configuration
 export const AUTH0_SCOPE = 'openid profile email offline_access mfa';

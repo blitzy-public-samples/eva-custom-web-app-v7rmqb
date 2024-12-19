@@ -47,7 +47,7 @@ type IntercomSettings = {
  * @throws {Error} If required environment variables are missing
  */
 const validateEnvironment = (): string => {
-  const appId = process.env.VITE_INTERCOM_APP_ID;
+  const appId = import.meta.env.VITE_INTERCOM_APP_ID;
   if (!appId) {
     throw new Error('VITE_INTERCOM_APP_ID environment variable is required for Intercom initialization');
   }

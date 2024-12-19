@@ -73,7 +73,9 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         billingCycle: BillingCycle.MONTHLY,
         features: ['unlimited_storage', 'priority_support'],
-        price: 19.99
+        price: 19.99,
+        shopifySubscriptionId: '',
+        shopifyCustomerId: ''
       };
 
       setDocuments(documentsData);
@@ -91,6 +93,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
 
   // Initial data load
   useEffect(() => {
+    console.log('isAuthenticated', user);
     if (isAuthenticated) {
       fetchDashboardData();
     }
@@ -119,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
   // Loading state
   if (authLoading || loading) {
     return (
-      <MainLayout>
+      <Box>
         <Box
           display="flex"
           flexDirection="column"
@@ -134,14 +137,14 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
             Loading your dashboard...
           </Typography>
         </Box>
-      </MainLayout>
+      </Box>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <MainLayout>
+      <Box>
         <Alert 
           severity="error"
           sx={{ mb: 3, fontSize: '1.1rem' }}
@@ -149,19 +152,19 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
         >
           {error}
         </Alert>
-      </MainLayout>
+      </Box>
     );
   }
 
   return (
-    <MainLayout>
+    <Box component="main" sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Welcome Section */}
       <Box mb={4}>
         <Typography
           variant="h1"
           component="h1"
           sx={{
-            fontSize: '2.5rem',
+            fontSize: { xs: '2rem', md: '2.5rem' },
             fontWeight: 700,
             mb: 2,
             color: 'text.primary'
@@ -172,9 +175,10 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
         <Typography
           variant="body1"
           sx={{
-            fontSize: '1.2rem',
+            fontSize: { xs: '1.1rem', md: '1.2rem' },
             color: 'text.secondary',
-            maxWidth: '800px'
+            maxWidth: '800px',
+            lineHeight: 1.6
           }}
         >
           Your estate planning dashboard provides a secure overview of your documents,
@@ -184,15 +188,23 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
       </Box>
 
       {/* Main Dashboard Grid */}
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 3, md: 4 }}>
         {/* Documents Section */}
         <Grid item xs={12} md={6}>
-          <Box mb={4}>
+          <Box 
+            mb={4}
+            sx={{
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              p: 3,
+              boxShadow: 1
+            }}
+          >
             <Typography
               variant="h2"
               component="h2"
               sx={{
-                fontSize: '1.8rem',
+                fontSize: { xs: '1.5rem', md: '1.8rem' },
                 fontWeight: 600,
                 mb: 3
               }}
@@ -210,7 +222,13 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
             ) : (
               <Typography
                 variant="body1"
-                sx={{ fontSize: '1.1rem', mb: 2 }}
+                sx={{ 
+                  fontSize: '1.1rem', 
+                  mb: 2,
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                  py: 4
+                }}
               >
                 No documents uploaded yet.
               </Typography>
@@ -219,7 +237,10 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
               variant="contained"
               onClick={handleDocumentUpload}
               size="large"
-              sx={{ mt: 2 }}
+              sx={{ 
+                mt: 2,
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Upload New Document
             </Button>
@@ -228,12 +249,20 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
 
         {/* Delegates Section */}
         <Grid item xs={12} md={6}>
-          <Box mb={4}>
+          <Box 
+            mb={4}
+            sx={{
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              p: 3,
+              boxShadow: 1
+            }}
+          >
             <Typography
               variant="h2"
               component="h2"
               sx={{
-                fontSize: '1.8rem',
+                fontSize: { xs: '1.5rem', md: '1.8rem' },
                 fontWeight: 600,
                 mb: 3
               }}
@@ -251,7 +280,13 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
             ) : (
               <Typography
                 variant="body1"
-                sx={{ fontSize: '1.1rem', mb: 2 }}
+                sx={{ 
+                  fontSize: '1.1rem', 
+                  mb: 2,
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                  py: 4
+                }}
               >
                 No delegates added yet.
               </Typography>
@@ -260,7 +295,10 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
               variant="contained"
               onClick={handleDelegateAdd}
               size="large"
-              sx={{ mt: 2 }}
+              sx={{ 
+                mt: 2,
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Add New Delegate
             </Button>
@@ -270,16 +308,18 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({ onError }) => {
         {/* Subscription Section */}
         <Grid item xs={12}>
           {subscription && (
-            <SubscriptionCard
-              subscription={subscription}
-              planDetails={planDetails}
-              onManage={handleSubscriptionManage}
-              className="dashboard-card"
-            />
+            <Box sx={{ mb: 4 }}>
+              <SubscriptionCard
+                subscription={subscription}
+                planDetails={planDetails}
+                onManage={handleSubscriptionManage}
+                className="dashboard-card"
+              />
+            </Box>
           )}
         </Grid>
       </Grid>
-    </MainLayout>
+    </Box>
   );
 });
 

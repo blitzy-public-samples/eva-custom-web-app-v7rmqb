@@ -5,11 +5,17 @@ import {
   Typography, 
   Alert, 
   CircularProgress, 
-  Box 
+  Box,
+  TextField,
+  Stack,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import Form from '../../components/common/Form/Form';
 import type { LoginPayload } from '../../types/auth.types';
+import * as yup from 'yup';
 
 // Constants for accessibility and analytics
 const ARIA_LABELS = {
@@ -33,6 +39,7 @@ const INITIAL_VALUES: LoginPayload = {
 const Login: React.FC = React.memo(() => {
   const navigate = useNavigate();
   const { login, loading, error } = useAuth();
+  const [showPassword, setShowPassword] = React.useState(false);
 
   /**
    * Handles form submission with enhanced security and error handling
@@ -65,26 +72,35 @@ const Login: React.FC = React.memo(() => {
     }
   };
 
+  const loginValidationSchema = yup.object().shape({
+    email: yup.string().email('Invalid email').required('Email is required'),
+    password: yup.string().required('Password is required')
+  });
+
   return (
     <Container maxWidth="sm">
       <Box
         sx={{
-          marginTop: 8,
+          marginTop: { xs: 4, sm: 8 },
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 3
+          gap: 2,
+          backgroundColor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 3,
+          p: { xs: 2, sm: 4 }
         }}
       >
         {/* Page Title */}
         <Typography
           component="h1"
-          variant="h4"
+          variant="h3"
           align="center"
           sx={{
-            fontFamily: 'var(--font-family-heading)',
-            color: 'var(--color-text)',
-            marginBottom: 'var(--spacing-lg)'
+            fontWeight: 600,
+            color: 'primary.main',
+            mb: 2
           }}
         >
           Sign In to Estate Kit
@@ -94,7 +110,7 @@ const Login: React.FC = React.memo(() => {
         {error && (
           <Alert 
             severity="error"
-            sx={{ width: '100%', marginBottom: 2 }}
+            sx={{ width: '100%', mb: 2 }}
             role="alert"
             aria-label={ARIA_LABELS.ERROR_MESSAGE}
           >
@@ -108,25 +124,62 @@ const Login: React.FC = React.memo(() => {
           onSubmit={handleSubmit}
           submitLabel={ARIA_LABELS.SUBMIT_BUTTON}
           analyticsEvent="login"
-          testId="login-form"
+          data-testid="login-form"
+          validationSchema={loginValidationSchema}
         >
-          {/* Form fields are handled by Form component */}
-          <input
-            type="email"
-            name="email"
-            aria-label={ARIA_LABELS.EMAIL_INPUT}
-            placeholder="Email Address"
-            autoComplete="email"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            aria-label={ARIA_LABELS.PASSWORD_INPUT}
-            placeholder="Password"
-            autoComplete="current-password"
-            required
-          />
+          {({ register }) => (
+            <Stack spacing={3} sx={{ width: '100%' }}>
+              <TextField
+                fullWidth
+                {...register('email')}
+                type="email"
+                label="Email Address"
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                  }
+                }}
+              />
+              <TextField
+                fullWidth
+                {...register('password')}
+                type={showPassword ? 'text' : 'password'}
+                label="Password"
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                  }
+                }}
+              />
+            </Stack>
+          )}
         </Form>
 
         {/* Loading Indicator */}
@@ -148,11 +201,20 @@ const Login: React.FC = React.memo(() => {
           variant="body2"
           align="center"
           sx={{
-            marginTop: 'var(--spacing-lg)',
-            color: 'var(--color-text-secondary)'
+            mt: 3,
+            color: 'text.secondary'
           }}
         >
-          Need help? Contact our support team at 1-800-ESTATE-KIT
+          Need help? Contact our support team at{' '}
+          <Box
+            component="span"
+            sx={{
+              color: 'primary.main',
+              fontWeight: 500
+            }}
+          >
+            1-800-ESTATE-KIT
+          </Box>
         </Typography>
       </Box>
     </Container>

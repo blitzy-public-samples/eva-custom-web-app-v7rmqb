@@ -40,7 +40,7 @@ const Settings: React.FC = () => {
   // Hooks
   const { user } = useAuth();
   const analytics = AnalyticsBrowser.load({
-    writeKey: process.env.REACT_APP_SEGMENT_WRITE_KEY || ''
+    writeKey: import.meta.env.REACT_APP_SEGMENT_WRITE_KEY || ''
   });
   
   // State management
@@ -194,7 +194,15 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <Stack spacing={4} sx={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
+    <Stack 
+      spacing={4} 
+      sx={{ 
+        maxWidth: '800px', 
+        margin: '0 auto', 
+        padding: { xs: '16px', sm: '24px', md: '32px' },
+        width: '100%'
+      }}
+    >
       {/* Profile Settings Section */}
       <Card
         title="Profile Settings"
@@ -221,48 +229,119 @@ const Settings: React.FC = () => {
         testId="security-settings-card"
         elevation={2}
       >
-        <Stack spacing={3}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="body1" color="text.primary">
-              Two-Factor Authentication
-            </Typography>
-            <Switch
-              checked={securitySettings.twoFactorEnabled}
-              onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.TWO_FACTOR, e.target.checked)}
-              disabled={loading}
-              inputProps={{
-                'aria-label': 'Two-Factor Authentication toggle'
+        <Stack spacing={4}>
+          {/* Security Options Group */}
+          <Stack spacing={3}>
+            <Typography 
+              variant="h6" 
+              color="text.primary" 
+              sx={{ 
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: 1
               }}
-            />
+            >
+              Authentication
+            </Typography>
+            <Stack 
+              direction="row" 
+              justifyContent="space-between" 
+              alignItems="center"
+              sx={{
+                padding: '12px 16px',
+                backgroundColor: 'action.hover',
+                borderRadius: 1
+              }}
+            >
+              <Stack spacing={0.5}>
+                <Typography variant="body1" color="text.primary" fontWeight={500}>
+                  Two-Factor Authentication
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Add an extra layer of security to your account
+                </Typography>
+              </Stack>
+              <Switch
+                checked={securitySettings.twoFactorEnabled}
+                onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.TWO_FACTOR, e.target.checked)}
+                disabled={loading}
+                inputProps={{
+                  'aria-label': 'Two-Factor Authentication toggle'
+                }}
+              />
+            </Stack>
           </Stack>
 
-          {/* Notification Preferences */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="body1" color="text.primary">
-              Email Notifications
-            </Typography>
-            <Switch
-              checked={securitySettings.emailNotifications}
-              onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.EMAIL_NOTIFICATIONS, e.target.checked)}
-              disabled={loading}
-              inputProps={{
-                'aria-label': 'Email notifications toggle'
+          {/* Notification Options Group */}
+          <Stack spacing={3}>
+            <Typography 
+              variant="h6" 
+              color="text.primary"
+              sx={{ 
+                fontSize: '1rem',
+                fontWeight: 600,
+                marginBottom: 1
               }}
-            />
-          </Stack>
+            >
+              Notifications
+            </Typography>
+            <Stack spacing={2}>
+              <Stack 
+                direction="row" 
+                justifyContent="space-between" 
+                alignItems="center"
+                sx={{
+                  padding: '12px 16px',
+                  backgroundColor: 'action.hover',
+                  borderRadius: 1
+                }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="body1" color="text.primary" fontWeight={500}>
+                    Email Notifications
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Receive updates and alerts via email
+                  </Typography>
+                </Stack>
+                <Switch
+                  checked={securitySettings.emailNotifications}
+                  onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.EMAIL_NOTIFICATIONS, e.target.checked)}
+                  disabled={loading}
+                  inputProps={{
+                    'aria-label': 'Email notifications toggle'
+                  }}
+                />
+              </Stack>
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="body1" color="text.primary">
-              SMS Notifications
-            </Typography>
-            <Switch
-              checked={securitySettings.smsNotifications}
-              onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.SMS_NOTIFICATIONS, e.target.checked)}
-              disabled={loading}
-              inputProps={{
-                'aria-label': 'SMS notifications toggle'
-              }}
-            />
+              <Stack 
+                direction="row" 
+                justifyContent="space-between" 
+                alignItems="center"
+                sx={{
+                  padding: '12px 16px',
+                  backgroundColor: 'action.hover',
+                  borderRadius: 1
+                }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="body1" color="text.primary" fontWeight={500}>
+                    SMS Notifications
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Receive updates and alerts via SMS
+                  </Typography>
+                </Stack>
+                <Switch
+                  checked={securitySettings.smsNotifications}
+                  onChange={(e) => handleSecuritySettingChange(SECURITY_SETTINGS.SMS_NOTIFICATIONS, e.target.checked)}
+                  disabled={loading}
+                  inputProps={{
+                    'aria-label': 'SMS notifications toggle'
+                  }}
+                />
+              </Stack>
+            </Stack>
           </Stack>
         </Stack>
       </Card>
@@ -273,7 +352,13 @@ const Settings: React.FC = () => {
           color="error"
           variant="body2"
           role="alert"
-          sx={{ marginTop: 2 }}
+          sx={{ 
+            marginTop: 2,
+            padding: '12px 16px',
+            backgroundColor: 'error.light',
+            borderRadius: 1,
+            color: 'error.main'
+          }}
           data-testid="settings-error"
         >
           {error}
@@ -284,7 +369,11 @@ const Settings: React.FC = () => {
       <Typography
         variant="body2"
         color="text.secondary"
-        sx={{ marginTop: 2 }}
+        sx={{ 
+          marginTop: 2,
+          textAlign: 'center',
+          fontStyle: 'italic'
+        }}
         data-testid="last-updated"
       >
         Last updated: {securitySettings.lastUpdated.toLocaleString()}

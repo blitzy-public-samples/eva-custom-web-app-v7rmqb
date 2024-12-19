@@ -10,7 +10,7 @@
  * @package @auth0/auth0-react ^2.0.0
  */
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { Auth0Provider } from '@auth0/auth0-react';
@@ -18,8 +18,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { AppRoutes } from './routes';
 import { MainLayout } from './components/layout/MainLayout/MainLayout';
 import { store } from './redux/store';
-import theme from './config/theme.config';
-import { auth0Config } from './config/auth.config';
+import { createAppTheme } from './config/theme.config';
+import { AUTH0_SCOPE, auth0Config } from './config/auth.config';
 
 // Error fallback component with accessibility support
 const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
@@ -61,30 +61,18 @@ const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
  * and enhanced accessibility features
  */
 const App: React.FC = () => {
-  // Monitor application initialization for security audit
-  useEffect(() => {
-    console.info('Application initialized:', {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      version: process.env.VITE_APP_VERSION || '1.0.0'
-    });
+  const [theme, setTheme] = useState(createAppTheme());
 
-    // Verify security requirements
-    if (!auth0Config.domain || !auth0Config.clientId) {
-      console.error('Missing required Auth0 configuration');
-      throw new Error('Invalid application configuration');
-    }
+  useEffect(() => {
+    // Update theme after DOM is loaded to ensure CSS variables are available
+    setTheme(createAppTheme());
   }, []);
 
   return (
     <ErrorBoundary 
       FallbackComponent={ErrorFallback}
       onError={(error) => {
-        console.error('Application Error:', {
-          timestamp: new Date().toISOString(),
-          error: error.message,
-          stack: error.stack
-        });
+        console.error('Application Error:', error);
       }}
     >
       <Auth0Provider
@@ -93,7 +81,7 @@ const App: React.FC = () => {
         authorizationParams={{
           redirect_uri: window.location.origin,
           audience: auth0Config.audience,
-          scope: 'openid profile email'
+          scope: AUTH0_SCOPE
         }}
         cacheLocation="memory"
         useRefreshTokens={true}

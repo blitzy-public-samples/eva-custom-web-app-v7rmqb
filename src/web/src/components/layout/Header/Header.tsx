@@ -6,8 +6,8 @@
  * comprehensive navigation, user profile access, and security features.
  */
 
-import React, { useReducer, useCallback, useEffect } from 'react';
-import { styled } from '@mui/material/styles'; // v5.11.0
+import React, { useReducer, useCallback, useEffect, useState } from 'react';
+import { styled } from '@mui/material/styles';
 import { 
   AppBar, 
   Toolbar, 
@@ -18,7 +18,7 @@ import {
   useMediaQuery,
   Box,
   Badge
-} from '@mui/material'; // v5.11.0
+} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import HelpOutline from '@mui/icons-material/HelpOutline';
@@ -30,14 +30,17 @@ import { useAuth } from '../../../hooks/useAuth';
 // Enhanced styled components with accessibility improvements
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backgroundColor: 'var(--color-background)',
-  boxShadow: 'var(--box-shadow-sm)',
+  boxShadow: 'var(--box-shadow-md)',
   position: 'fixed',
   top: 0,
-  zIndex: 1100,
+  left: 0,
+  right: 0,
+  zIndex: theme.zIndex.appBar,
+  borderBottom: '1px solid var(--color-border)',
   '& .MuiToolbar-root': {
-    padding: 'var(--spacing-md) var(--spacing-lg)',
+    minHeight: '64px',
     [theme.breakpoints.down('sm')]: {
-      padding: 'var(--spacing-sm)',
+      minHeight: '56px',
     },
   },
   '& a': {
@@ -52,9 +55,11 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 
 const Logo = styled(Typography)({
   fontFamily: 'var(--font-family-heading)',
-  fontSize: 'calc(var(--font-size-base) * 1.25)',
+  fontSize: 'calc(var(--font-size-base) * 1.4)',
   fontWeight: 'var(--font-weight-bold)',
   color: 'var(--color-primary)',
+  letterSpacing: '0.5px', 
+  textTransform: 'uppercase',
 });
 
 // Interface definitions
@@ -101,6 +106,8 @@ export const Header: React.FC<HeaderProps> = ({
     anchorEl: null,
     isOpen: false,
   });
+  const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
+  const isProfileMenuOpen = Boolean(profileAnchorEl);
 
   // Security audit logging
   useEffect(() => {
@@ -141,6 +148,14 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, [handleMenuClose]);
 
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
+  };
+
   return (
     <StyledAppBar 
       position="static" 
@@ -155,13 +170,19 @@ export const Header: React.FC<HeaderProps> = ({
             color="inherit"
             aria-label="Open menu"
             onClick={handleMenuOpen}
-            sx={{ mr: 2 }}
+            sx={{ 
+              mr: 2,
+              ...(isAuthenticated ? {
+                display: { xs: 'flex', md: 'none' }, 
+                color: 'var(--color-text)'   
+              } : {})
+            }}
           >
             <MenuIcon />
           </IconButton>
         )}
 
-        <Logo variant="h1" sx={{ flexGrow: 1 }}>
+        <Logo variant="h4" sx={{ flexGrow: 1 }}>
           Estate Kit
         </Logo>
 
@@ -173,6 +194,10 @@ export const Header: React.FC<HeaderProps> = ({
                 startIcon={<HelpOutline />}
                 ariaLabel="Help and Support"
                 size="large"
+                sx={{
+                  color: 'var(--color-text)', 
+                  '&:hover': { backgroundColor: 'var(--color-hover)' }
+                }}
               >
                 Help
               </Button>
@@ -183,6 +208,10 @@ export const Header: React.FC<HeaderProps> = ({
                   startIcon={<Settings />}
                   ariaLabel="Settings"
                   size="large"
+                  sx={{
+                    color: 'var(--color-text)', 
+                    '&:hover': { backgroundColor: 'var(--color-hover)' }
+                  }}
                 >
                   Settings
                 </Button>
@@ -196,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
                 aria-label="Account menu"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
-                onClick={handleMenuOpen}
+                onClick={handleProfileMenuOpen}
                 color="inherit"
                 size="large"
               >
@@ -204,14 +233,17 @@ export const Header: React.FC<HeaderProps> = ({
                   color="secondary"
                   variant="dot"
                   invisible={!mfaRequired}
+                  sx={{
+                    color: 'var(--color-text)',
+                  }}
                 >
                   <AccountCircle />
                 </Badge>
               </IconButton>
 
               <Menu
-                id="menu-appbar"
-                anchorEl={menuState.anchorEl}
+                id="profile-menu"
+                anchorEl={profileAnchorEl}
                 anchorOrigin={{
                   vertical: 'bottom',
                   horizontal: 'right',
@@ -221,12 +253,12 @@ export const Header: React.FC<HeaderProps> = ({
                   vertical: 'top',
                   horizontal: 'right',
                 }}
-                open={menuState.isOpen}
-                onClose={handleMenuClose}
+                open={isProfileMenuOpen}
+                onClose={handleProfileMenuClose}
                 onKeyDown={handleKeyPress}
               >
                 <MenuItem onClick={handleMenuClose}>
-                  <Typography variant="body1">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {user?.name}
                   </Typography>
                 </MenuItem>
@@ -246,8 +278,12 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <Button
               variant="primary"
-              size="large"
+              size="small"
               ariaLabel="Login to Estate Kit"
+              sx={{
+                backgroundColor: 'var(--color-primary)',
+                '&:hover': { backgroundColor: 'var(--color-primary-hover)', color: 'var(--color-text)' },
+              }}
             >
               Login
             </Button>

@@ -17,14 +17,21 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useAuth0 } from '@auth0/auth0-react';
 import PublicRoute from './PublicRoute';
 import { PrivateRoute } from './PrivateRoute';
+import Settings from '@/pages/Settings/Settings';
+import Help from '@/pages/Help/Help';
+import Subscription from '@/pages/Subscription/Subscription';
+import { useAuth } from '@/hooks/useAuth';
 
 // Lazy-loaded components for optimized loading
 const Login = lazy(() => import('../pages/Auth/Login'));
 const Register = lazy(() => import('../pages/Auth/Register'));
+const Callback = lazy(() => import('../pages/Auth/Callback'));
 const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
 const Documents = lazy(() => import('../pages/Documents/Documents'));
 const Delegates = lazy(() => import('../pages/Delegates/Delegates'));
 const Profile = lazy(() => import('../pages/Profile/Profile'));
+// const MFAVerification = lazy(() => import('../pages/Auth/MFAVerification'));
+// const Callback = lazy(() => import('../pages/Auth/Callback'));
 
 // Error fallback component
 const ErrorFallback: FC<{ error: Error }> = ({ error }) => (
@@ -46,7 +53,7 @@ const LoadingFallback: FC = () => (
  * Main routing component implementing secure route protection and analytics
  */
 export const AppRoutes: FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth0();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
   // Track route changes for analytics
@@ -59,7 +66,7 @@ export const AppRoutes: FC = () => {
     });
   }, [location, isAuthenticated, user]);
 
-  if (isLoading) {
+  if (loading) {
     return <LoadingFallback />;
   }
 
@@ -92,12 +99,29 @@ export const AppRoutes: FC = () => {
               </PublicRoute>
             }
           />
+          
+          <Route
+            path="/callback"
+            element={
+              <PublicRoute>
+                <Callback />
+              </PublicRoute>
+            }
+          />
 
           {/* Protected Routes */}
+          {/* <Route
+            path="/mfa-verify"
+            element={
+              <PrivateRoute requireMFA={true}>
+                <MFAVerification />
+              </PrivateRoute>
+            }
+          /> */}
           <Route
             path="/dashboard"
             element={
-              <PrivateRoute requireMFA={true}>
+              <PrivateRoute requireMFA={false}>
                 <Dashboard />
               </PrivateRoute>
             }
@@ -105,7 +129,7 @@ export const AppRoutes: FC = () => {
           <Route
             path="/documents/*"
             element={
-              <PrivateRoute requireMFA={true}>
+              <PrivateRoute requireMFA={false}>
                 <Documents />
               </PrivateRoute>
             }
@@ -113,7 +137,7 @@ export const AppRoutes: FC = () => {
           <Route
             path="/delegates/*"
             element={
-              <PrivateRoute requireMFA={true} requiredRoles={['OWNER']}>
+              <PrivateRoute requireMFA={false} requiredRoles={['OWNER']}>
                 <Delegates />
               </PrivateRoute>
             }
@@ -121,8 +145,32 @@ export const AppRoutes: FC = () => {
           <Route
             path="/profile"
             element={
-              <PrivateRoute requireMFA={true}>
+              <PrivateRoute requireMFA={false}>
                 <Profile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute requireMFA={false}>
+                <Settings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <PrivateRoute requireMFA={false}>
+                <Help />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/subscription/*"
+            element={
+              <PrivateRoute requireMFA={false}>
+                <Subscription />
               </PrivateRoute>
             }
           />
@@ -136,9 +184,7 @@ export const AppRoutes: FC = () => {
  * Root router component with browser history
  */
 export const Router: FC = () => (
-  <BrowserRouter>
     <AppRoutes />
-  </BrowserRouter>
 );
 
 export default Router;

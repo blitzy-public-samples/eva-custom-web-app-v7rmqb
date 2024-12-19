@@ -30,7 +30,16 @@ interface PublicRouteProps {
  */
 const PublicRoute: FC<PublicRouteProps> = ({ children }): ReactElement => {
   // Get authentication state from secure auth hook
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
+
+  // Only show loading during initial auth state check
+  if (isInitializing) {
+    return (
+      <div className="secure-loading" role="alert" aria-busy="true">
+        {/* Loading... */}
+      </div>
+    );
+  }
 
   /**
    * Security check and redirection logic
@@ -48,7 +57,7 @@ const PublicRoute: FC<PublicRouteProps> = ({ children }): ReactElement => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Render public route content for unauthenticated users
+  // Always render children (login form) unless redirecting
   return children;
 };
 

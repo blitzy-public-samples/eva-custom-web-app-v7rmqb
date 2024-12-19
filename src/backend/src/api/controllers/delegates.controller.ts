@@ -43,7 +43,7 @@ import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { AuthGuard } from '../middlewares/auth.middleware';
 import { RBACGuard } from '../middlewares/rbac.middleware';
 import { AuditInterceptor } from '../middlewares/logging.middleware';
-import { CreateDelegateDTO } from '../../types/delegate.types';
+import { CreateDelegateDTO, UpdateDelegateDTO } from '../../types/delegate.types';
 
 @Controller('delegates')
 @ApiTags('Delegates')
@@ -72,7 +72,10 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(request.user.id, validatedData);
+      const delegate = await this.delegateService.createDelegate(request.user.id, {
+        ...validatedData,
+        email: validatedData.email as string // Type assertion to handle branded type
+      });
 
       // Log delegate creation
       await this.auditService.createAuditLog({
@@ -108,7 +111,7 @@ export class DelegatesController {
   @ApiResponse({ status: 404, description: 'Delegate not found' })
   async updateDelegate(
     @Param('id') id: string,
-    @Body() updateDelegateDto: any,
+    @Body() updateDelegateDto: UpdateDelegateDTO,
     @Req() request: any
   ) {
     try {
@@ -125,7 +128,7 @@ export class DelegatesController {
       }
 
       // Update delegate with security checks
-      const updatedDelegate = await this.delegateService.updateDelegate(id, validatedData);
+      const updatedDelegate = await this.delegateService.updateDelegate(id, request.user.id, validatedData);
 
       // Log delegate update
       await this.auditService.createAuditLog({
@@ -239,13 +242,13 @@ export class DelegatesController {
       }
 
       // Revoke delegate access with security checks
-      const revokedDelegate = await this.delegateService.revokeDelegate(id);
+      await this.delegateService.revokeDelegate(id, request.user.id);
 
       // Log delegate revocation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.WARNING,
-        userId: revokedDelegate.delegateId,
+        userId: delegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
         ipAddress: request.ip,
@@ -256,7 +259,7 @@ export class DelegatesController {
         }
       });
 
-      return revokedDelegate;
+      return { message: 'Delegate access revoked successfully' };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to revoke delegate';
       throw new HttpException(message, HttpStatus.BAD_REQUEST);

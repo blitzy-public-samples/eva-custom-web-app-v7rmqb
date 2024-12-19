@@ -1,5 +1,5 @@
 // @ts-check
-import { KMS, KMSClientConfig } from '@aws-sdk/client-kms'; // ^2.1.0
+import { KMS, KMSClientConfig, DataKeySpec } from '@aws-sdk/client-kms'; // ^2.1.0
 import winston from 'winston'; // ^3.0.0
 import { 
   encrypt, 
@@ -37,7 +37,7 @@ interface EncryptedDataWithMetadata {
  */
 interface EncryptionOptions {
   context?: string;
-  keySpec?: string;
+  keySpec?: DataKeySpec;
   metadata?: Record<string, unknown>;
 }
 
@@ -108,7 +108,7 @@ export class EncryptionService {
   ): Promise<{ encryptedData: EncryptedDataWithMetadata; keyId: string }> {
     try {
       // Generate a new key
-      const newKey = await generateEncryptionKey('kms', { keySpec: options.keySpec || 'AES_256' });
+      const newKey = await generateEncryptionKey('kms', { keySpec: options.keySpec || 'AES_256' as DataKeySpec });
       const keyId = Date.now().toString(36);
 
       // Store the new key in cache
@@ -282,7 +282,7 @@ export class EncryptionService {
       });
 
       // Generate new key using KMS
-      const newKey = await generateEncryptionKey('kms', { keySpec: 'AES_256' });
+      const newKey = await generateEncryptionKey('kms', { keySpec: 'AES_256' as DataKeySpec });
       const newVersion = Date.now().toString(36);
 
       // Update key cache
@@ -365,7 +365,7 @@ export class EncryptionService {
     }
 
     // Generate new key if not cached or version mismatch
-    const newKey = await generateEncryptionKey('kms', { keySpec: 'AES_256' });
+    const newKey = await generateEncryptionKey('kms', { keySpec: 'AES_256' as DataKeySpec });
     const keyData: CachedKeyData = {
       key: newKey,
       version: version || Date.now().toString(36),

@@ -69,12 +69,6 @@ export class UserService {
         lastLoginAt: null,
         auditEnabled: true
       };
-      user.lastPasswordChangeAt = new Date();
-      user.failedLoginAttempts = 0;
-      user.currentSessionId = null;
-
-      // Encrypt sensitive profile data
-      await this.encryptSensitiveData(user);
 
       // Save user
       const savedUser = await this.userRepository.save(user);
@@ -94,7 +88,15 @@ export class UserService {
         }
       });
 
-      return savedUser as User;
+      // Convert to User type with additional fields
+      const userResponse: User = {
+        ...savedUser,
+        lastPasswordChangeAt: new Date(),
+        failedLoginAttempts: 0,
+        currentSessionId: null
+      };
+
+      return userResponse;
     } catch (error) {
       logger.error('Failed to create user', { error, email: userData.email });
       throw error;
@@ -141,7 +143,15 @@ export class UserService {
         }
       });
 
-      return user as User;
+      // Convert to User type with additional fields
+      const userResponse: User = {
+        ...user,
+        lastPasswordChangeAt: new Date(),
+        failedLoginAttempts: 0,
+        currentSessionId: null
+      };
+
+      return userResponse;
     } catch (error) {
       logger.error('Failed to retrieve user', { error, userId: id });
       throw error;
@@ -207,7 +217,15 @@ export class UserService {
         }
       });
 
-      return updatedUser as User;
+      // Convert to User type with additional fields
+      const userResponse: User = {
+        ...updatedUser,
+        lastPasswordChangeAt: new Date(),
+        failedLoginAttempts: 0,
+        currentSessionId: null
+      };
+
+      return userResponse;
     } catch (error) {
       logger.error('Failed to update user', { error, userId: id });
       throw error;

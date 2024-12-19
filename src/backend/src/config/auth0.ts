@@ -97,8 +97,7 @@ export const getManagementConfig = (): ManagementClientOptions => {
   try {
     return {
       domain: MANAGEMENT_API_CONFIG.domain,
-      clientId: MANAGEMENT_API_CONFIG.clientId,
-      clientSecret: MANAGEMENT_API_CONFIG.clientSecret,
+      token: '', // Token will be provided by the Auth0 SDK
       tokenProvider: {
         ...MANAGEMENT_API_CONFIG.tokenProvider
       },
@@ -121,7 +120,6 @@ export const getAuthenticationConfig = (): AuthenticationClientOptions => {
       domain: AUTH0_CONFIG.domain,
       clientId: AUTH0_CONFIG.clientId,
       clientSecret: AUTH0_CONFIG.clientSecret,
-      audience: AUTH0_CONFIG.audience,
       maxRetries: 3,
       timeout: 10000, // 10 seconds timeout
       headers: {

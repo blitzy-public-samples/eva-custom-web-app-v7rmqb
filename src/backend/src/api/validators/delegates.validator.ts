@@ -91,7 +91,7 @@ function validatePermissionMatrix(permissions: Array<{
   }
 
   return permissions.every(permission => {
-    const allowedLevels = rolePermissions[role][permission.resourceType];
+    const allowedLevels = rolePermissions[role as keyof typeof rolePermissions][permission.resourceType];
     return allowedLevels?.includes(permission.accessLevel) ?? false;
   });
 }
@@ -116,7 +116,8 @@ export const createDelegateSchema = z.object({
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
     .superRefine((permissions, ctx) => {
-      const role = (ctx.parent as { role: UserRole }).role;
+      const data = ctx.path[0] as { role: UserRole };
+      const role = data?.role;
       if (!validatePermissionMatrix(permissions, role)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -152,7 +153,8 @@ export const updateDelegateSchema = z.object({
   permissions: z.array(permissionSchema)
     .min(1, 'At least one permission must be specified')
     .superRefine((permissions, ctx) => {
-      const role = (ctx.parent as { role?: UserRole }).role || UserRole.EXECUTOR;
+      const data = ctx.path[0] as { role?: UserRole };
+      const role = data?.role || UserRole.EXECUTOR;
       if (!validatePermissionMatrix(permissions, role)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

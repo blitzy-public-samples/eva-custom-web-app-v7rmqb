@@ -105,7 +105,7 @@ export class IntercomService {
       });
 
       // Create or update user in Intercom using contacts API
-      const response = await this.client.contacts.create({
+      const response = await this.client.users.create({
         external_id: sanitizedData.userId,
         email: sanitizedData.email,
         name: sanitizedData.name,
@@ -149,7 +149,7 @@ export class IntercomService {
       // Create conversation in Intercom
       const response = await this.client.messages.create({
         from: {
-          type: 'contact',
+          type: 'user',
           id: userId
         },
         body: conversationData.message,

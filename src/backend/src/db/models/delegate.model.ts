@@ -28,9 +28,8 @@ import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Initialize services
 const encryptionService = new EncryptionService();
-const auditService = new AuditService({
-  auditRepository: null // This will be injected by the DI container
-});
+// Initialize audit service without repository - it will be injected by DI container
+const auditService = new AuditService();
 
 @Entity('delegates')
 @Index(['ownerId'])

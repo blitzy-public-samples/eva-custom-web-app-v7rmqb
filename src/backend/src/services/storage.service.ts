@@ -26,26 +26,6 @@ interface DocumentMetadata {
   securityContext: SecurityMetadata;
 }
 
-interface EnhancedMetadata {
-  contentType: string;
-  size: number;
-  checksum: string;
-  versionId: string;
-  lastModified: Date;
-  metadata: {
-    iv: string;
-    authTag: string;
-    encryptionVersion: string;
-    userId: string;
-    securityClassification: string;
-    accessLevel: string;
-    retentionPolicy: string;
-  };
-  encryption: {
-    keyId: string;
-  };
-}
-
 @injectable()
 export class StorageService {
   constructor(
@@ -170,7 +150,7 @@ export class StorageService {
       });
 
       // Get document metadata for security validation
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Validate access permissions
       this.validateAccessPermissions(metadata, userId, securityContext);
@@ -185,9 +165,9 @@ export class StorageService {
       const decryptedContent = await this.encryptionService.decryptSensitiveData(
         {
           content: encryptedBuffer,
-          iv: Buffer.from(metadata.metadata.iv || '', 'base64'),
-          authTag: Buffer.from(metadata.metadata.authTag || '', 'base64'),
-          keyVersion: metadata.metadata.encryptionVersion,
+          iv: Buffer.from(metadata.encryption.iv || '', 'base64'),
+          authTag: Buffer.from(metadata.encryption.authTag || '', 'base64'),
+          keyVersion: metadata.encryption.encryptionVersion,
           metadata: {
             algorithm: 'aes-256-gcm',
             timestamp: Date.now()
@@ -239,7 +219,7 @@ export class StorageService {
       });
 
       // Get document metadata
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Validate deletion permissions
       this.validateDeletionPermissions(metadata, userId);
@@ -286,7 +266,7 @@ export class StorageService {
       });
 
       // Get base metadata from S3
-      const metadata = await this.s3Integration.getFileMetadata(documentKey) as EnhancedMetadata;
+      const metadata = await this.s3Integration.getFileMetadata(documentKey);
 
       // Compile enhanced metadata
       const enhancedMetadata: DocumentMetadata = {
@@ -296,9 +276,9 @@ export class StorageService {
         versionId: metadata.versionId,
         lastModified: metadata.lastModified,
         securityContext: {
-          classification: metadata.metadata.securityClassification,
-          accessLevel: metadata.metadata.accessLevel,
-          retentionPolicy: metadata.metadata.retentionPolicy,
+          classification: metadata.encryption.securityClassification,
+          accessLevel: metadata.encryption.accessLevel,
+          retentionPolicy: metadata.encryption.retentionPolicy,
           encryptionContext: metadata.encryption.keyId
         }
       };
@@ -324,7 +304,7 @@ export class StorageService {
    * @private
    */
   private validateAccessPermissions(
-    metadata: EnhancedMetadata,
+    metadata: any,
     userId: string,
     securityContext: SecurityMetadata
   ): void {
@@ -342,7 +322,7 @@ export class StorageService {
    * Validates user permissions for document deletion
    * @private
    */
-  private validateDeletionPermissions(metadata: EnhancedMetadata, userId: string): void {
+  private validateDeletionPermissions(metadata: any, userId: string): void {
     const documentUserId = metadata.metadata.userId;
     if (documentUserId !== userId) {
       throw new Error('Insufficient permissions to delete document');

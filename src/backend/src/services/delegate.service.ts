@@ -148,7 +148,7 @@ export class DelegateService {
           content: Buffer.from(delegate.encryptedData, 'base64'),
           iv: Buffer.alloc(16), // Should be stored with encrypted data
           authTag: Buffer.alloc(16), // Should be stored with encrypted data
-          keyVersion: '1', // Added required keyVersion
+          keyVersion: '1', // Added keyVersion
           metadata: {
             algorithm: 'aes-256-gcm',
             timestamp: Date.now()

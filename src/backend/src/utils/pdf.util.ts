@@ -203,18 +203,22 @@ export async function generatePDFPreview(
       previewPdf.addPage(page);
     }
 
-    // Generate preview buffer
-    const previewBuffer = await previewPdf.save({
-      permissions: {
-        printing: options.allowPrinting ? 'lowResolution' : 'none',
-        modifying: false,
-        copying: options.allowCopying || false,
-        annotating: false,
-        fillingForms: false,
-        contentAccessibility: true,
-        documentAssembly: false
-      }
+    // Set document encryption with user permissions
+    const userPassword = generatePreviewPassword();
+    await previewPdf.encrypt({
+      userPassword,
+      ownerPassword: userPassword,
+      printing: options.allowPrinting ? 'lowResolution' : 'none',
+      modifying: false,
+      copying: options.allowCopying || false,
+      annotating: false,
+      fillingForms: false,
+      contentAccessibility: true,
+      documentAssembly: false
     });
+
+    // Generate preview buffer
+    const previewBuffer = await previewPdf.save();
 
     // Log preview generation
     logger.info('PDF preview generated', {

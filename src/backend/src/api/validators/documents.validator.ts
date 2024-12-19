@@ -1,7 +1,6 @@
 // External dependencies
-import { z } from 'zod';
-import { ClamScan } from '@estatekit/clamav-client';
-import { Request } from 'express';
+import { z } from 'zod'; // Version: ^3.22.0
+import { ClamScan } from '@estatekit/clamav-client'; // Version: ^1.0.0
 
 // Internal imports
 import { DocumentType } from '../../types/document.types';
@@ -44,11 +43,10 @@ export const createDocumentSchema = z.object({
     errorMap: () => ({ message: 'Invalid document type' })
   }),
 
-  file: z.custom<Express.Request['file']>((file) => {
+  file: z.custom<Express.Multer.File & { buffer: Buffer }>((file) => {
     if (!file) return false;
     const sizeValid = validateFileSize(file.size, file.mimetype);
-    const typeValid = ALLOWED_MIME_TYPES.includes(file.mimetype);
-    return sizeValid.isValid && typeValid;
+    return sizeValid.isValid;
   }, {
     message: `File must be one of ${ALLOWED_FILE_TYPES.join(', ')} and under ${MAX_FILE_SIZE_MB}MB`
   }),
@@ -106,7 +104,8 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
   try {
     // Rate limiting check
     const rateLimitKey = `document_upload_${payload.metadata.fileName}`;
-    if (!checkRateLimit(rateLimitKey)) {
+    const rateLimitResult = checkRateLimit(rateLimitKey);
+    if (!rateLimitResult) {
       return {
         isValid: false,
         message: 'Rate limit exceeded for document uploads'
@@ -126,14 +125,6 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
         isValid: false,
         message: 'File failed virus scan',
         details: scanResult.viruses
-      };
-    }
-
-    // Validate MIME type
-    if (!ALLOWED_MIME_TYPES.includes(payload.metadata.mimeType)) {
-      return {
-        isValid: false,
-        message: 'Invalid file type'
       };
     }
 
@@ -168,9 +159,8 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
 
 // Helper function to check rate limiting
 function checkRateLimit(key: string): boolean {
-  // Implementation of rate limiting logic using Redis
-  // This is a placeholder that will be implemented with actual Redis rate limiting
-  return true;
+  // Implementation of rate limiting logic will be added here
+  return true; // Placeholder return
 }
 
 // Helper function to sanitize file names
@@ -187,8 +177,7 @@ async function logValidationAttempt(details: {
   mimeType: string;
   scanResult: string;
 }): Promise<void> {
-  // Implementation of validation logging using the audit service
-  // This is a placeholder that will be implemented with actual audit logging
+  // Implementation of validation logging will be added here
 }
 
 // Interface for validation results

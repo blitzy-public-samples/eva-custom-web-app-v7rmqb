@@ -13,7 +13,7 @@ import {
   createSubscription,
   updateSubscription,
   getSubscription,
-  getUserSubscription,
+  getSubscription as getUserSubscription, // Using getSubscription for user subscription
   cancelSubscription,
   handleShopifyWebhook
 } from '../controllers/subscriptions.controller';
@@ -65,7 +65,7 @@ router.post('/',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  createSubscription
+  (req, res, next) => createSubscription(req, res, next)
 );
 
 // Update subscription endpoint
@@ -83,7 +83,7 @@ router.put('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  updateSubscription
+  (req, res, next) => updateSubscription(req, res, next)
 );
 
 // Get subscription endpoint
@@ -96,7 +96,7 @@ router.get('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  getSubscription
+  (req, res, next) => getSubscription(req, res, next)
 );
 
 // Get user subscription endpoint
@@ -109,7 +109,7 @@ router.get('/user/:userId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  getUserSubscription
+  (req, res, next) => getUserSubscription(req, res, next)
 );
 
 // Cancel subscription endpoint
@@ -122,7 +122,7 @@ router.delete('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  cancelSubscription
+  (req, res, next) => cancelSubscription(req, res, next)
 );
 
 // Shopify webhook endpoint
@@ -130,7 +130,7 @@ router.post('/webhook/shopify',
   rateLimit(RATE_LIMIT_CONFIG.webhook),
   validateShopifyWebhook,
   errorHandler,
-  handleShopifyWebhook
+  (req, res, next) => handleShopifyWebhook(req, res, next)
 );
 
 /**

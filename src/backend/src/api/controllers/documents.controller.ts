@@ -8,7 +8,7 @@
 import { Request, Response } from 'express'; // ^4.18.0
 import { z } from 'zod'; // ^3.22.0
 import rateLimit from 'express-rate-limit'; // ^6.7.0
-import { Controller, Post, Get, Put, Delete, UseMiddleware } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, UseMiddleware, Injectable } from '@nestjs/common';
 
 import { DocumentService } from '../../services/document.service';
 import { AuditService } from '../../services/audit.service';
@@ -49,6 +49,7 @@ const createDocumentSchema = z.object({
 /**
  * Controller handling document management endpoints with enhanced security
  */
+@Injectable()
 @Controller('/documents')
 @UseMiddleware(correlationMiddleware)
 @UseMiddleware(rateLimitMiddleware)

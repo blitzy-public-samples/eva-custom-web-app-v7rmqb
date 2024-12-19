@@ -23,7 +23,7 @@ const router = express.Router();
 // Apply security headers
 router.use(helmet());
 
-// Initialize Auth Controller with required AuthService
+// Initialize Auth Controller with AuthService
 const authService = new AuthService();
 const authController = new AuthController(authService);
 
@@ -141,7 +141,7 @@ router.post('/logout',
 );
 
 // Global error handler for authentication routes
-router.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+router.use((error: any, req: express.Request, res: express.Response) => {
   logger.error('Authentication route error', {
     error,
     path: req.path,

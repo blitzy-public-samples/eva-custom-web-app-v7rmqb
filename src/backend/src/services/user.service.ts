@@ -24,7 +24,7 @@ import { logger } from '../utils/logger.util';
 @Service()
 export class UserService {
   // Security constants
-  private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'];
+  private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'] as const;
 
   constructor(
     @InjectRepository(UserModel)
@@ -38,7 +38,7 @@ export class UserService {
    * @param userData User creation data
    * @returns Promise<User> Created user object
    */
-  async createUser(userData: CreateUserDTO): Promise<User> {
+  async createUser(userData: CreateUserDTO & { ipAddress?: string; userAgent?: string }): Promise<User> {
     try {
       // Validate input data
       this.validateUserData(userData);
@@ -68,7 +68,10 @@ export class UserService {
           language: 'en',
           lastLoginAt: null,
           auditEnabled: true
-        }
+        },
+        lastPasswordChangeAt: new Date(),
+        failedLoginAttempts: 0,
+        currentSessionId: null
       });
 
       // Encrypt sensitive profile data
@@ -92,7 +95,12 @@ export class UserService {
         }
       });
 
-      return savedUser;
+      return {
+        ...savedUser,
+        lastPasswordChangeAt: savedUser.lastPasswordChangeAt || new Date(),
+        failedLoginAttempts: savedUser.failedLoginAttempts || 0,
+        currentSessionId: savedUser.currentSessionId || null
+      };
     } catch (error) {
       logger.error('Failed to create user', { error, email: userData.email });
       throw error;
@@ -131,7 +139,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0', // Should be passed from request context
+        ipAddress: '0.0.0.0',
         userAgent: 'SYSTEM',
         details: {
           action: 'READ_USER',
@@ -139,7 +147,12 @@ export class UserService {
         }
       });
 
-      return user;
+      return {
+        ...user,
+        lastPasswordChangeAt: user.lastPasswordChangeAt || new Date(),
+        failedLoginAttempts: user.failedLoginAttempts || 0,
+        currentSessionId: user.currentSessionId || null
+      };
     } catch (error) {
       logger.error('Failed to retrieve user', { error, userId: id });
       throw error;
@@ -196,7 +209,7 @@ export class UserService {
         userId: id,
         resourceId: id,
         resourceType: 'USER',
-        ipAddress: '0.0.0.0', // Should be passed from request context
+        ipAddress: '0.0.0.0',
         userAgent: 'SYSTEM',
         details: {
           action: 'UPDATE_USER',
@@ -205,7 +218,12 @@ export class UserService {
         }
       });
 
-      return updatedUser;
+      return {
+        ...updatedUser,
+        lastPasswordChangeAt: updatedUser.lastPasswordChangeAt || new Date(),
+        failedLoginAttempts: updatedUser.failedLoginAttempts || 0,
+        currentSessionId: updatedUser.currentSessionId || null
+      };
     } catch (error) {
       logger.error('Failed to update user', { error, userId: id });
       throw error;
@@ -243,7 +261,7 @@ export class UserService {
       for (const field of this.SENSITIVE_FIELDS) {
         if (user.profile[field]) {
           const encrypted = await this.encryptionService.encryptSensitiveData(
-            Buffer.from(user.profile[field]),
+            Buffer.from(user.profile[field] as string),
             process.env.ENCRYPTION_KEY as string
           );
           user.profile[field] = encrypted.content.toString('base64');
@@ -263,10 +281,10 @@ export class UserService {
           try {
             const decrypted = await this.encryptionService.decryptSensitiveData(
               {
-                content: Buffer.from(user.profile[field], 'base64'),
+                content: Buffer.from(user.profile[field] as string, 'base64'),
                 iv: Buffer.alloc(16),
                 authTag: Buffer.alloc(16),
-                keyVersion: '1', // Added required keyVersion property
+                keyVersion: '1',
                 metadata: {
                   algorithm: 'aes-256-gcm',
                   timestamp: Date.now()
@@ -328,9 +346,9 @@ export class UserService {
     if (newData.profile) {
       changes.profile = {};
       for (const [key, value] of Object.entries(newData.profile)) {
-        if (oldData.profile[key] !== value) {
+        if (oldData.profile[key as keyof typeof oldData.profile] !== value) {
           changes.profile[key] = {
-            from: oldData.profile[key],
+            from: oldData.profile[key as keyof typeof oldData.profile],
             to: value
           };
         }

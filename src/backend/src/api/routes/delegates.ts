@@ -92,7 +92,7 @@ delegatesRouter.get('/',
         ownerId: (req as any).user?.sub
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result.delegates,
         pagination: {

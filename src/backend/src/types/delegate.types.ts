@@ -58,7 +58,7 @@ export interface Delegate {
  * Enforces strict validation and security controls for delegate creation.
  */
 export interface CreateDelegateDTO {
-    email: string & { __emailBrand: never }; // Branded type for validated email
+    email: string; // Branded type for validated email
     role: UserRole;                          // Required delegate role
     expiresAt: Date;                         // Required expiration date
     permissions: Array<{                     // Required permission set

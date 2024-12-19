@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { Router } from 'express'; // ^4.18.2
+import { Router, Request, Response, NextFunction } from 'express'; // ^4.18.2
 import rateLimit from 'express-rate-limit'; // ^6.7.0
 import cors from 'cors'; // ^2.8.5
 
@@ -65,7 +65,10 @@ router.post('/',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  (req, res, next) => createSubscription(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const subscriptionData = req.validatedData;
+    return createSubscription(subscriptionData);
+  }
 );
 
 // Update subscription endpoint
@@ -83,7 +86,11 @@ router.put('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  (req, res, next) => updateSubscription(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const { subscriptionId } = req.params;
+    const updateData = req.validatedData;
+    return updateSubscription(subscriptionId, updateData);
+  }
 );
 
 // Get subscription endpoint
@@ -96,7 +103,10 @@ router.get('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  (req, res, next) => getSubscription(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const { subscriptionId } = req.params;
+    return getSubscription(subscriptionId);
+  }
 );
 
 // Get user subscription endpoint
@@ -109,7 +119,10 @@ router.get('/user/:userId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  (req, res, next) => getUserSubscription(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    return getUserSubscription(userId);
+  }
 );
 
 // Cancel subscription endpoint
@@ -122,7 +135,10 @@ router.delete('/:subscriptionId',
     complianceRequirements: ['PIPEDA']
   }),
   errorHandler,
-  (req, res, next) => cancelSubscription(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const { subscriptionId } = req.params;
+    return cancelSubscription(subscriptionId);
+  }
 );
 
 // Shopify webhook endpoint
@@ -130,13 +146,17 @@ router.post('/webhook/shopify',
   rateLimit(RATE_LIMIT_CONFIG.webhook),
   validateShopifyWebhook,
   errorHandler,
-  (req, res, next) => handleShopifyWebhook(req, res, next)
+  (req: Request, res: Response, next: NextFunction) => {
+    const webhookData = req.body;
+    const signature = req.headers['x-shopify-hmac-sha256'];
+    return handleShopifyWebhook(webhookData, signature as string);
+  }
 );
 
 /**
  * Validates Shopify webhook signatures
  */
-function validateShopifyWebhook(req: any, res: any, next: any) {
+function validateShopifyWebhook(req: Request, res: Response, next: NextFunction) {
   const signature = req.headers['x-shopify-hmac-sha256'];
   const topic = req.headers['x-shopify-topic'];
   

@@ -2,12 +2,27 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { RegisterPayload, Province } from '../../types/auth.types';
-import Input from '../../components/common/Input/Input';
-import { Button } from '../../components/common/Button/Button';
-import Form from '../../components/common/Form/Form';
-import Select from '../../components/common/Select/Select';
+import Form, { FormRenderProps } from '../../components/common/Form/Form';
 import { styled } from '@mui/material/styles';
-import { Box, Typography, Alert, Link } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Alert, 
+  Link,
+  TextField,
+  MenuItem,
+  Stack,
+  InputAdornment,
+  IconButton
+} from '@mui/material';
+import { 
+  Person, 
+  Email, 
+  Lock, 
+  Visibility, 
+  VisibilityOff,
+  LocationOn 
+} from '@mui/icons-material';
 import * as Yup from 'yup';
 import { Auth0ContextInterface, User } from '@auth0/auth0-react';
 
@@ -51,11 +66,6 @@ const validationSchema = Yup.object().shape({
   acceptedTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
 });
 
-interface FormProps {
-  values: Record<string, any>;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: any } }) => void;
-}
-
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loading, error } = useAuth();
@@ -96,9 +106,10 @@ const Register: React.FC = () => {
     }
   }, [register, navigate]);
 
-  const renderForm = ({ values, handleChange }: FormProps): React.ReactNode => (
-    <>
-      <Input
+  const renderForm = ({ values, setFieldValue, register }: FormRenderProps): React.ReactElement => (
+    <Stack spacing={3} sx={{ width: '100%' }}>
+      <TextField
+        fullWidth
         id="name"
         name="name"
         label="Full Name"
@@ -106,13 +117,21 @@ const Register: React.FC = () => {
         required
         autoComplete="name"
         placeholder="Enter your full name"
-        error={formError}
-        aria-label="Enter your full name"
+        error={!!formError}
+        helperText={formError}
         value={values.name}
-        onChange={handleChange}
+        onChange={(e) => setFieldValue('name', e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Person color="action" />
+            </InputAdornment>
+          ),
+        }}
       />
 
-      <Input
+      <TextField
+        fullWidth
         id="email"
         name="email"
         label="Email Address"
@@ -120,13 +139,21 @@ const Register: React.FC = () => {
         required
         autoComplete="email"
         placeholder="Enter your email address"
-        error={formError}
-        aria-label="Enter your email address"
+        error={!!formError}
+        helperText={formError}
         value={values.email}
-        onChange={handleChange}
+        onChange={(e) => setFieldValue('email', e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Email color="action" />
+            </InputAdornment>
+          ),
+        }}
       />
 
-      <Input
+      <TextField
+        fullWidth
         id="password"
         name="password"
         label="Password"
@@ -134,24 +161,54 @@ const Register: React.FC = () => {
         required
         autoComplete="new-password"
         placeholder="Create a secure password"
-        error={formError}
-        aria-label="Create a secure password"
+        error={!!formError}
+        helperText={formError}
         value={values.password}
-        onChange={handleChange}
+        onChange={(e) => setFieldValue('password', e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Lock color="action" />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="toggle password visibility"
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
 
-      <Select
+      <TextField
+        select
+        fullWidth
+        id="province"
         name="province"
         label="Province"
-        options={provinceOptions}
         required
-        fullWidth
-        helpText="Select your province for jurisdiction-specific features"
-        aria-label="Select your province"
         value={values.province}
-        onChange={(value) => handleChange({ target: { name: 'province', value } })}
-        onBlur={() => {}}
-      />
+        onChange={(e) => setFieldValue('province', e.target.value)}
+        helperText="Select your province for jurisdiction-specific features"
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <LocationOn color="action" />
+            </InputAdornment>
+          ),
+        }}
+      >
+        {provinceOptions.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
 
       <Box sx={{ marginY: 'var(--spacing-md)' }}>
         <Typography variant="body2" color="textSecondary">
@@ -185,31 +242,7 @@ const Register: React.FC = () => {
           {error.toString()}
         </Alert>
       )}
-
-      <Button
-        type="submit"
-        variant="primary"
-        size="large"
-        fullWidth
-        loading={loading}
-        disabled={loading}
-        aria-label="Create your account"
-      >
-        Create Account
-      </Button>
-
-      <Box sx={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
-        <Typography variant="body2">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            aria-label="Sign in to your existing account"
-          >
-            Sign In
-          </Link>
-        </Typography>
-      </Box>
-    </>
+    </Stack>
   );
 
   return (
@@ -230,7 +263,7 @@ const Register: React.FC = () => {
         initialValues={initialFormState}
         onSubmit={handleSubmit}
         submitLabel="Create Account"
-        testId="register-form"
+        data-testid="register-form"
         analyticsEvent="register"
         validationSchema={validationSchema}
       >

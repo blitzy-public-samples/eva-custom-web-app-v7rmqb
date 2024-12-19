@@ -70,7 +70,7 @@ const redactSensitiveData = (message: string): string => {
 /**
  * Custom logger class with enhanced security and monitoring features
  */
-class CustomLogger {
+export class Logger {
   private winstonLogger: winston.Logger;
   private defaultMeta: Record<string, any>;
   private securityContext: Record<string, any>;
@@ -189,10 +189,5 @@ class CustomLogger {
   }
 }
 
-// Create and export singleton logger instance
-const logger = new CustomLogger();
-
-export {
-  logger,
-  type CustomLogger
-};
+// Create and export default logger instance
+export const logger = new Logger();

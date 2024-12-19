@@ -33,6 +33,15 @@ interface EncryptedDataWithMetadata {
 }
 
 /**
+ * Interface for encryption options
+ */
+interface EncryptionOptions {
+  context?: string;
+  keySpec?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Service class providing enterprise-grade encryption operations with enhanced security features
  */
 export class EncryptionService {
@@ -85,6 +94,57 @@ export class EncryptionService {
         this.logger.error('Key rotation check failed:', { error });
       });
     }, 24 * 60 * 60 * 1000); // Daily check
+  }
+
+  /**
+   * Encrypts data with a new encryption key
+   * @param content - Content to encrypt
+   * @param options - Encryption options
+   * @returns Promise resolving to encrypted data with keyId
+   */
+  public async encryptWithNewKey(
+    content: Buffer,
+    options: EncryptionOptions = {}
+  ): Promise<{ encryptedData: EncryptedDataWithMetadata; keyId: string }> {
+    try {
+      // Generate a new key
+      const newKey = await generateEncryptionKey('kms', { keySpec: options.keySpec || 'AES_256' });
+      const keyId = Date.now().toString(36);
+
+      // Store the new key in cache
+      this.keyCache.set(keyId, {
+        key: newKey,
+        version: Date.now().toString(36),
+        lastRotated: new Date()
+      });
+
+      // Encrypt the content
+      const encryptedData = await encrypt(content, newKey, options.context);
+
+      // Add key version and additional metadata
+      const result: EncryptedDataWithMetadata = {
+        ...encryptedData,
+        keyVersion: this.keyCache.get(keyId)!.version,
+        metadata: {
+          ...encryptedData.metadata,
+          ...options.metadata
+        }
+      };
+
+      this.logger.info('Data encrypted with new key', {
+        keyId,
+        timestamp: new Date().toISOString()
+      });
+
+      return { encryptedData: result, keyId };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error('Encryption with new key failed', {
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(`Encryption with new key failed: ${errorMessage}`);
+    }
   }
 
   /**

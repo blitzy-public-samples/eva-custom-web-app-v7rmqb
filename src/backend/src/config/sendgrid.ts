@@ -7,7 +7,6 @@
 
 // External imports
 import dotenv from 'dotenv'; // ^16.0.0
-import { config } from '@types/node'; // ^18.0.0
 
 // Initialize environment variables
 dotenv.config();

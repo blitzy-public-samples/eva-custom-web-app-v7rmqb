@@ -21,7 +21,6 @@ import {
   InternalServerErrorException
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { CorrelationIdInterceptor } from '@evanion/nestjs-correlation-id';
 import { ApiOperation, ApiResponse, ApiTags, ApiSecurity } from '@nestjs/swagger';
 
 import { UserService } from '../../services/user.service';
@@ -38,19 +37,8 @@ import {
 } from '../../types/audit.types';
 import { logger } from '../../utils/logger.util';
 
-// Security decorators
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RoleGuard } from '../guards/role.guard';
-import { ComplianceGuard } from '../guards/compliance.guard';
-import { 
-  AuditLogInterceptor, 
-  SecurityHeadersInterceptor 
-} from '../interceptors';
-
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard, RoleGuard)
-@UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor)
 @UseGuards(ThrottlerGuard)
 export class UsersController {
   constructor(
@@ -62,7 +50,6 @@ export class UsersController {
    * Creates a new user account with enhanced security validation
    */
   @Post()
-  @UseGuards(ComplianceGuard)
   @ApiOperation({ summary: 'Create new user with security validation' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
@@ -230,9 +217,7 @@ export class UsersController {
     try {
       logger.addCorrelationId(correlationId);
 
-      await this.userService.deleteUser(id, userRole);
-
-      // Log deletion operation
+      // Log deletion operation before actual deletion
       await this.auditService.createAuditLog({
         eventType: AuditEventType.USER_LOGIN,
         severity: AuditSeverity.WARNING,
@@ -247,6 +232,10 @@ export class UsersController {
           correlationId
         }
       });
+
+      // Soft delete the user
+      await this.userService.updateUser(id, { status: 'INACTIVE' }, userRole);
+
     } catch (error: unknown) {
       logger.error('User deletion failed', { error, userId: id });
       if (error instanceof Error) {

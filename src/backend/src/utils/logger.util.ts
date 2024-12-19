@@ -124,8 +124,8 @@ class CustomLogger {
           messageFormatter: formatLogMessage,
           handleExceptions: true,
           jsonMessage: true,
-          bufferSize: this.bufferConfig.size,
-          flushInterval: this.bufferConfig.flushInterval
+          retentionInDays: 14,
+          uploadRate: this.bufferConfig.flushInterval
         }));
       } catch (error) {
         console.error('Failed to initialize CloudWatch transport:', error);

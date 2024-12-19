@@ -17,15 +17,15 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
+} from '@nestjs/common'; // ^9.0.0
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth,
-} from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+} from '@nestjs/swagger'; // ^6.0.0
+import { Throttle } from '@nestjs/throttler'; // ^4.0.0
 
 // Internal service imports
 import { DelegateService } from '../../services/delegate.service';
@@ -38,7 +38,6 @@ import {
 
 // Types and enums
 import { ResourceType, AccessLevel } from '../../types/permission.types';
-import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Security guards and interceptors
 import { AuthGuard } from '../guards/auth.guard';
@@ -72,18 +71,17 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(
-        createDelegateDto.ownerId,
-        validatedData
-      );
+      const delegate = await this.delegateService.createDelegate(validatedData);
 
       // Log delegate creation
-      await this.auditService.logEvent({
-        eventType: AuditEventType.DELEGATE_INVITE,
-        severity: AuditSeverity.INFO,
-        userId: createDelegateDto.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_INVITE',
+        severity: 'INFO',
+        userId: validatedData.userId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           delegateEmail: validatedData.email,
           role: validatedData.role,
@@ -93,11 +91,8 @@ export class DelegatesController {
 
       return delegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to create delegate: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to create delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -122,18 +117,17 @@ export class DelegatesController {
       const validatedData = await updateDelegateSchema.parseAsync(updateDelegateDto);
 
       // Update delegate with security checks
-      const updatedDelegate = await this.delegateService.updateDelegate(
-        id,
-        validatedData
-      );
+      const updatedDelegate = await this.delegateService.updateDelegate(id, validatedData);
 
       // Log delegate update
-      await this.auditService.logEvent({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.INFO,
-        userId: updatedDelegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'PERMISSION_CHANGE',
+        severity: 'INFO',
+        userId: updatedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           changes: validatedData,
           previousState: updatedDelegate
@@ -142,11 +136,8 @@ export class DelegatesController {
 
       return updatedDelegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to update delegate: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to update delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -164,29 +155,28 @@ export class DelegatesController {
       await delegateIdSchema.parseAsync({ id });
 
       // Retrieve delegate with security checks
-      const delegate = await this.delegateService.getDelegateById(id);
+      const delegate = await this.delegateService.getDelegate(id);
 
       if (!delegate) {
         throw new HttpException('Delegate not found', HttpStatus.NOT_FOUND);
       }
 
       // Log delegate access
-      await this.auditService.logEvent({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: AuditSeverity.INFO,
-        userId: delegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: 'INFO',
+        userId: delegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: { accessType: 'READ' }
       });
 
       return delegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to retrieve delegate: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to retrieve delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -200,27 +190,23 @@ export class DelegatesController {
   async getDelegates(@Query() query: any) {
     try {
       // Get delegates with security checks
-      const delegates = await this.delegateService.getDelegatesByOwner(
-        query.ownerId,
-        query.status
-      );
+      const delegates = await this.delegateService.getDelegates(query);
 
       // Log delegate list access
-      await this.auditService.logEvent({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: AuditSeverity.INFO,
-        userId: query.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: 'INFO',
+        userId: query.userId,
         resourceType: 'DELEGATE_LIST',
+        ipAddress: '',
+        userAgent: '',
         details: { filters: query }
       });
 
       return delegates;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to list delegates: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to list delegates';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -241,12 +227,14 @@ export class DelegatesController {
       const revokedDelegate = await this.delegateService.revokeDelegate(id);
 
       // Log delegate revocation
-      await this.auditService.logEvent({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.WARNING,
-        userId: revokedDelegate.ownerId,
+      await this.auditService.createAuditLog({
+        eventType: 'PERMISSION_CHANGE',
+        severity: 'WARNING',
+        userId: revokedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
+        ipAddress: '',
+        userAgent: '',
         details: {
           action: 'REVOKE',
           previousStatus: revokedDelegate.status
@@ -255,11 +243,8 @@ export class DelegatesController {
 
       return revokedDelegate;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to revoke delegate: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to revoke delegate';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -279,11 +264,13 @@ export class DelegatesController {
       );
 
       // Log access verification
-      await this.auditService.logEvent({
-        eventType: AuditEventType.DELEGATE_ACCESS,
-        severity: hasAccess ? AuditSeverity.INFO : AuditSeverity.WARNING,
+      await this.auditService.createAuditLog({
+        eventType: 'DELEGATE_ACCESS',
+        severity: hasAccess ? 'INFO' : 'WARNING',
         userId: verifyAccessDto.delegateId,
         resourceType: verifyAccessDto.resourceType,
+        ipAddress: '',
+        userAgent: '',
         details: {
           accessLevel: verifyAccessDto.accessLevel,
           accessGranted: hasAccess
@@ -292,11 +279,8 @@ export class DelegatesController {
 
       return { hasAccess };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new HttpException(
-        `Failed to verify access: ${errorMessage}`,
-        HttpStatus.BAD_REQUEST
-      );
+      const message = error instanceof Error ? error.message : 'Failed to verify access';
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 }

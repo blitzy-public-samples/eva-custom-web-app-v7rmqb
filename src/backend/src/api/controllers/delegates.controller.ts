@@ -18,15 +18,15 @@ import {
   HttpException,
   HttpStatus,
   Req,
-} from '@nestjs/common'; // ^9.0.0
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth,
-} from '@nestjs/swagger'; // ^6.0.0
-import { Throttle } from '@nestjs/throttler'; // ^4.0.0
+} from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 // Internal service imports
 import { DelegateService } from '../../services/delegate.service';
@@ -72,7 +72,10 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(request.user.id, validatedData);
+      const delegate = await this.delegateService.createDelegate(request.user.id, {
+        ...validatedData,
+        email: validatedData.email as string // Cast the branded email type to string
+      });
 
       // Log delegate creation
       await this.auditService.createAuditLog({

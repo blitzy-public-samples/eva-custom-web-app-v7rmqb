@@ -6,13 +6,12 @@
  */
 
 // External dependencies
-import express, { Express, Request } from 'express'; // ^4.18.2
+import express, { Express } from 'express'; // ^4.18.2
 import helmet from 'helmet'; // ^7.0.0
 import compression from 'compression'; // ^1.7.4
 import cors from 'cors'; // ^2.8.5
 import rateLimit from 'express-rate-limit'; // ^7.0.0
 import * as opentelemetry from '@opentelemetry/api'; // ^1.4.0
-import { logger } from './utils/logger.util';
 
 // Internal imports
 import { dataSource } from './config/database';
@@ -20,6 +19,7 @@ import redisClient from './config/redis';
 import router from './api/routes';
 import errorMiddleware from './api/middlewares/error.middleware';
 import { requestLogger } from './api/middlewares/logging.middleware';
+import { logger } from './utils/logger.util';
 
 // Initialize OpenTelemetry for distributed tracing
 const tracer = opentelemetry.trace.getTracer('estate-kit-backend');
@@ -63,9 +63,9 @@ async function initializeServer(): Promise<Express> {
     max: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10), // Limit each IP
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req: Request) => {
+    skip: (req: express.Request) => {
       const trustedIPs = process.env.TRUSTED_IPS?.split(',') || [];
-      return trustedIPs.includes(req.ip || '');
+      return trustedIPs.length > 0 && trustedIPs.includes(req.ip || '');
     }
   };
 

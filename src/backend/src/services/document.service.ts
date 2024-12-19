@@ -98,7 +98,7 @@ export class DocumentService {
       const command = new PutObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME || '',
         Key: s3Key,
-        Body: Buffer.from(encryptedData.encryptedData),
+        Body: encryptedData.encryptedData, // Removed Buffer.from() since encryptedData should already be a Buffer
         ServerSideEncryption: 'aws:kms',
         SSEKMSKeyId: process.env.KMS_KEY_ID || '',
         Metadata: {
@@ -184,7 +184,10 @@ export class DocumentService {
       const documentAge = this.calculateDocumentAge(document.metadata.uploadedAt);
 
       if (documentAge > retentionPolicy.retentionPeriod) {
-        await this.storageService.archiveDocument(document, 'system', documentId);
+        await this.storageService.archiveDocument(document, {
+          reason: 'system',
+          retentionPeriod: retentionPolicy.retentionPeriod
+        });
 
         // Log retention action
         await this.auditService.createAuditLog({

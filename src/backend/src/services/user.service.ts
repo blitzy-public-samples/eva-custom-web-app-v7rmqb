@@ -24,7 +24,7 @@ import { logger } from '../utils/logger.util';
 @Service()
 export class UserService {
   // Security constants
-  private readonly SENSITIVE_FIELDS = ['phoneNumber', 'sin'] as const;
+  private readonly SENSITIVE_FIELDS = ['phoneNumber'] as const;
 
   constructor(
     @InjectRepository(UserModel)
@@ -52,27 +52,23 @@ export class UserService {
         throw new Error('User already exists');
       }
 
-      // Create user model with default values
-      const user = this.userRepository.create({
-        email: userData.email,
-        name: userData.name,
-        role: UserRole.OWNER,
-        status: UserStatus.PENDING,
-        profile: {
-          province: userData.province,
-          phoneNumber: null,
-          mfaEnabled: false,
-          emailNotifications: true,
-          smsNotifications: false,
-          timezone: 'America/Toronto',
-          language: 'en',
-          lastLoginAt: null,
-          auditEnabled: true
-        },
-        lastPasswordChangeAt: new Date(),
-        failedLoginAttempts: 0,
-        currentSessionId: null
-      });
+      // Create user model
+      const user = new UserModel();
+      user.email = userData.email;
+      user.name = userData.name;
+      user.role = UserRole.OWNER;
+      user.status = UserStatus.PENDING;
+      user.profile = {
+        province: userData.province,
+        phoneNumber: null,
+        mfaEnabled: false,
+        emailNotifications: true,
+        smsNotifications: false,
+        timezone: 'America/Toronto',
+        language: 'en',
+        lastLoginAt: null,
+        auditEnabled: true
+      };
 
       // Encrypt sensitive profile data
       await this.encryptSensitiveData(user);
@@ -95,12 +91,7 @@ export class UserService {
         }
       });
 
-      return {
-        ...savedUser,
-        lastPasswordChangeAt: savedUser.lastPasswordChangeAt || new Date(),
-        failedLoginAttempts: savedUser.failedLoginAttempts || 0,
-        currentSessionId: savedUser.currentSessionId || null
-      };
+      return savedUser;
     } catch (error) {
       logger.error('Failed to create user', { error, email: userData.email });
       throw error;
@@ -147,12 +138,7 @@ export class UserService {
         }
       });
 
-      return {
-        ...user,
-        lastPasswordChangeAt: user.lastPasswordChangeAt || new Date(),
-        failedLoginAttempts: user.failedLoginAttempts || 0,
-        currentSessionId: user.currentSessionId || null
-      };
+      return user;
     } catch (error) {
       logger.error('Failed to retrieve user', { error, userId: id });
       throw error;
@@ -218,12 +204,7 @@ export class UserService {
         }
       });
 
-      return {
-        ...updatedUser,
-        lastPasswordChangeAt: updatedUser.lastPasswordChangeAt || new Date(),
-        failedLoginAttempts: updatedUser.failedLoginAttempts || 0,
-        currentSessionId: updatedUser.currentSessionId || null
-      };
+      return updatedUser;
     } catch (error) {
       logger.error('Failed to update user', { error, userId: id });
       throw error;

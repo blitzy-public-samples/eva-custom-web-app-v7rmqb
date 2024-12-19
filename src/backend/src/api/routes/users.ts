@@ -4,7 +4,7 @@
  * @version 1.0.0
  */
 
-import { Router, Request } from 'express'; // ^4.18.2
+import { Router } from 'express'; // ^4.18.2
 import helmet from 'helmet'; // ^7.0.0
 import { RateLimiterMemory } from 'rate-limiter-flexible'; // ^2.4.1
 import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
@@ -17,7 +17,6 @@ import { createUserSchema, updateUserSchema } from '../validators/users.validato
 import { logger } from '../../utils/logger.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { UserRole } from '../../types/user.types';
-import { UserService } from '../../services/user.service';
 
 // Configure rate limiter
 const rateLimiter = new RateLimiterMemory({
@@ -28,8 +27,7 @@ const rateLimiter = new RateLimiterMemory({
 
 // Initialize router with security settings
 const router = Router();
-const userService = new UserService();
-const usersController = new UsersController(userService);
+const usersController = new UsersController();
 
 // Apply security middleware
 router.use(helmet({
@@ -50,12 +48,12 @@ router.use(helmet({
 }));
 
 // Rate limiting middleware
-const rateLimitMiddleware = async (req: Request, res: any, next: any) => {
+const rateLimitMiddleware = async (req: any, res: any, next: any) => {
   try {
     await rateLimiter.consume(req.ip);
     next();
   } catch (error) {
-    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
+    logger.securityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.WARNING,
       message: 'Rate limit exceeded',
       ipAddress: req.ip,
@@ -85,7 +83,7 @@ router.post('/',
     sensitiveFields: ['email', 'phoneNumber'],
     complianceRequirements: ['PIPEDA', 'HIPAA']
   }),
-  async (req: any, res, next) => {
+  async (req, res, next) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -93,8 +91,7 @@ router.post('/',
       const result = await usersController.createUser(
         req.validatedData,
         req.headers['user-agent'] as string,
-        req.ip,
-        correlationId
+        req.ip
       );
 
       res.status(201).json({
@@ -113,7 +110,7 @@ router.post('/',
  * GET /api/users/:id
  */
 router.get('/:id',
-  async (req: any, res, next) => {
+  async (req, res, next) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -122,8 +119,7 @@ router.get('/:id',
         req.params.id,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip,
-        correlationId
+        req.ip
       );
 
       if (!result) {
@@ -137,7 +133,7 @@ router.get('/:id',
         });
       }
 
-      return res.json({
+      res.json({
         success: true,
         data: result,
         meta: { correlationId }
@@ -158,7 +154,7 @@ router.put('/:id',
     sensitiveFields: ['phoneNumber'],
     complianceRequirements: ['PIPEDA', 'HIPAA']
   }),
-  async (req: any, res, next) => {
+  async (req, res, next) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -168,8 +164,7 @@ router.put('/:id',
         req.validatedData,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip,
-        correlationId
+        req.ip
       );
 
       res.json({
@@ -188,7 +183,7 @@ router.put('/:id',
  * DELETE /api/users/:id
  */
 router.delete('/:id',
-  async (req: any, res, next) => {
+  async (req, res, next) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -197,8 +192,7 @@ router.delete('/:id',
         req.params.id,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip,
-        correlationId
+        req.ip
       );
 
       res.json({
@@ -212,7 +206,7 @@ router.delete('/:id',
 );
 
 // Error handling middleware
-router.use((error: any, req: any, res: any, _next: any) => {
+router.use((error: any, req: any, res: any, next: any) => {
   const correlationId = uuidv4();
   logger.error('User route error', {
     error,

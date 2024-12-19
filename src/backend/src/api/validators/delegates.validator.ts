@@ -51,12 +51,6 @@ const permissionSchema = z.object({
   temporalAccess: temporalAccessSchema.optional()
 });
 
-type RolePermissions = {
-  [key in Exclude<UserRole, UserRole.OWNER>]: {
-    [key in ResourceType]: AccessLevel[];
-  };
-};
-
 /**
  * Validates permission matrix against role-based access control rules
  * Ensures compliance with security policies and authorization matrix
@@ -65,7 +59,7 @@ function validatePermissionMatrix(permissions: Array<{
   resourceType: ResourceType,
   accessLevel: AccessLevel
 }>, role: UserRole): boolean {
-  const rolePermissions: RolePermissions = {
+  const rolePermissions = {
     [UserRole.EXECUTOR]: {
       [ResourceType.PERSONAL_INFO]: [AccessLevel.READ],
       [ResourceType.FINANCIAL_DATA]: [AccessLevel.READ],
@@ -90,15 +84,15 @@ function validatePermissionMatrix(permissions: Array<{
       [ResourceType.MEDICAL_DATA]: [AccessLevel.NONE],
       [ResourceType.LEGAL_DOCS]: [AccessLevel.READ]
     }
-  };
+  } as const;
 
-  if (role === UserRole.OWNER || !rolePermissions[role]) {
+  if (!(role in rolePermissions)) {
     return false;
   }
 
   return permissions.every(permission => {
     const allowedLevels = rolePermissions[role][permission.resourceType];
-    return allowedLevels.includes(permission.accessLevel);
+    return allowedLevels?.includes(permission.accessLevel) ?? false;
   });
 }
 

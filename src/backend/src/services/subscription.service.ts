@@ -15,11 +15,11 @@ import {
   ISubscription, 
   ISubscriptionCreateDTO,
   SubscriptionStatus,
-  SubscriptionPlan 
+  SubscriptionPlan,
+  BillingCycle 
 } from '../types/subscription.types';
 import { ShopifyIntegration } from '../integrations/shopify.integration';
 import { AuditEventType } from '../types/audit.types';
-import { EncryptionService } from '../services/encryption.service';
 
 /**
  * Enhanced service class for managing user subscriptions with comprehensive
@@ -28,7 +28,6 @@ import { EncryptionService } from '../services/encryption.service';
 @Service()
 export class SubscriptionService {
   private readonly rateLimiter: RateLimiterMemory;
-  private readonly encryptionService: EncryptionService;
   private readonly logger: Logger;
 
   constructor(
@@ -43,7 +42,6 @@ export class SubscriptionService {
       blockDuration: 120 // Block for 2 minutes if exceeded
     });
 
-    this.encryptionService = new EncryptionService();
     this.logger = logger;
   }
 
@@ -83,11 +81,11 @@ export class SubscriptionService {
             variantId: this.getPlanVariantId(createDTO.plan, createDTO.billingCycle)
           }],
           billingAddress: {
-            address1: '',
-            city: '',
-            province: '',
-            country: '',
-            zip: ''
+            address1: 'TBD',
+            city: 'TBD',
+            province: 'TBD',
+            country: 'CA',
+            zip: 'TBD'
           }
         });
 
@@ -131,7 +129,7 @@ export class SubscriptionService {
         });
 
         return savedSubscription;
-      } catch (error: unknown) {
+      } catch (error) {
         // Rollback transaction on error
         await queryRunner.rollbackTransaction();
         throw error;
@@ -139,9 +137,10 @@ export class SubscriptionService {
         // Release query runner
         await queryRunner.release();
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to create subscription', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         userId: createDTO.userId
       });
       throw error;
@@ -155,7 +154,7 @@ export class SubscriptionService {
   public async handleShopifyWebhook(webhookEvent: any): Promise<void> {
     try {
       // Verify webhook signature
-      const isValid = this.shopifyIntegration.validateWebhookSignature(
+      const isValid = await this.shopifyIntegration.verifyWebhookSignature(
         webhookEvent.signature,
         JSON.stringify(webhookEvent.payload),
         webhookEvent.timestamp
@@ -213,15 +212,16 @@ export class SubscriptionService {
           topic: webhookEvent.topic,
           subscriptionId: subscription.id
         });
-      } catch (error: unknown) {
+      } catch (error) {
         await queryRunner.rollbackTransaction();
         throw error;
       } finally {
         await queryRunner.release();
       }
-    } catch (error: unknown) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       this.logger.error('Failed to process subscription webhook', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         topic: webhookEvent.topic
       });
       throw error;
@@ -251,7 +251,7 @@ export class SubscriptionService {
    * @returns Shopify variant ID
    * @private
    */
-  private getPlanVariantId(plan: SubscriptionPlan, billingCycle: string): string {
+  private getPlanVariantId(plan: SubscriptionPlan, billingCycle: BillingCycle): string {
     // Implementation would map plans and billing cycles to actual Shopify variant IDs
     const variantMap: Record<string, string> = {
       'FREE_MONTHLY': 'free-monthly-id',

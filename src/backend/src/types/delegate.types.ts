@@ -86,6 +86,12 @@ export const hasResourceAccess = (
     resourceType: ResourceType
 ): boolean => {
     const accessMatrix: Record<UserRole, ResourceType[]> = {
+        [UserRole.OWNER]: [
+            ResourceType.PERSONAL_INFO,
+            ResourceType.FINANCIAL_DATA,
+            ResourceType.MEDICAL_DATA,
+            ResourceType.LEGAL_DOCS
+        ],
         [UserRole.EXECUTOR]: [
             ResourceType.PERSONAL_INFO,
             ResourceType.FINANCIAL_DATA,

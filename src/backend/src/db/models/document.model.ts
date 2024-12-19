@@ -33,7 +33,7 @@ const encryptionService = new EncryptionService();
 @Index(['createdAt'])
 @Index(['userId', 'createdAt'])
 @Index(['type', 'status'])
-export class Document {
+export class DocumentModel {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -149,7 +149,7 @@ export class Document {
    * Creates a new document instance with enhanced security initialization
    * @param data - Partial document data for initialization
    */
-  constructor(data?: Partial<Document>) {
+  constructor(data?: Partial<DocumentModel>) {
     if (data) {
       Object.assign(this, data);
     }
@@ -308,4 +308,4 @@ export class Document {
   }
 }
 
-export default Document;
+export default DocumentModel;

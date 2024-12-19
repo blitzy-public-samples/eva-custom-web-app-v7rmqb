@@ -22,7 +22,10 @@ const RATE_LIMIT_WINDOW_MS = 60000;
 const RATE_LIMIT_MAX_REQUESTS = 100;
 
 // Initialize virus scanner
-const clamav = new NodeClam({
+const clamav = new NodeClam();
+
+// Configure virus scanner after initialization
+clamav.init({
   removeInfected: true,
   quarantineInfected: false,
   scanLog: null,

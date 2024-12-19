@@ -97,7 +97,8 @@ export const getManagementConfig = (): ManagementClientOptions => {
   try {
     return {
       domain: MANAGEMENT_API_CONFIG.domain,
-      token: MANAGEMENT_API_CONFIG.clientSecret,
+      clientId: MANAGEMENT_API_CONFIG.clientId,
+      clientSecret: MANAGEMENT_API_CONFIG.clientSecret,
       tokenProvider: {
         ...MANAGEMENT_API_CONFIG.tokenProvider
       },

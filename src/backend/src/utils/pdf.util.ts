@@ -203,31 +203,30 @@ export async function generatePDFPreview(
       previewPdf.addPage(page);
     }
 
-    // Set document encryption with user permissions
+    // Set document security with user permissions
     const userPassword = generatePreviewPassword();
-    await previewPdf.encrypt({
+    const encryptedPdfBytes = await previewPdf.save({
       userPassword,
       ownerPassword: userPassword,
-      printing: options.allowPrinting ? 'lowResolution' : 'none',
-      modifying: false,
-      copying: options.allowCopying || false,
-      annotating: false,
-      fillingForms: false,
-      contentAccessibility: true,
-      documentAssembly: false
+      permissions: {
+        printing: options.allowPrinting ? 'lowResolution' : 'none',
+        modifying: false,
+        copying: options.allowCopying || false,
+        annotating: false,
+        fillingForms: false,
+        contentAccessibility: true,
+        documentAssembly: false
+      }
     });
-
-    // Generate preview buffer
-    const previewBuffer = await previewPdf.save();
 
     // Log preview generation
     logger.info('PDF preview generated', {
       originalSize: pdfBuffer.length,
-      previewSize: previewBuffer.length,
+      previewSize: encryptedPdfBytes.length,
       pages: pageCount
     });
 
-    return Buffer.from(previewBuffer);
+    return Buffer.from(encryptedPdfBytes);
   } catch (error: unknown) {
     logger.error('PDF preview generation failed', { error });
     throw new Error(`Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

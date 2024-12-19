@@ -59,7 +59,13 @@ function validatePermissionMatrix(permissions: Array<{
   resourceType: ResourceType,
   accessLevel: AccessLevel
 }>, role: UserRole): boolean {
-  const rolePermissions = {
+  const rolePermissions: Record<UserRole, Record<ResourceType, AccessLevel[]>> = {
+    [UserRole.OWNER]: {
+      [ResourceType.PERSONAL_INFO]: [AccessLevel.READ, AccessLevel.WRITE],
+      [ResourceType.FINANCIAL_DATA]: [AccessLevel.READ, AccessLevel.WRITE],
+      [ResourceType.MEDICAL_DATA]: [AccessLevel.READ, AccessLevel.WRITE],
+      [ResourceType.LEGAL_DOCS]: [AccessLevel.READ, AccessLevel.WRITE]
+    },
     [UserRole.EXECUTOR]: {
       [ResourceType.PERSONAL_INFO]: [AccessLevel.READ],
       [ResourceType.FINANCIAL_DATA]: [AccessLevel.READ],
@@ -84,15 +90,10 @@ function validatePermissionMatrix(permissions: Array<{
       [ResourceType.MEDICAL_DATA]: [AccessLevel.NONE],
       [ResourceType.LEGAL_DOCS]: [AccessLevel.READ]
     }
-  } as const;
-
-  // Check if role exists in rolePermissions
-  if (!(role in rolePermissions)) {
-    return false;
-  }
+  };
 
   return permissions.every(permission => {
-    const allowedLevels = rolePermissions[role as keyof typeof rolePermissions][permission.resourceType] || [];
+    const allowedLevels = rolePermissions[role][permission.resourceType];
     return allowedLevels.includes(permission.accessLevel);
   });
 }

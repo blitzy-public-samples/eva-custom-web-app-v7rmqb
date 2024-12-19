@@ -72,10 +72,7 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(request.user.id, {
-        ...validatedData,
-        email: validatedData.email as string // Type assertion to handle branded type
-      });
+      const delegate = await this.delegateService.createDelegate(request.user.id, validatedData);
 
       // Log delegate creation
       await this.auditService.createAuditLog({

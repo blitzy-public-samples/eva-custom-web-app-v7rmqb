@@ -194,3 +194,26 @@ export const authMiddleware = async (
     });
   }
 };
+
+/**
+ * Class-based authentication guard for route protection
+ */
+export class AuthGuard {
+  /**
+   * Verifies if the request is authenticated
+   * @param req Express request object
+   * @param res Express response object
+   * @param next Express next function
+   */
+  public async canActivate(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      await authMiddleware(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  }
+}

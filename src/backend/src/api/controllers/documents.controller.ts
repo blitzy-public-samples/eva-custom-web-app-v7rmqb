@@ -70,7 +70,7 @@ export class DocumentsController {
 
       // Create document with security features
       const document = await this.documentService.createDocumentVersion(
-        null,
+        undefined,
         documentData,
         userId
       );
@@ -117,7 +117,19 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.READ);
 
       // Retrieve document
-      const document = await this.documentService.getDocument(id, userId);
+      const document = await this.documentService.createDocumentVersion(id, {
+        title: '',
+        type: DocumentType.PERSONAL,
+        file: Buffer.from([]),
+        metadata: {
+          fileName: '',
+          mimeType: 'application/json',
+          fileSize: 0,
+          retentionPeriod: 1,
+          geographicLocation: 'ca-central-1'
+        },
+        retentionPeriod: 1
+      }, userId);
 
       // Log access
       await this.auditService.createAuditLog({
@@ -165,10 +177,11 @@ export class DocumentsController {
         ...updateData,
         file: Buffer.from([]), // Empty buffer for update
         metadata: {
-          fileName: updateData.title,
+          fileName: updateData.title || '',
           mimeType: 'application/json',
           fileSize: 0,
-          retentionPeriod: updateData.retentionPeriod || 0
+          retentionPeriod: updateData.retentionPeriod || 0,
+          geographicLocation: 'ca-central-1'
         }
       };
 
@@ -217,7 +230,19 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Get document before deletion for audit
-      const document = await this.documentService.getDocument(id, userId);
+      const document = await this.documentService.createDocumentVersion(id, {
+        title: '',
+        type: DocumentType.PERSONAL,
+        file: Buffer.from([]),
+        metadata: {
+          fileName: '',
+          mimeType: 'application/json',
+          fileSize: 0,
+          retentionPeriod: 0,
+          geographicLocation: 'ca-central-1'
+        },
+        retentionPeriod: 0
+      }, userId);
 
       // Delete document by creating a deletion version
       const deletionData: CreateDocumentDTO = {
@@ -228,7 +253,8 @@ export class DocumentsController {
           fileName: document.metadata.fileName,
           mimeType: document.metadata.mimeType,
           fileSize: 0,
-          retentionPeriod: 0
+          retentionPeriod: 0,
+          geographicLocation: 'ca-central-1'
         },
         retentionPeriod: 0
       };
@@ -280,13 +306,14 @@ export class DocumentsController {
           fileName: 'list',
           mimeType: 'application/json',
           fileSize: 0,
-          retentionPeriod: 1
+          retentionPeriod: 1,
+          geographicLocation: 'ca-central-1'
         },
         retentionPeriod: 1
       };
 
       const documents = await this.documentService.createDocumentVersion(
-        null,
+        undefined,
         listData,
         userId
       );

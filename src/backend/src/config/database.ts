@@ -1,5 +1,5 @@
 // @ts-check
-import { DataSource, DataSourceOptions, PostgresConnectionOptions } from 'typeorm'; // ^0.3.0
+import { DataSource, DataSourceOptions } from 'typeorm'; // ^0.3.0
 import UserModel from '../db/models/user.model';
 import DocumentModel from '../db/models/document.model';
 import winston from 'winston'; // ^3.8.0 - For comprehensive logging
@@ -49,7 +49,7 @@ export const getDataSourceOptions = (): DataSourceOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Base configuration
-  const config: PostgresConnectionOptions = {
+  const config: DataSourceOptions = {
     type: 'postgres',
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT as string, 10),
@@ -69,16 +69,9 @@ export const getDataSourceOptions = (): DataSourceOptions => {
       rejectUnauthorized: true
     },
 
-    // Connection pool settings via extra config
-    extra: {
-      max: isProduction ? 10 : 5,
-      min: 2,
-      idleTimeoutMillis: 30000,
-      acquireTimeoutMillis: 20000,
-      statement_timeout: 10000, // 10s query timeout
-      idle_in_transaction_session_timeout: 60000, // 1m transaction timeout
-      ssl: true
-    },
+    // Connection pool settings
+    connectTimeoutMS: 20000,
+    maxQueryExecutionTime: 10000,
 
     // Cache configuration for performance
     cache: {
@@ -90,6 +83,14 @@ export const getDataSourceOptions = (): DataSourceOptions => {
         db: 0,
         duration: 60000 // 1 minute cache duration
       }
+    },
+
+    // Extra configuration for PostgreSQL
+    extra: {
+      max: 10,
+      statement_timeout: 10000, // 10s query timeout
+      idle_in_transaction_session_timeout: 60000, // 1m transaction timeout
+      ssl: true
     }
   };
 
@@ -111,13 +112,12 @@ export const initializeDatabase = async (): Promise<DataSource> => {
       try {
         await dataSource.initialize();
         break;
-      } catch (err) {
+      } catch (error) {
         retries--;
-        if (retries === 0) throw err;
+        if (retries === 0) throw error;
         
-        const error = err as Error;
         logger.warn(`Database connection failed, retrying... (${retries} attempts left)`, {
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         });
         
@@ -125,25 +125,23 @@ export const initializeDatabase = async (): Promise<DataSource> => {
       }
     }
 
-    // Set up connection event listeners
-    await dataSource.driver.afterConnect();
-    logger.info('Database connected successfully', {
-      timestamp: new Date().toISOString(),
-      host: process.env.DB_HOST,
-      database: process.env.DB_NAME
+    // Set up connection monitoring
+    dataSource.initialize().then(() => {
+      logger.info('Database connected successfully', {
+        timestamp: new Date().toISOString(),
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME
+      });
     });
 
     // Set up query performance monitoring
     if (process.env.NODE_ENV === 'production') {
-      dataSource.queryResultCache?.connect();
-      
-      // Monitor query execution through query runner
-      dataSource.createQueryRunner().stream.on('query', (data: { time?: number, query: string, parameters?: any[] }) => {
-        if (data.time && data.time > 1000) {
+      dataSource.driver.on('query', (query: any) => {
+        if (query.time > 1000) { // Log slow queries (>1s)
           logger.warn('Slow query detected', {
-            query: data.query,
-            parameters: data.parameters,
-            time: data.time,
+            query: query.query,
+            parameters: query.parameters,
+            time: query.time,
             timestamp: new Date().toISOString()
           });
         }
@@ -159,23 +157,22 @@ export const initializeDatabase = async (): Promise<DataSource> => {
             timestamp: new Date().toISOString(),
             operation: 'VACUUM ANALYZE'
           });
-        } catch (err) {
-          const error = err as Error;
+        } catch (error) {
           logger.error('Maintenance operation failed', {
-            error: error.message,
-            timestamp: new Date().toISOString()
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString(),
+            stack: error instanceof Error ? error.stack : undefined
           });
         }
       }, 24 * 60 * 60 * 1000); // Daily maintenance
     }
 
     return dataSource;
-  } catch (err) {
-    const error = err as Error;
+  } catch (error) {
     logger.error('Failed to initialize database', {
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     throw error;
   }

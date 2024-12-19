@@ -51,7 +51,7 @@ delegatesRouter.post('/',
       const delegateService = Container.get(DelegateService);
       const auditService = Container.get(AuditService);
       const controller = new DelegatesController(delegateService, auditService);
-      const result = await controller.createDelegate(req.validatedData);
+      const result = await controller.createDelegate(req.validatedData, req);
 
       logger.info('Delegate created successfully', {
         delegateId: result.id,
@@ -64,7 +64,7 @@ delegatesRouter.post('/',
         data: result
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -90,7 +90,7 @@ delegatesRouter.get('/',
         status,
         role,
         ownerId: (req as any).user?.sub
-      });
+      }, req);
 
       return res.status(200).json({
         success: true,
@@ -103,7 +103,7 @@ delegatesRouter.get('/',
         }
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -122,7 +122,7 @@ delegatesRouter.get('/:id',
       const delegateService = Container.get(DelegateService);
       const auditService = Container.get(AuditService);
       const controller = new DelegatesController(delegateService, auditService);
-      const result = await controller.getDelegate(req.params.id);
+      const result = await controller.getDelegate(req.params.id, req);
 
       if (!result) {
         return res.status(404).json({
@@ -134,12 +134,12 @@ delegatesRouter.get('/:id',
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -164,7 +164,8 @@ delegatesRouter.put('/:id',
       const controller = new DelegatesController(delegateService, auditService);
       const result = await controller.updateDelegate(
         req.params.id,
-        req.validatedData
+        req.validatedData,
+        req
       );
 
       logger.info('Delegate updated successfully', {
@@ -173,12 +174,12 @@ delegatesRouter.put('/:id',
         correlationId: req.headers['x-correlation-id']
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: result
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -197,7 +198,7 @@ delegatesRouter.delete('/:id',
       const delegateService = Container.get(DelegateService);
       const auditService = Container.get(AuditService);
       const controller = new DelegatesController(delegateService, auditService);
-      await controller.revokeDelegate(req.params.id);
+      await controller.revokeDelegate(req.params.id, req);
 
       logger.logSecurityEvent(AuditEventType.DELEGATE_ACCESS, {
         severity: AuditSeverity.WARNING,
@@ -207,12 +208,12 @@ delegatesRouter.delete('/:id',
         correlationId: req.headers['x-correlation-id']
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Delegate access revoked successfully'
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );

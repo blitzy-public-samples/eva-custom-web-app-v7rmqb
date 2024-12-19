@@ -60,6 +60,16 @@ const formatResponseLog = (res: Response, duration: number): Record<string, any>
   const responseSize = res.get('content-length');
   const correlationId = res.get('x-correlation-id');
 
+  // Convert headers to compatible format
+  const headers: Record<string, string | number | string[]> = {};
+  const rawHeaders = res.getHeaders();
+  Object.keys(rawHeaders).forEach(key => {
+    const value = rawHeaders[key];
+    if (value !== undefined) {
+      headers[key] = value;
+    }
+  });
+
   const logEntry = {
     type: 'response',
     timestamp: new Date().toISOString(),
@@ -71,7 +81,7 @@ const formatResponseLog = (res: Response, duration: number): Record<string, any>
       microseconds: duration,
       milliseconds: duration / 1000
     },
-    headers: res.getHeaders(),
+    headers,
     environment: process.env.NODE_ENV
   };
 

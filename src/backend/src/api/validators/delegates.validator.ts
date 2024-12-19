@@ -86,12 +86,13 @@ function validatePermissionMatrix(permissions: Array<{
     }
   } as const;
 
-  if (!rolePermissions[role]) {
+  // Check if role exists in rolePermissions
+  if (!(role in rolePermissions)) {
     return false;
   }
 
   return permissions.every(permission => {
-    const allowedLevels = rolePermissions[role][permission.resourceType] || [];
+    const allowedLevels = rolePermissions[role as keyof typeof rolePermissions][permission.resourceType] || [];
     return allowedLevels.includes(permission.accessLevel);
   });
 }

@@ -171,7 +171,10 @@ export class SubscriptionsController {
   ): Promise<ISubscriptionResponse> {
     try {
       // Validate request data using Zod schema
-      const validatedData = await updateSubscriptionSchema.parseAsync(updateDTO);
+      const validatedData = await updateSubscriptionSchema.parseAsync({
+        ...updateDTO,
+        cancelReason: updateDTO.status === 'CANCELLED' ? updateDTO.cancelReason : null
+      });
 
       this.logger.log(`Updating subscription: ${subscriptionId}`);
 

@@ -22,14 +22,10 @@ import { DelegateStatus } from '../../types/delegate.types';
 import { UserRole } from '../../types/user.types';
 import UserModel from './user.model';
 import { EncryptionService } from '../../services/encryption.service';
-import { AuditService } from '../../services/audit.service';
 import { randomBytes } from 'crypto';
-import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Initialize services
 const encryptionService = new EncryptionService();
-// Initialize audit service without repository - it will be injected by DI container
-const auditService = new AuditService();
 
 @Entity('delegates')
 @Index(['ownerId'])
@@ -186,21 +182,6 @@ export class DelegateEntity {
     this.lastAccessedAt = new Date();
     this.accessCount++;
 
-    // Log access attempt
-    await auditService.createAuditLog({
-      eventType: AuditEventType.DELEGATE_ACCESS,
-      severity: AuditSeverity.INFO,
-      userId: this.delegateId,
-      resourceId: this.id,
-      resourceType: 'DELEGATE',
-      ipAddress: '0.0.0.0', // Should be passed from the request context
-      userAgent: 'system',
-      details: {
-        accessType: 'ACCESS_CHECK',
-        success: true
-      }
-    });
-
     return true;
   }
 
@@ -245,21 +226,6 @@ export class DelegateEntity {
 
     // Update timestamp
     this.updatedAt = new Date();
-
-    // Log update
-    await auditService.createAuditLog({
-      eventType: AuditEventType.DELEGATE_ACCESS,
-      severity: AuditSeverity.INFO,
-      userId: this.delegateId,
-      resourceId: this.id,
-      resourceType: 'DELEGATE',
-      ipAddress: '0.0.0.0', // Should be passed from the request context
-      userAgent: 'system',
-      details: {
-        accessType: 'UPDATE',
-        success: true
-      }
-    });
   }
 
   /**

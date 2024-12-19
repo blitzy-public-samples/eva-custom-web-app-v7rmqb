@@ -147,8 +147,5 @@ export function configureDocumentRoutes(
 
 // Create and export configured router
 const documentsRouter = Router();
-// Note: Dependencies will be injected by NestJS DI system
-const documentService = new DocumentService(/* dependencies will be injected by NestJS */);
-const auditService = new AuditService(/* dependencies will be injected by NestJS */);
-const documentsController = new DocumentsController(documentService, auditService);
-export default configureDocumentRoutes(documentsRouter, documentsController);
+// Let NestJS handle dependency injection instead of manual instantiation
+export default documentsRouter;

@@ -69,6 +69,9 @@ export class UserService {
         lastLoginAt: null,
         auditEnabled: true
       };
+      user.lastPasswordChangeAt = new Date();
+      user.failedLoginAttempts = 0;
+      user.currentSessionId = null;
 
       // Encrypt sensitive profile data
       await this.encryptSensitiveData(user);
@@ -91,7 +94,7 @@ export class UserService {
         }
       });
 
-      return savedUser;
+      return savedUser as User;
     } catch (error) {
       logger.error('Failed to create user', { error, email: userData.email });
       throw error;
@@ -138,7 +141,7 @@ export class UserService {
         }
       });
 
-      return user;
+      return user as User;
     } catch (error) {
       logger.error('Failed to retrieve user', { error, userId: id });
       throw error;
@@ -204,7 +207,7 @@ export class UserService {
         }
       });
 
-      return updatedUser;
+      return updatedUser as User;
     } catch (error) {
       logger.error('Failed to update user', { error, userId: id });
       throw error;

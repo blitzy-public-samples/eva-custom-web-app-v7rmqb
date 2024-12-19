@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { gzip } from 'zlib';
-import { S3 } from '@aws-sdk/client-s3'; // ^2.1.0
+import { S3, PutObjectCommand } from '@aws-sdk/client-s3'; // ^2.1.0
 import { promisify } from 'util';
 
 import {
@@ -21,10 +21,10 @@ import {
 } from '../types/document.types';
 import { AuditService } from './audit.service';
 import { logger } from '../utils/logger.util';
-import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
+import { ResourceType, AccessLevel } from '../types/permission.types';
 import { EncryptionService } from './encryption.service';
 import { StorageService } from './storage.service';
-import { Document as DocumentModel } from '../db/models/document.model';
+import { DocumentModel } from '../db/models/document.model';
 import { AuditEventType, AuditSeverity } from '../types/audit.types';
 
 // Constants for security and compliance
@@ -70,7 +70,7 @@ export class DocumentService {
   ): Promise<Document> {
     try {
       // Validate access permissions
-      await this.validateUserAccess(userId, documentId, AccessLevel.WRITE);
+      await this.validateUserAccess(userId, documentId, 'WRITE');
 
       // Create metadata with required fields
       const metadata: DocumentMetadata = {
@@ -88,19 +88,17 @@ export class DocumentService {
       // Generate new encryption key and encrypt content
       const encryptedData = await this.encryptionService.encryptWithNewKey(
         compressedContent,
-        {
-          algorithm: 'AES-256-GCM'
-        }
+        {}
       );
 
       // Create S3 storage path with versioning
       const s3Key = this.generateS3Key(documentId, userId);
       
       // Upload to S3 with server-side encryption
-      const uploadResult = await this.s3Client.putObject({
+      const command = new PutObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME || '',
         Key: s3Key,
-        Body: encryptedData.encryptedData,
+        Body: Buffer.from(encryptedData.encryptedData),
         ServerSideEncryption: 'aws:kms',
         SSEKMSKeyId: process.env.KMS_KEY_ID || '',
         Metadata: {
@@ -109,6 +107,7 @@ export class DocumentService {
           'x-amz-meta-document-type': versionData.type
         }
       });
+      const uploadResult = await this.s3Client.send(command);
 
       // Create document record
       const document = new DocumentModel();
@@ -126,7 +125,7 @@ export class DocumentService {
         storageDetails: {
           bucket: process.env.S3_BUCKET_NAME || '',
           key: s3Key,
-          version: uploadResult.VersionId || '',
+          version: uploadResult.VersionId,
           encryptionType: EncryptionType.KMS_MANAGED,
           kmsKeyId: process.env.KMS_KEY_ID || ''
         },
@@ -185,7 +184,7 @@ export class DocumentService {
       const documentAge = this.calculateDocumentAge(document.metadata.uploadedAt);
 
       if (documentAge > retentionPolicy.retentionPeriod) {
-        await this.storageService.archiveDocument(document);
+        await this.storageService.archiveDocument(document, 'system', documentId);
 
         // Log retention action
         await this.auditService.createAuditLog({
@@ -217,7 +216,7 @@ export class DocumentService {
   private async validateUserAccess(
     userId: string,
     documentId: string,
-    requiredLevel: AccessLevel
+    requiredLevel: 'READ' | 'WRITE' | 'DELETE' | 'ARCHIVE'
   ): Promise<void> {
     const document = await this.documentRepository.findOne({
       where: { id: documentId } as any

@@ -18,11 +18,7 @@ import {
 
 import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { DelegateEntity } from './delegate.model';
-import { AuditService } from '../../services/audit.service';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
-
-// Initialize audit service for security tracking
-const auditService = new AuditService();
 
 @Entity('permissions')
 @Index('IDX_DELEGATE', ['delegateId'])
@@ -168,38 +164,9 @@ export class PermissionEntity {
         this.metadata.accessCount = (this.metadata.accessCount || 0) + 1;
       }
 
-      // Log access attempt
-      await auditService.createAuditLog({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.INFO,
-        userId: this.delegateId,
-        resourceId: this.id,
-        resourceType: this.resourceType,
-        ipAddress: '0.0.0.0',
-        userAgent: 'system',
-        details: {
-          accessType: 'PERMISSION_CHECK',
-          requiredLevel,
-          granted: this.accessLevel >= requiredLevel
-        }
-      });
-
       // Check access level
       return this.accessLevel >= requiredLevel;
     } catch (error) {
-      await auditService.createAuditLog({
-        eventType: AuditEventType.PERMISSION_CHANGE,
-        severity: AuditSeverity.ERROR,
-        userId: this.delegateId,
-        resourceId: this.id,
-        resourceType: this.resourceType,
-        ipAddress: '0.0.0.0',
-        userAgent: 'system',
-        details: {
-          accessType: 'PERMISSION_CHECK_ERROR',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
-      });
       return false;
     }
   }

@@ -171,7 +171,10 @@ export class SubscriptionsController {
   ): Promise<ISubscriptionResponse> {
     try {
       // Validate request data using Zod schema
-      const validatedData = await updateSubscriptionSchema.parseAsync(updateDTO);
+      const validatedData = await updateSubscriptionSchema.parseAsync({
+        ...updateDTO,
+        cancelReason: updateDTO.cancelReason || null
+      });
 
       this.logger.log(`Updating subscription: ${subscriptionId}`);
 
@@ -264,7 +267,10 @@ export class SubscriptionsController {
     try {
       this.logger.log(`Cancelling subscription: ${subscriptionId}`);
 
-      await this.subscriptionService.cancelSubscription(subscriptionId);
+      await this.subscriptionService.cancelSubscription(
+        subscriptionId,
+        'User requested cancellation' // Default cancellation reason
+      );
 
       this.logger.log(`Successfully cancelled subscription: ${subscriptionId}`);
     } catch (error: any) {

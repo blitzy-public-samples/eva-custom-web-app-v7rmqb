@@ -20,7 +20,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 /**
  * Interface defining province-specific content structure
  */
-export interface ProvinceContent {
+interface ProvinceContent {
   name: string;
   code: string;
   resources: Resource[];
@@ -32,7 +32,7 @@ export interface ProvinceContent {
 /**
  * Interface defining estate planning resource structure
  */
-export interface Resource {
+interface Resource {
   title: string;
   description: string;
   category: string;
@@ -46,7 +46,7 @@ export interface Resource {
 /**
  * Interface defining estate planning guidelines
  */
-export interface Guideline {
+interface Guideline {
   title: string;
   content: string;
   category: string;
@@ -169,8 +169,9 @@ export async function getProvinceContent(
 
     return content as ProvinceContent;
 
-  } catch (error) {
-    logger.error(`Error retrieving province content: ${error.message}`, {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error(`Error retrieving province content: ${errorMessage}`, {
       provinceCode,
       error
     });
@@ -213,8 +214,9 @@ export async function getResourcesByCategory(
 
     return resources as Resource[];
 
-  } catch (error) {
-    logger.error(`Error retrieving resources by category: ${error.message}`, {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error(`Error retrieving resources by category: ${errorMessage}`, {
       category,
       error
     });
@@ -253,8 +255,9 @@ export async function searchResources(
 
     return resources as Resource[];
 
-  } catch (error) {
-    logger.error(`Error searching resources: ${error.message}`, {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error(`Error searching resources: ${errorMessage}`, {
       searchTerm,
       error
     });
@@ -262,5 +265,4 @@ export async function searchResources(
   }
 }
 
-// Export interfaces for external use
-export type { ProvinceContent, Resource, Guideline };
+export { ProvinceContent, Resource, Guideline };

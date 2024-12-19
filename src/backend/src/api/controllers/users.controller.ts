@@ -29,7 +29,8 @@ import {
   CreateUserDTO, 
   UpdateUserDTO, 
   User, 
-  UserRole 
+  UserRole,
+  UserStatus
 } from '../../types/user.types';
 import { 
   AuditEventType, 
@@ -234,7 +235,7 @@ export class UsersController {
       });
 
       // Soft delete the user
-      await this.userService.updateUser(id, { status: 'INACTIVE' }, userRole);
+      await this.userService.updateUser(id, { status: UserStatus.INACTIVE }, userRole);
 
     } catch (error: unknown) {
       logger.error('User deletion failed', { error, userId: id });

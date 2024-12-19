@@ -205,8 +205,7 @@ export async function generatePDFPreview(
 
     // Generate preview buffer
     const previewBuffer = await previewPdf.save({
-      userPassword: undefined,
-      ownerPassword: generatePreviewPassword(),
+      ownerProtectionPassword: generatePreviewPassword(),
       permissions: {
         printing: options.allowPrinting ? 'lowResolution' : 'none',
         modifying: false,
@@ -273,7 +272,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: Math.PI / 4,
+    rotate: Math.PI / 4 as number,
     opacity: 0.3
   });
 }

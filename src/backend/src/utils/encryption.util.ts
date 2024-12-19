@@ -1,6 +1,6 @@
 // @ts-check
 import crypto from 'crypto'; // native - Node.js crypto module
-import { KMS } from '@aws-sdk/client-kms'; // ^2.1.0 - AWS SDK for KMS integration
+import { KMS, GenerateDataKeyCommandInput, DataKeySpec } from '@aws-sdk/client-kms'; // ^2.1.0 - AWS SDK for KMS integration
 import { awsConfig } from '../config/aws';
 
 // Constants for encryption configuration
@@ -92,8 +92,9 @@ export async function encrypt(data: Buffer, key: Buffer, context?: string): Prom
     };
 
     return encryptedData;
-  } catch (error) {
-    throw new Error(`Encryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Encryption failed: ${errorMessage}`);
   }
 }
 
@@ -125,8 +126,9 @@ export async function decrypt(encryptedData: EncryptedData, key: Buffer): Promis
     ]);
 
     return decrypted;
-  } catch (error) {
-    throw new Error(`Decryption failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Decryption failed: ${errorMessage}`);
   }
 }
 
@@ -138,25 +140,26 @@ export async function decrypt(encryptedData: EncryptedData, key: Buffer): Promis
  */
 export async function generateEncryptionKey(
   keyType: 'local' | 'kms' = 'local',
-  options: { keySpec?: string } = {}
+  options: { keySpec?: DataKeySpec } = {}
 ): Promise<Buffer> {
   try {
     if (keyType === 'kms' && awsConfig.credentials.accessKeyId) {
       // Generate key using KMS
-      const params = {
+      const params: GenerateDataKeyCommandInput = {
         KeyId: awsConfig.credentials.accessKeyId,
         NumberOfBytes: KEY_LENGTH,
         KeySpec: options.keySpec || 'AES_256'
       };
       
-      const { Plaintext } = await kms.generateDataKey(params).promise();
+      const { Plaintext } = await kms.generateDataKey(params);
       return Buffer.from(Plaintext as Buffer);
     } else {
       // Generate key locally
       return crypto.randomBytes(KEY_LENGTH);
     }
-  } catch (error) {
-    throw new Error(`Key generation failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Key generation failed: ${errorMessage}`);
   }
 }
 
@@ -228,7 +231,8 @@ export async function rotateKey(
     };
 
     return { newKey, metadata };
-  } catch (error) {
-    throw new Error(`Key rotation failed: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    throw new Error(`Key rotation failed: ${errorMessage}`);
   }
 }

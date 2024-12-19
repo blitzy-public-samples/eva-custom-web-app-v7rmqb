@@ -42,6 +42,7 @@ import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { AuthGuard } from '../middlewares/auth.middleware';
 import { RBACGuard } from '../middlewares/rbac.middleware';
 import { AuditInterceptor } from '../middlewares/logging.middleware';
+import { CreateDelegateDTO } from '../../types/delegate.types';
 
 @Controller('delegates')
 @ApiTags('Delegates')
@@ -64,19 +65,19 @@ export class DelegatesController {
   @ApiResponse({ status: 201, description: 'Delegate created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid delegate data' })
   @ApiResponse({ status: 403, description: 'Unauthorized role or permission' })
-  async createDelegate(@Body() createDelegateDto: any) {
+  async createDelegate(@Body() createDelegateDto: CreateDelegateDTO) {
     try {
       // Validate request data
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(validatedData.userId, validatedData);
+      const delegate = await this.delegateService.createDelegate(validatedData);
 
       // Log delegate creation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.DELEGATE_INVITE,
         severity: AuditSeverity.INFO,
-        userId: validatedData.userId,
+        userId: delegate.delegateId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
         ipAddress: '',
@@ -115,6 +116,12 @@ export class DelegatesController {
       // Validate update data
       const validatedData = await updateDelegateSchema.parseAsync(updateDelegateDto);
 
+      // Get existing delegate
+      const delegate = await this.delegateService.getDelegate(id);
+      if (!delegate) {
+        throw new HttpException('Delegate not found', HttpStatus.NOT_FOUND);
+      }
+
       // Update delegate with security checks
       const updatedDelegate = await this.delegateService.updateDelegate(id, validatedData);
 
@@ -122,14 +129,14 @@ export class DelegatesController {
       await this.auditService.createAuditLog({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.INFO,
-        userId: updatedDelegate.userId,
+        userId: updatedDelegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
         ipAddress: '',
         userAgent: '',
         details: {
           changes: validatedData,
-          previousState: updatedDelegate
+          previousState: delegate
         }
       });
 
@@ -164,7 +171,7 @@ export class DelegatesController {
       await this.auditService.createAuditLog({
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: AuditSeverity.INFO,
-        userId: delegate.userId,
+        userId: delegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
         ipAddress: '',
@@ -196,7 +203,8 @@ export class DelegatesController {
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: AuditSeverity.INFO,
         userId: query.userId,
-        resourceType: 'DELEGATE_LIST',
+        resourceType: 'DELEGATE',
+        resourceId: 'LIST',
         ipAddress: '',
         userAgent: '',
         details: { filters: query }
@@ -222,6 +230,12 @@ export class DelegatesController {
       // Validate delegate ID
       await delegateIdSchema.parseAsync({ id });
 
+      // Get existing delegate
+      const delegate = await this.delegateService.getDelegate(id);
+      if (!delegate) {
+        throw new HttpException('Delegate not found', HttpStatus.NOT_FOUND);
+      }
+
       // Revoke delegate access with security checks
       const revokedDelegate = await this.delegateService.revokeDelegate(id);
 
@@ -229,14 +243,14 @@ export class DelegatesController {
       await this.auditService.createAuditLog({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.WARNING,
-        userId: revokedDelegate.userId,
+        userId: revokedDelegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
         ipAddress: '',
         userAgent: '',
         details: {
           action: 'REVOKE',
-          previousStatus: revokedDelegate.status
+          previousStatus: delegate.status
         }
       });
 
@@ -267,6 +281,7 @@ export class DelegatesController {
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: hasAccess ? AuditSeverity.INFO : AuditSeverity.WARNING,
         userId: verifyAccessDto.delegateId,
+        resourceId: verifyAccessDto.resourceId || 'VERIFY',
         resourceType: verifyAccessDto.resourceType,
         ipAddress: '',
         userAgent: '',

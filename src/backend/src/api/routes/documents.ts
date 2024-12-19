@@ -8,6 +8,7 @@
 import { Router } from 'express'; // ^4.18.2
 import multer from 'multer'; // ^1.4.5-lts.1
 import rateLimit from 'express-rate-limit'; // ^6.7.0
+import { Request, Response, NextFunction } from 'express';
 
 import { DocumentsController } from '../controllers/documents.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
@@ -64,60 +65,60 @@ export function configureDocumentRoutes(
   // Create document endpoint with enhanced security
   router.post('/',
     rateLimit(RATE_LIMITS.create),
-    authMiddleware as any,
+    authMiddleware,
     upload.single('file'),
     validateRequest(createDocumentSchema, {
       resourceType: 'DOCUMENT',
       sensitiveFields: ['file'],
       complianceRequirements: ['PIPEDA', 'HIPAA']
     }),
-    controller.createDocument.bind(controller)
+    (req: Request, res: Response, next: NextFunction) => controller.createDocument(req as any, res).catch(next)
   );
 
   // Get specific document endpoint
   router.get('/:id',
     rateLimit(RATE_LIMITS.read),
-    authMiddleware as any,
+    authMiddleware,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.getDocument.bind(controller)
+    (req: Request, res: Response, next: NextFunction) => controller.getDocument(req as any, res).catch(next)
   );
 
   // List documents endpoint with pagination and filtering
   router.get('/',
     rateLimit(RATE_LIMITS.read),
-    authMiddleware as any,
+    authMiddleware,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.listDocuments.bind(controller)
+    (req: Request, res: Response, next: NextFunction) => controller.listDocuments(req as any, res).catch(next)
   );
 
   // Update document endpoint
   router.put('/:id',
     rateLimit(RATE_LIMITS.update),
-    authMiddleware as any,
+    authMiddleware,
     validateRequest(updateDocumentSchema, {
       resourceType: 'DOCUMENT',
       sensitiveFields: ['metadata'],
       complianceRequirements: ['PIPEDA', 'HIPAA']
     }),
-    controller.updateDocument.bind(controller)
+    (req: Request, res: Response, next: NextFunction) => controller.updateDocument(req as any, res).catch(next)
   );
 
   // Delete document endpoint
   router.delete('/:id',
     rateLimit(RATE_LIMITS.delete),
-    authMiddleware as any,
+    authMiddleware,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.deleteDocument.bind(controller)
+    (req: Request, res: Response, next: NextFunction) => controller.deleteDocument(req as any, res).catch(next)
   );
 
   // Error handling middleware
-  router.use((error: Error, _req: any, res: any, next: any) => {
+  router.use((error: Error, _req: Request, res: Response, next: NextFunction) => {
     if (error instanceof multer.MulterError) {
       return res.status(400).json({
         success: false,
@@ -146,7 +147,7 @@ export function configureDocumentRoutes(
 
 // Create and export configured router
 const documentsRouter = Router();
-const documentService = new DocumentService();
-const auditService = new AuditService();
+const documentService = new DocumentService(/* dependencies will be injected by NestJS */);
+const auditService = new AuditService(/* dependencies will be injected by NestJS */);
 const documentsController = new DocumentsController(documentService, auditService);
 export default configureDocumentRoutes(documentsRouter, documentsController);

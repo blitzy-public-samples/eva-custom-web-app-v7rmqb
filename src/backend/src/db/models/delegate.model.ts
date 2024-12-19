@@ -18,15 +18,19 @@ import {
   AfterLoad
 } from 'typeorm'; // ^0.3.0
 
-import { UserRole, DelegateStatus } from '../../types/delegate.types';
-import { UserModel } from './user.model';
+import { DelegateStatus } from '../../types/delegate.types';
+import { UserRole } from '../../types/user.types';
+import UserModel from './user.model';
 import { EncryptionService } from '../../services/encryption.service';
 import { AuditService } from '../../services/audit.service';
 import { randomBytes } from 'crypto';
+import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Initialize services
 const encryptionService = new EncryptionService();
-const auditService = new AuditService();
+const auditService = new AuditService({
+  auditRepository: null // This will be injected by the DI container
+});
 
 @Entity('delegates')
 @Index(['ownerId'])
@@ -185,8 +189,8 @@ export class DelegateEntity {
 
     // Log access attempt
     await auditService.createAuditLog({
-      eventType: 'DELEGATE_ACCESS',
-      severity: 'INFO',
+      eventType: AuditEventType.DELEGATE_ACCESS,
+      severity: AuditSeverity.INFO,
       userId: this.delegateId,
       resourceId: this.id,
       resourceType: 'DELEGATE',
@@ -213,7 +217,7 @@ export class DelegateEntity {
 
     // Encrypt sensitive data if present
     if (this.encryptedData) {
-      const encrypted = await encryptionService.encryptSensitiveData(
+      const encrypted = await encryptionService.encryptField(
         Buffer.from(this.encryptedData),
         this.accessKey
       );
@@ -233,7 +237,7 @@ export class DelegateEntity {
   async beforeUpdate(): Promise<void> {
     // Re-encrypt data if modified
     if (this.encryptedData) {
-      const encrypted = await encryptionService.encryptSensitiveData(
+      const encrypted = await encryptionService.encryptField(
         Buffer.from(this.encryptedData),
         this.accessKey
       );
@@ -245,8 +249,8 @@ export class DelegateEntity {
 
     // Log update
     await auditService.createAuditLog({
-      eventType: 'DELEGATE_ACCESS',
-      severity: 'INFO',
+      eventType: AuditEventType.DELEGATE_ACCESS,
+      severity: AuditSeverity.INFO,
       userId: this.delegateId,
       resourceId: this.id,
       resourceType: 'DELEGATE',
@@ -267,7 +271,7 @@ export class DelegateEntity {
     // Decrypt sensitive data
     if (this.encryptedData) {
       try {
-        const decrypted = await encryptionService.decryptSensitiveData(
+        const decrypted = await encryptionService.decryptField(
           {
             content: Buffer.from(this.encryptedData, 'base64'),
             iv: Buffer.alloc(16),

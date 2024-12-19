@@ -19,9 +19,12 @@ import {
 import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { DelegateEntity } from './delegate.model';
 import { AuditService } from '../../services/audit.service';
+import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Initialize audit service for security tracking
-const auditService = new AuditService();
+const auditService = new AuditService({
+  auditRepository: null // Will be injected by DI container
+});
 
 @Entity('permissions')
 @Index('IDX_DELEGATE', ['delegateId'])
@@ -169,8 +172,8 @@ export class PermissionEntity {
 
       // Log access attempt
       await auditService.createAuditLog({
-        eventType: 'PERMISSION_CHECK',
-        severity: 'INFO',
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.INFO,
         userId: this.delegateId,
         resourceId: this.id,
         resourceType: this.resourceType,
@@ -187,8 +190,8 @@ export class PermissionEntity {
       return this.accessLevel >= requiredLevel;
     } catch (error) {
       await auditService.createAuditLog({
-        eventType: 'PERMISSION_CHECK',
-        severity: 'ERROR',
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.ERROR,
         userId: this.delegateId,
         resourceId: this.id,
         resourceType: this.resourceType,

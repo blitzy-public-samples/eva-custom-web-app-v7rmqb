@@ -8,7 +8,7 @@ import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from 'typeorm-typedi-extensions'; // ^0.4.1
 
-import { UserModel } from '../db/models/user.model';
+import UserModel from '../db/models/user.model';
 import { 
   User, 
   CreateUserDTO, 
@@ -260,7 +260,7 @@ export class UserService {
     if (user.profile) {
       for (const field of this.SENSITIVE_FIELDS) {
         if (user.profile[field]) {
-          const encrypted = await this.encryptionService.encryptSensitiveData(
+          const encrypted = await this.encryptionService.encryptField(
             Buffer.from(user.profile[field] as string),
             process.env.ENCRYPTION_KEY as string
           );
@@ -279,7 +279,7 @@ export class UserService {
       for (const field of this.SENSITIVE_FIELDS) {
         if (user.profile[field]) {
           try {
-            const decrypted = await this.encryptionService.decryptSensitiveData(
+            const decrypted = await this.encryptionService.decryptField(
               {
                 content: Buffer.from(user.profile[field] as string, 'base64'),
                 iv: Buffer.alloc(16),

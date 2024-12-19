@@ -32,7 +32,7 @@ const encryptionService = new EncryptionService();
 @Index(['role'], { where: "status = 'ACTIVE'" })
 export default class UserModel {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ 
     type: 'varchar', 
@@ -40,34 +40,34 @@ export default class UserModel {
     unique: true,
     nullable: false 
   })
-  email: string;
+  email!: string;
 
   @Column({ 
     type: 'varchar', 
     length: 255,
     nullable: false 
   })
-  name: string;
+  name!: string;
 
   @Column({
     type: 'enum',
     enum: UserRole,
     default: UserRole.OWNER
   })
-  role: UserRole;
+  role!: UserRole;
 
   @Column({
     type: 'enum',
     enum: UserStatus,
     default: UserStatus.PENDING
   })
-  status: UserStatus;
+  status!: UserStatus;
 
   @Column({
     type: 'jsonb',
     nullable: false
   })
-  profile: UserProfile;
+  profile!: UserProfile;
 
   @Column({
     type: 'varchar',
@@ -75,57 +75,58 @@ export default class UserModel {
     nullable: true,
     comment: 'Last login IP address for security tracking'
   })
-  lastLoginIp: string | null;
+  lastLoginIp!: string | null;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Last successful login timestamp'
   })
-  lastLoginAt: Date | null;
+  lastLoginAt!: Date | null;
 
   @CreateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Account creation timestamp'
   })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Last update timestamp'
   })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @Column({
     type: 'timestamp with time zone',
     nullable: true,
     comment: 'Soft delete timestamp'
   })
-  deletedAt: Date | null;
+  deletedAt!: Date | null;
 
   /**
    * Creates a new user instance with enhanced security initialization
    * @param data - Partial user data for initialization
    */
   constructor(data?: Partial<UserModel>) {
-    if (data) {
-      Object.assign(this, data);
-      
-      // Initialize default profile if not provided
-      if (!this.profile) {
-        this.profile = {
-          phoneNumber: null,
-          province: '',
-          mfaEnabled: false,
-          emailNotifications: true,
-          smsNotifications: false,
-          timezone: 'America/Toronto',
-          language: 'en',
-          lastLoginAt: null,
-          auditEnabled: true
-        };
-      }
-    }
+    Object.assign(this, {
+      role: UserRole.OWNER,
+      status: UserStatus.PENDING,
+      profile: {
+        phoneNumber: null,
+        province: '',
+        mfaEnabled: false,
+        emailNotifications: true,
+        smsNotifications: false,
+        timezone: 'America/Toronto',
+        language: 'en',
+        lastLoginAt: null,
+        auditEnabled: true
+      },
+      lastLoginIp: null,
+      lastLoginAt: null,
+      deletedAt: null,
+      ...data
+    });
   }
 
   /**
@@ -140,7 +141,7 @@ export default class UserModel {
       const sensitiveFields = ['phoneNumber'] as const;
       for (const field of sensitiveFields) {
         if (this.profile[field]) {
-          const encrypted = await encryptionService.encryptSensitiveData(
+          const encrypted = await encryptionService.encryptField(
             Buffer.from(this.profile[field] as string),
             process.env.ENCRYPTION_KEY as string
           );
@@ -160,12 +161,12 @@ export default class UserModel {
       for (const field of sensitiveFields) {
         if (this.profile[field]) {
           try {
-            const decrypted = await encryptionService.decryptSensitiveData(
+            const decrypted = await encryptionService.decryptField(
               {
                 content: Buffer.from(this.profile[field] as string, 'base64'),
                 iv: Buffer.alloc(16),
                 authTag: Buffer.alloc(16),
-                keyVersion: '1', // Added required keyVersion
+                keyVersion: '1',
                 metadata: {
                   algorithm: process.env.ENCRYPTION_ALGORITHM || 'aes-256-gcm',
                   timestamp: Date.now()

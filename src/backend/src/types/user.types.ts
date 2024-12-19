@@ -66,6 +66,7 @@ export interface CreateUserDTO {
     email: string;                   // Required email address
     name: string;                    // Required full name
     province: string;                // Required province selection
+    password: string;                // Required password for account creation
 }
 
 /**

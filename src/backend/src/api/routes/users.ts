@@ -8,6 +8,8 @@ import { Router } from 'express'; // ^4.18.2
 import helmet from 'helmet'; // ^7.0.0
 import { RateLimiterMemory } from 'rate-limiter-flexible'; // ^2.4.1
 import { v4 as uuidv4 } from 'uuid'; // ^9.0.0
+import { Container } from 'typedi';
+import { getRepository } from 'typeorm';
 
 // Internal imports
 import { UsersController } from '../controllers/users.controller';
@@ -19,6 +21,9 @@ import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { UserRole } from '../../types/user.types';
 import { UserService } from '../../services/user.service';
 import { AuditService } from '../../services/audit.service';
+import { EncryptionService } from '../../services/encryption.service';
+import UserModel from '../../db/models/user.model';
+import { AuditModel } from '../../db/models/audit.model';
 
 // Configure rate limiter
 const rateLimiter = new RateLimiterMemory({
@@ -27,10 +32,15 @@ const rateLimiter = new RateLimiterMemory({
   blockDuration: 300 // Block for 5 minutes if exceeded
 });
 
+// Initialize services with dependencies
+const userRepository = getRepository(UserModel);
+const auditRepository = getRepository(AuditModel);
+const encryptionService = Container.get(EncryptionService);
+const auditService = new AuditService(auditRepository);
+const userService = new UserService(userRepository, auditService, encryptionService);
+
 // Initialize router with security settings
 const router = Router();
-const userService = new UserService();
-const auditService = new AuditService();
 const usersController = new UsersController(userService, auditService);
 
 // Apply security middleware

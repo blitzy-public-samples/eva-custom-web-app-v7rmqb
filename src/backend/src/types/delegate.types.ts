@@ -2,6 +2,9 @@
 import { UUID } from 'crypto'; // Version: latest - Used for unique identifiers
 import { User, UserRole } from './user.types';
 
+// Re-export UserRole for external use
+export { UserRole };
+
 /**
  * Enum defining types of resources that can be accessed by delegates.
  * Maps to authorization matrix defined in security specifications.
@@ -86,6 +89,12 @@ export const hasResourceAccess = (
     resourceType: ResourceType
 ): boolean => {
     const accessMatrix: Record<UserRole, ResourceType[]> = {
+        [UserRole.OWNER]: [
+            ResourceType.PERSONAL_INFO,
+            ResourceType.FINANCIAL_DATA,
+            ResourceType.MEDICAL_DATA,
+            ResourceType.LEGAL_DOCS
+        ],
         [UserRole.EXECUTOR]: [
             ResourceType.PERSONAL_INFO,
             ResourceType.FINANCIAL_DATA,

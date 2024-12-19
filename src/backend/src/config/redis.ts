@@ -111,7 +111,7 @@ export async function createRedisClient(
     }
   };
 
-  // Add healthCheck as a property to the client type
+  // Add healthCheck as a property to the client
   (client as any).healthCheck = healthCheck;
 
   return client;
@@ -175,7 +175,7 @@ export async function createRedisCluster(
     }
   };
 
-  // Add healthCheck as a property to the cluster type
+  // Add healthCheck as a property to the cluster
   (cluster as any).healthCheck = clusterHealthCheck;
 
   return cluster;

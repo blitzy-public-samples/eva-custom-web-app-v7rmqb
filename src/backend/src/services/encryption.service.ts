@@ -1,5 +1,5 @@
 // @ts-check
-import { KMS } from '@aws-sdk/client-kms'; // ^2.1.0
+import { KMS, KMSClientConfig } from '@aws-sdk/client-kms'; // ^2.1.0
 import winston from 'winston'; // ^3.0.0
 import { 
   encrypt, 
@@ -52,7 +52,14 @@ export class EncryptionService {
     maxRetryAttempts: number = 3
   ) {
     // Initialize AWS KMS client with provided configuration
-    this.kmsClient = new KMS(awsConfig);
+    const kmsConfig: KMSClientConfig = {
+      region: awsConfig.region,
+      credentials: {
+        accessKeyId: awsConfig.credentials.accessKeyId || '',
+        secretAccessKey: awsConfig.credentials.secretAccessKey || ''
+      }
+    };
+    this.kmsClient = new KMS(kmsConfig);
     
     // Initialize key cache and configuration
     this.keyCache = new Map<string, CachedKeyData>();

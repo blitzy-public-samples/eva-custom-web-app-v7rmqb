@@ -18,7 +18,7 @@ import {
   HttpStatus,
   HttpException,
   Logger
-} from '@nestjs/common'; // ^10.0.0
+} from '@nestjs/common';
 
 import {
   ApiTags,
@@ -26,16 +26,14 @@ import {
   ApiResponse,
   ApiSecurity,
   ApiBearerAuth
-} from '@nestjs/swagger'; // ^7.0.0
+} from '@nestjs/swagger';
 
-import { AuthGuard } from '@nestjs/passport'; // ^10.0.0
-import { ThrottlerGuard } from '@nestjs/throttler'; // ^5.0.0
+import { AuthGuard } from '@nestjs/passport';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 // Internal imports
 import { SubscriptionService } from '../../services/subscription.service';
-import { createSubscriptionSchema } from '../validators/subscriptions.validator';
-import { LoggingInterceptor } from '../interceptors/logging.interceptor';
-import { Roles } from '../decorators/roles.decorator';
+import { createSubscriptionSchema, updateSubscriptionSchema } from '../validators/subscriptions.validator';
 import { 
   ISubscriptionCreateDTO, 
   ISubscriptionResponse,
@@ -48,7 +46,6 @@ import {
 @Controller('subscriptions')
 @ApiTags('Subscriptions')
 @UseGuards(AuthGuard('jwt'), ThrottlerGuard)
-@UseInterceptors(LoggingInterceptor)
 @ApiBearerAuth()
 export class SubscriptionsController {
   private readonly logger = new Logger(SubscriptionsController.name);
@@ -59,7 +56,6 @@ export class SubscriptionsController {
    * Creates a new subscription with enhanced validation and security
    */
   @Post()
-  @Roles('admin', 'user')
   @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Create new subscription' })
   @ApiResponse({ 
@@ -83,7 +79,11 @@ export class SubscriptionsController {
 
       this.logger.log(`Creating subscription for user: ${validatedData.userId}`);
 
-      const subscription = await this.subscriptionService.createSubscription(validatedData);
+      const subscription = await this.subscriptionService.createSubscription({
+        ...validatedData,
+        shopifyCustomerId: createDTO.shopifyCustomerId,
+        trialDays: createDTO.trialDays || null
+      });
 
       this.logger.log(`Successfully created subscription: ${subscription.id}`);
 
@@ -159,7 +159,6 @@ export class SubscriptionsController {
    * Updates an existing subscription with validation
    */
   @Put(':subscriptionId')
-  @Roles('admin', 'user')
   @UseGuards(ThrottlerGuard)
   @ApiOperation({ summary: 'Update subscription' })
   @ApiResponse({ 
@@ -171,11 +170,14 @@ export class SubscriptionsController {
     @Body() updateDTO: ISubscriptionUpdateDTO
   ): Promise<ISubscriptionResponse> {
     try {
+      // Validate request data using Zod schema
+      const validatedData = await updateSubscriptionSchema.parseAsync(updateDTO);
+
       this.logger.log(`Updating subscription: ${subscriptionId}`);
 
       const subscription = await this.subscriptionService.updateSubscription(
         subscriptionId,
-        updateDTO
+        validatedData
       );
 
       this.logger.log(`Successfully updated subscription: ${subscriptionId}`);
@@ -209,7 +211,6 @@ export class SubscriptionsController {
    * Retrieves subscription details with security checks
    */
   @Get(':subscriptionId')
-  @Roles('admin', 'user')
   @ApiOperation({ summary: 'Get subscription details' })
   @ApiResponse({ 
     status: HttpStatus.OK, 
@@ -252,7 +253,6 @@ export class SubscriptionsController {
    * Cancels an existing subscription with security validation
    */
   @Delete(':subscriptionId')
-  @Roles('admin', 'user')
   @ApiOperation({ summary: 'Cancel subscription' })
   @ApiResponse({ 
     status: HttpStatus.OK, 

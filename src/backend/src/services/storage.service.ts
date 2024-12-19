@@ -26,6 +26,25 @@ interface DocumentMetadata {
   securityContext: SecurityMetadata;
 }
 
+interface S3Metadata {
+  encryption: {
+    algorithm: string;
+    keyId?: string;
+    iv: string;
+    authTag: string;
+    version: string;
+    classification: string;
+    accessLevel: string;
+    retentionPolicy?: string;
+    userId?: string;
+  };
+  contentType: string;
+  size: number;
+  checksum: string;
+  versionId: string;
+  lastModified: Date;
+}
+
 @injectable()
 export class StorageService {
   constructor(
@@ -42,12 +61,6 @@ export class StorageService {
 
   /**
    * Uploads and encrypts a document with enhanced security features
-   * @param fileBuffer - Document content buffer
-   * @param fileName - Name of the file
-   * @param contentType - MIME type of the file
-   * @param userId - ID of the user uploading the document
-   * @param securityMetadata - Security classification and access controls
-   * @returns Promise resolving to upload result with security context
    */
   public async uploadDocument(
     fileBuffer: Buffer,
@@ -127,10 +140,6 @@ export class StorageService {
 
   /**
    * Downloads and decrypts a document with security validation
-   * @param documentKey - Storage key of the document
-   * @param userId - ID of the requesting user
-   * @param securityContext - Security validation context
-   * @returns Promise resolving to decrypted document content
    */
   public async downloadDocument(
     documentKey: string,
@@ -150,7 +159,7 @@ export class StorageService {
       });
 
       // Get document metadata for security validation
-      const metadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
 
       // Validate access permissions
       this.validateAccessPermissions(metadata, userId, securityContext);
@@ -163,11 +172,11 @@ export class StorageService {
 
       // Get encryption metadata
       const encryptionMetadata = {
-        iv: Buffer.from(metadata.encryption?.iv || '', 'base64'),
-        authTag: Buffer.from(metadata.encryption?.authTag || '', 'base64'),
-        keyVersion: metadata.encryption?.version || '1',
+        iv: Buffer.from(metadata.encryption.iv, 'base64'),
+        authTag: Buffer.from(metadata.encryption.authTag, 'base64'),
+        keyVersion: metadata.encryption.version,
         metadata: {
-          algorithm: metadata.encryption?.algorithm || 'aes-256-gcm',
+          algorithm: metadata.encryption.algorithm,
           timestamp: Date.now()
         }
       };
@@ -200,11 +209,106 @@ export class StorageService {
   }
 
   /**
+   * Archives a document with audit trail
+   */
+  public async archiveDocument(
+    documentKey: string,
+    userId: string,
+    archiveMetadata: { reason: string; retentionPeriod: number }
+  ): Promise<void> {
+    try {
+      // Input validation
+      if (!documentKey || !userId) {
+        throw new Error('Missing required archive parameters');
+      }
+
+      logger.info('Starting document archival', {
+        documentKey,
+        userId,
+        retentionPeriod: archiveMetadata.retentionPeriod
+      });
+
+      // Get document metadata
+      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+
+      // Validate archive permissions
+      await this.checkUserAccess(userId, documentKey, 'ARCHIVE');
+
+      // Move to archive storage location
+      const archiveKey = `archive/${documentKey}`;
+      await this.s3Integration.uploadFile(
+        await this.s3Integration.downloadFile(documentKey),
+        archiveKey,
+        metadata.contentType,
+        {
+          ...metadata.encryption,
+          archiveReason: archiveMetadata.reason,
+          archiveDate: new Date().toISOString(),
+          retentionPeriod: archiveMetadata.retentionPeriod.toString()
+        }
+      );
+
+      // Delete original document
+      await this.s3Integration.deleteFile(documentKey);
+
+      logger.info('Document archived successfully', {
+        documentKey,
+        archiveKey,
+        userId
+      });
+
+    } catch (error) {
+      logger.error('Document archival failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        documentKey,
+        userId
+      });
+      throw new Error(`Document archival failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Checks user access permissions for document operations
+   */
+  public async checkUserAccess(
+    userId: string,
+    documentKey: string,
+    operation: 'READ' | 'WRITE' | 'DELETE' | 'ARCHIVE'
+  ): Promise<boolean> {
+    try {
+      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
+      const documentUserId = metadata.encryption.userId;
+      const documentAccessLevel = metadata.encryption.accessLevel;
+
+      // Admin users have full access
+      if (documentAccessLevel === 'ADMIN') {
+        return true;
+      }
+
+      // Document owners have full access
+      if (documentUserId === userId) {
+        return true;
+      }
+
+      // Public documents can be read by anyone
+      if (operation === 'READ' && documentAccessLevel === 'PUBLIC') {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('Access check failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId,
+        documentKey,
+        operation
+      });
+      return false;
+    }
+  }
+
+  /**
    * Implements secure document deletion with audit trail
-   * @param documentKey - Storage key of the document
-   * @param userId - ID of the requesting user
-   * @param deletionMetadata - Metadata for deletion audit
-   * @returns Promise resolving to void
    */
   public async deleteDocument(
     documentKey: string,
@@ -224,7 +328,7 @@ export class StorageService {
       });
 
       // Get document metadata
-      const metadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
 
       // Validate deletion permissions
       this.validateDeletionPermissions(metadata, userId);
@@ -251,9 +355,6 @@ export class StorageService {
 
   /**
    * Retrieves enhanced document metadata with security information
-   * @param documentKey - Storage key of the document
-   * @param securityContext - Security validation context
-   * @returns Promise resolving to enhanced metadata
    */
   public async getDocumentMetadata(
     documentKey: string,
@@ -271,7 +372,7 @@ export class StorageService {
       });
 
       // Get base metadata from S3
-      const metadata = await this.s3Integration.getFileMetadata(documentKey);
+      const metadata = await this.s3Integration.getFileMetadata(documentKey) as S3Metadata;
 
       // Compile enhanced metadata
       const enhancedMetadata: DocumentMetadata = {
@@ -281,10 +382,10 @@ export class StorageService {
         versionId: metadata.versionId,
         lastModified: metadata.lastModified,
         securityContext: {
-          classification: metadata.encryption?.classification || 'UNCLASSIFIED',
-          accessLevel: metadata.encryption?.accessLevel || 'PRIVATE',
-          retentionPolicy: metadata.encryption?.retentionPolicy,
-          encryptionContext: metadata.encryption?.keyId
+          classification: metadata.encryption.classification,
+          accessLevel: metadata.encryption.accessLevel,
+          retentionPolicy: metadata.encryption.retentionPolicy,
+          encryptionContext: metadata.encryption.keyId
         }
       };
 
@@ -309,12 +410,12 @@ export class StorageService {
    * @private
    */
   private validateAccessPermissions(
-    metadata: any,
+    metadata: S3Metadata,
     userId: string,
     securityContext: SecurityMetadata
   ): void {
-    const documentUserId = metadata.encryption?.userId;
-    const documentAccessLevel = metadata.encryption?.accessLevel;
+    const documentUserId = metadata.encryption.userId;
+    const documentAccessLevel = metadata.encryption.accessLevel;
 
     if (documentUserId !== userId && 
         securityContext.accessLevel !== 'ADMIN' &&
@@ -327,8 +428,8 @@ export class StorageService {
    * Validates user permissions for document deletion
    * @private
    */
-  private validateDeletionPermissions(metadata: any, userId: string): void {
-    const documentUserId = metadata.encryption?.userId;
+  private validateDeletionPermissions(metadata: S3Metadata, userId: string): void {
+    const documentUserId = metadata.encryption.userId;
     if (documentUserId !== userId) {
       throw new Error('Insufficient permissions to delete document');
     }

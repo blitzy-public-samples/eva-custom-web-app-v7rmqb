@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
-import { RateLimiterRes } from 'rate-limiter-flexible'; // ^2.3.0
+import { RateLimiter } from 'rate-limiter-flexible'; // ^2.3.0
 import { CloudWatch } from '@aws-sdk/client-cloudwatch'; // ^3.0.0
 
 import { DelegateEntity } from '../db/models/delegate.model';
@@ -25,7 +25,7 @@ const RATE_LIMIT_DURATION = 60; // seconds
 
 @Injectable()
 export class DelegateService {
-  private rateLimiter: RateLimiterRes;
+  private rateLimiter: RateLimiter;
   private cloudWatch: CloudWatch;
 
   constructor(
@@ -35,7 +35,7 @@ export class DelegateService {
     private readonly auditService: AuditService
   ) {
     // Initialize rate limiter
-    this.rateLimiter = new RateLimiterRes({
+    this.rateLimiter = new RateLimiter({
       points: RATE_LIMIT_POINTS,
       duration: RATE_LIMIT_DURATION
     });
@@ -48,9 +48,6 @@ export class DelegateService {
 
   /**
    * Creates a new delegate relationship with enhanced security features
-   * @param ownerId - ID of the estate owner
-   * @param delegateData - DTO containing delegate information and permissions
-   * @returns Promise resolving to created delegate entity
    */
   async createDelegate(
     ownerId: string,
@@ -111,11 +108,156 @@ export class DelegateService {
   }
 
   /**
+   * Retrieves a specific delegate by ID with security checks
+   */
+  async getDelegate(id: string): Promise<DelegateEntity> {
+    try {
+      const delegate = await this.delegateRepository.findOne({
+        where: { id }
+      });
+
+      if (!delegate) {
+        throw new Error('Delegate not found');
+      }
+
+      await this.auditService.createAuditLog({
+        eventType: AuditEventType.DELEGATE_ACCESS,
+        severity: AuditSeverity.INFO,
+        userId: delegate.delegateId,
+        resourceId: id,
+        resourceType: 'DELEGATE',
+        ipAddress: '', // Should be passed from controller
+        userAgent: '', // Should be passed from controller
+        details: {
+          accessType: 'READ'
+        }
+      });
+
+      return delegate;
+    } catch (error) {
+      logger.error('Failed to retrieve delegate', { error, id });
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves all delegates for an owner with pagination
+   */
+  async getDelegates(ownerId: string, page: number = 1, limit: number = 10): Promise<{
+    delegates: DelegateEntity[];
+    total: number;
+  }> {
+    try {
+      const [delegates, total] = await this.delegateRepository.findAndCount({
+        where: { ownerId },
+        skip: (page - 1) * limit,
+        take: limit,
+        order: { createdAt: 'DESC' }
+      });
+
+      await this.auditService.createAuditLog({
+        eventType: AuditEventType.DELEGATE_ACCESS,
+        severity: AuditSeverity.INFO,
+        userId: ownerId,
+        resourceId: null,
+        resourceType: 'DELEGATE_LIST',
+        ipAddress: '', // Should be passed from controller
+        userAgent: '', // Should be passed from controller
+        details: {
+          accessType: 'LIST',
+          page,
+          limit
+        }
+      });
+
+      return { delegates, total };
+    } catch (error) {
+      logger.error('Failed to retrieve delegates', { error, ownerId });
+      throw error;
+    }
+  }
+
+  /**
+   * Updates delegate information with security validation
+   */
+  async updateDelegate(
+    id: string,
+    ownerId: string,
+    updates: Partial<DelegateEntity>
+  ): Promise<DelegateEntity> {
+    try {
+      const delegate = await this.delegateRepository.findOne({
+        where: { id, ownerId }
+      });
+
+      if (!delegate) {
+        throw new Error('Delegate not found or unauthorized');
+      }
+
+      // Update delegate
+      Object.assign(delegate, updates);
+      const updatedDelegate = await this.delegateRepository.save(delegate);
+
+      await this.auditService.createAuditLog({
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.INFO,
+        userId: ownerId,
+        resourceId: id,
+        resourceType: 'DELEGATE',
+        ipAddress: '', // Should be passed from controller
+        userAgent: '', // Should be passed from controller
+        details: {
+          updates: Object.keys(updates)
+        }
+      });
+
+      await this.recordSecurityMetric('DelegateUpdate', 1);
+
+      return updatedDelegate;
+    } catch (error) {
+      logger.error('Failed to update delegate', { error, id });
+      throw error;
+    }
+  }
+
+  /**
+   * Revokes delegate access with security audit
+   */
+  async revokeDelegate(id: string, ownerId: string): Promise<void> {
+    try {
+      const delegate = await this.delegateRepository.findOne({
+        where: { id, ownerId }
+      });
+
+      if (!delegate) {
+        throw new Error('Delegate not found or unauthorized');
+      }
+
+      delegate.status = DelegateStatus.REVOKED;
+      await this.delegateRepository.save(delegate);
+
+      await this.auditService.createAuditLog({
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.WARNING,
+        userId: ownerId,
+        resourceId: id,
+        resourceType: 'DELEGATE',
+        ipAddress: '', // Should be passed from controller
+        userAgent: '', // Should be passed from controller
+        details: {
+          action: 'REVOKE'
+        }
+      });
+
+      await this.recordSecurityMetric('DelegateRevocation', 1);
+    } catch (error) {
+      logger.error('Failed to revoke delegate', { error, id });
+      throw error;
+    }
+  }
+
+  /**
    * Verifies delegate access with comprehensive security checks
-   * @param delegateId - ID of the delegate
-   * @param resourceType - Type of resource being accessed
-   * @param requiredAccess - Required access level
-   * @returns Promise resolving to access verification result
    */
   async verifyDelegateAccess(
     delegateId: string,

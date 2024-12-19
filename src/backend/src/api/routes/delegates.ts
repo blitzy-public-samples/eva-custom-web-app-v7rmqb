@@ -59,7 +59,7 @@ delegatesRouter.post('/',
         correlationId: req.headers['x-correlation-id']
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: result
       });

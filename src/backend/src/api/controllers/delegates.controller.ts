@@ -17,6 +17,7 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  Req,
 } from '@nestjs/common'; // ^9.0.0
 import {
   ApiTags,
@@ -65,13 +66,13 @@ export class DelegatesController {
   @ApiResponse({ status: 201, description: 'Delegate created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid delegate data' })
   @ApiResponse({ status: 403, description: 'Unauthorized role or permission' })
-  async createDelegate(@Body() createDelegateDto: CreateDelegateDTO) {
+  async createDelegate(@Body() createDelegateDto: CreateDelegateDTO, @Req() request: any) {
     try {
       // Validate request data
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(validatedData);
+      const delegate = await this.delegateService.createDelegate(request.user.id, validatedData);
 
       // Log delegate creation
       await this.auditService.createAuditLog({
@@ -80,8 +81,8 @@ export class DelegatesController {
         userId: delegate.delegateId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: {
           delegateEmail: validatedData.email,
           role: validatedData.role,
@@ -107,7 +108,8 @@ export class DelegatesController {
   @ApiResponse({ status: 404, description: 'Delegate not found' })
   async updateDelegate(
     @Param('id') id: string,
-    @Body() updateDelegateDto: any
+    @Body() updateDelegateDto: any,
+    @Req() request: any
   ) {
     try {
       // Validate delegate ID
@@ -132,8 +134,8 @@ export class DelegatesController {
         userId: updatedDelegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: {
           changes: validatedData,
           previousState: delegate
@@ -155,7 +157,7 @@ export class DelegatesController {
   @ApiOperation({ summary: 'Get delegate by ID' })
   @ApiResponse({ status: 200, description: 'Delegate retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
-  async getDelegate(@Param('id') id: string) {
+  async getDelegate(@Param('id') id: string, @Req() request: any) {
     try {
       // Validate delegate ID
       await delegateIdSchema.parseAsync({ id });
@@ -174,8 +176,8 @@ export class DelegatesController {
         userId: delegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: { accessType: 'READ' }
       });
 
@@ -193,7 +195,7 @@ export class DelegatesController {
   @Throttle(50, 60)
   @ApiOperation({ summary: 'List delegates' })
   @ApiResponse({ status: 200, description: 'Delegates retrieved successfully' })
-  async getDelegates(@Query() query: any) {
+  async getDelegates(@Query() query: any, @Req() request: any) {
     try {
       // Get delegates with security checks
       const delegates = await this.delegateService.getDelegates(query);
@@ -202,11 +204,11 @@ export class DelegatesController {
       await this.auditService.createAuditLog({
         eventType: AuditEventType.DELEGATE_ACCESS,
         severity: AuditSeverity.INFO,
-        userId: query.userId,
+        userId: request.user.id,
         resourceType: 'DELEGATE',
         resourceId: 'LIST',
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: { filters: query }
       });
 
@@ -225,7 +227,7 @@ export class DelegatesController {
   @ApiOperation({ summary: 'Revoke delegate access' })
   @ApiResponse({ status: 200, description: 'Delegate access revoked successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
-  async revokeDelegate(@Param('id') id: string) {
+  async revokeDelegate(@Param('id') id: string, @Req() request: any) {
     try {
       // Validate delegate ID
       await delegateIdSchema.parseAsync({ id });
@@ -246,8 +248,8 @@ export class DelegatesController {
         userId: revokedDelegate.delegateId,
         resourceId: id,
         resourceType: 'DELEGATE',
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: {
           action: 'REVOKE',
           previousStatus: delegate.status
@@ -268,7 +270,7 @@ export class DelegatesController {
   @Throttle(100, 60)
   @ApiOperation({ summary: 'Verify delegate access permissions' })
   @ApiResponse({ status: 200, description: 'Access verification result' })
-  async verifyDelegateAccess(@Query() verifyAccessDto: any) {
+  async verifyDelegateAccess(@Query() verifyAccessDto: any, @Req() request: any) {
     try {
       const hasAccess = await this.delegateService.verifyDelegateAccess(
         verifyAccessDto.delegateId,
@@ -283,8 +285,8 @@ export class DelegatesController {
         userId: verifyAccessDto.delegateId,
         resourceId: verifyAccessDto.resourceId || 'VERIFY',
         resourceType: verifyAccessDto.resourceType,
-        ipAddress: '',
-        userAgent: '',
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
         details: {
           accessLevel: verifyAccessDto.accessLevel,
           accessGranted: hasAccess

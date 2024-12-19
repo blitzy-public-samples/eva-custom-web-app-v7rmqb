@@ -234,8 +234,11 @@ export class UsersController {
         }
       });
 
-      // Soft delete the user
-      await this.userService.updateUser(id, { status: UserStatus.INACTIVE }, userRole);
+      // Soft delete the user with required profile field
+      await this.userService.updateUser(id, { 
+        status: UserStatus.INACTIVE,
+        profile: {} // Include empty profile to satisfy DTO requirements
+      }, userRole);
 
     } catch (error: unknown) {
       logger.error('User deletion failed', { error, userId: id });

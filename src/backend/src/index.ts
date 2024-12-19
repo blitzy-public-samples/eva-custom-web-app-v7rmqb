@@ -101,7 +101,7 @@ async function startServer(): Promise<void> {
     logger.info('Database connection established successfully');
 
     // Initialize Redis connection
-    await redisClient.connect();
+    const redisInstance = await redisClient;
     logger.info('Redis connection established successfully');
 
     // Initialize Express server
@@ -144,7 +144,8 @@ async function handleShutdown(server: any): Promise<void> {
     logger.info('Database connection closed');
 
     // Close Redis connection
-    await redisClient.quit();
+    const redisInstance = await redisClient;
+    await redisInstance.disconnect();
     logger.info('Redis connection closed');
 
     // Log successful shutdown

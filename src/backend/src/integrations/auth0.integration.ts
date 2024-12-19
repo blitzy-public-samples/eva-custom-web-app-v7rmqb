@@ -52,12 +52,11 @@ export class Auth0Integration {
       }
     });
 
-    // Initialize Auth0 Authentication Client with timeout
+    // Initialize Auth0 Authentication Client
     this.authClient = new AuthenticationClient({
       domain: auth0Config.domain,
       clientId: auth0Config.clientId,
-      clientSecret: auth0Config.clientSecret,
-      timeout: this.requestTimeout
+      clientSecret: auth0Config.clientSecret
     });
 
     // Configure rate limiting
@@ -173,19 +172,20 @@ export class Auth0Integration {
         );
       });
 
-      const response = await this.authClient.refreshToken({
-        refresh_token: refreshToken,
-        scope: 'openid profile email'
-      });
+      const response = await this.authClient.refreshToken({ refresh_token: refreshToken });
 
       // Verify new tokens
-      await this.verifyToken(response.access_token);
+      if (typeof response === 'object' && 'access_token' in response) {
+        await this.verifyToken(response.access_token as string);
 
-      return {
-        accessToken: response.access_token,
-        refreshToken: response.refresh_token,
-        expiresIn: response.expires_in
-      };
+        return {
+          accessToken: response.access_token,
+          refreshToken: response.refresh_token,
+          expiresIn: response.expires_in
+        };
+      }
+
+      throw new Auth0IntegrationError('Invalid token response', 'TOKEN_REFRESH_ERROR');
     } catch (error) {
       throw new Auth0IntegrationError(
         `Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

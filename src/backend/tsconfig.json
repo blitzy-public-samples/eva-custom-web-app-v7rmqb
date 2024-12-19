@@ -21,7 +21,8 @@
     },
     "typeRoots": [
       "./src/types",
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "./node_modules/pdf2json/dist"
     ],
     "allowJs": false,
     "checkJs": false,

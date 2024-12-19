@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib'; // v1.17.1
+import { PDFDocument, PDFPage, rgb, StandardFonts, degrees } from 'pdf-lib'; // v1.17.1
 import PDFParser from 'pdf2json'; // v2.0.0
 import { ReadableStreamBuffer } from 'stream-buffers'; // v3.0.2
 import { DocumentMetadata } from '../types/document.types';
@@ -205,7 +205,6 @@ export async function generatePDFPreview(
 
     // Generate preview buffer
     const previewBuffer = await previewPdf.save({
-      ownerProtectionPassword: generatePreviewPassword(),
       permissions: {
         printing: options.allowPrinting ? 'lowResolution' : 'none',
         modifying: false,
@@ -272,7 +271,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: Math.PI / 4 as number,
+    rotate: degrees(45),
     opacity: 0.3
   });
 }

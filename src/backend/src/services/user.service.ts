@@ -7,6 +7,7 @@
 import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from 'typeorm-typedi-extensions'; // ^0.4.1
+import { UUID } from 'crypto';
 
 import UserModel from '../db/models/user.model';
 import { 
@@ -91,6 +92,7 @@ export class UserService {
       // Convert to User type with additional fields
       const userResponse: User = {
         ...savedUser,
+        id: savedUser.id as UUID,
         lastPasswordChangeAt: new Date(),
         failedLoginAttempts: 0,
         currentSessionId: null
@@ -146,6 +148,7 @@ export class UserService {
       // Convert to User type with additional fields
       const userResponse: User = {
         ...user,
+        id: user.id as UUID,
         lastPasswordChangeAt: new Date(),
         failedLoginAttempts: 0,
         currentSessionId: null
@@ -220,6 +223,7 @@ export class UserService {
       // Convert to User type with additional fields
       const userResponse: User = {
         ...updatedUser,
+        id: updatedUser.id as UUID,
         lastPasswordChangeAt: new Date(),
         failedLoginAttempts: 0,
         currentSessionId: null

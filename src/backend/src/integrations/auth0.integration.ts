@@ -131,7 +131,7 @@ export class Auth0Integration {
 
     const attemptGetUser = async (): Promise<object> => {
       try {
-        const user = await this.managementClient.getUser({ id: userId });
+        const user = await this.managementClient.users.get({ id: userId });
         return {
           ...user,
           // Remove sensitive information
@@ -172,7 +172,7 @@ export class Auth0Integration {
         );
       });
 
-      const response = await this.authClient.refreshToken({ refresh_token: refreshToken });
+      const response = await this.authClient.oauth.refreshToken({ refresh_token: refreshToken });
 
       // Verify new tokens
       if (typeof response === 'object' && 'access_token' in response) {

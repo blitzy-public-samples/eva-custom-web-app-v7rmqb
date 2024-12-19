@@ -28,53 +28,54 @@ interface ValidationResult {
   details?: Record<string, any>;
 }
 
-// Decorator for caching validation results
-function Cached(ttlSeconds: number) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    const cache = new Map<string, { result: ValidationResult; timestamp: number }>();
-    const originalMethod = descriptor.value;
+// Cache implementation using Map
+const validationCache = new Map<string, { result: ValidationResult; timestamp: number }>();
 
-    descriptor.value = function (...args: any[]) {
-      const key = JSON.stringify(args);
-      const now = Date.now();
-      const cached = cache.get(key);
+// Rate limiting implementation using Map
+const rateLimitAttempts = new Map<string, number[]>();
 
-      if (cached && (now - cached.timestamp) < ttlSeconds * 1000) {
-        return cached.result;
-      }
+// Cache helper function
+function withCache<T extends any[]>(
+  fn: (...args: T) => ValidationResult,
+  ttlSeconds: number
+): (...args: T) => ValidationResult {
+  return (...args: T) => {
+    const key = JSON.stringify(args);
+    const now = Date.now();
+    const cached = validationCache.get(key);
 
-      const result = originalMethod.apply(this, args);
-      cache.set(key, { result, timestamp: now });
-      return result;
-    };
+    if (cached && (now - cached.timestamp) < ttlSeconds * 1000) {
+      return cached.result;
+    }
+
+    const result = fn(...args);
+    validationCache.set(key, { result, timestamp: now });
+    return result;
   };
 }
 
-// Rate limiting decorator
-function RateLimit(limit: number, window: string) {
-  const attempts = new Map<string, number[]>();
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+// Rate limit helper function
+function withRateLimit(
+  fn: (input: string, userId: string) => ValidationResult,
+  limit: number,
+  windowMs: number
+): (input: string, userId: string) => ValidationResult {
+  return (input: string, userId: string) => {
+    const key = userId || 'default';
+    const now = Date.now();
+    const userAttempts = rateLimitAttempts.get(key) || [];
+    const validAttempts = userAttempts.filter(time => (now - time) < windowMs);
 
-    descriptor.value = function (...args: any[]) {
-      const key = args[1] || 'default'; // userId or default
-      const now = Date.now();
-      const windowMs = window === '1m' ? 60000 : 3600000;
-      
-      const userAttempts = attempts.get(key) || [];
-      const validAttempts = userAttempts.filter(time => (now - time) < windowMs);
-      
-      if (validAttempts.length >= limit) {
-        return {
-          isValid: false,
-          message: 'Rate limit exceeded. Please try again later.'
-        };
-      }
+    if (validAttempts.length >= limit) {
+      return {
+        isValid: false,
+        message: 'Rate limit exceeded. Please try again later.'
+      };
+    }
 
-      validAttempts.push(now);
-      attempts.set(key, validAttempts);
-      return originalMethod.apply(this, args);
-    };
+    validAttempts.push(now);
+    rateLimitAttempts.set(key, validAttempts);
+    return fn(input, userId);
   };
 }
 
@@ -83,8 +84,7 @@ function RateLimit(limit: number, window: string) {
  * @param email - Email address to validate
  * @returns ValidationResult object
  */
-@Cached(300)
-export function validateEmail(email: string): ValidationResult {
+export const validateEmail = withCache((email: string): ValidationResult => {
   try {
     // Sanitize input
     const sanitizedEmail = sanitizeInput(email);
@@ -123,7 +123,7 @@ export function validateEmail(email: string): ValidationResult {
   } catch (error) {
     return { isValid: false, message: 'Email validation failed', details: { error } };
   }
-}
+}, 300);
 
 /**
  * Enhanced password validation with HIPAA compliance and pattern detection
@@ -131,53 +131,56 @@ export function validateEmail(email: string): ValidationResult {
  * @param userId - User ID for rate limiting
  * @returns ValidationResult object
  */
-@RateLimit(10, '1m')
-export function validatePassword(password: string, userId: string): ValidationResult {
-  try {
-    if (!password) {
-      return { isValid: false, message: 'Password is required' };
+export const validatePassword = withRateLimit(
+  (password: string, userId: string): ValidationResult => {
+    try {
+      if (!password) {
+        return { isValid: false, message: 'Password is required' };
+      }
+
+      // Length validation
+      if (password.length < PASSWORD_MIN_LENGTH) {
+        return {
+          isValid: false,
+          message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`
+        };
+      }
+
+      // Pattern validation
+      if (!PASSWORD_REGEX.test(password)) {
+        return {
+          isValid: false,
+          message: 'Password must contain uppercase, lowercase, number, and special character'
+        };
+      }
+
+      // Common pattern check
+      const commonPatterns = ['password', '123456', 'qwerty'];
+      if (commonPatterns.some(pattern => password.toLowerCase().includes(pattern))) {
+        return { isValid: false, message: 'Password contains common patterns' };
+      }
+
+      // HIPAA compliance check
+      const hipaaCompliant = z.string()
+        .min(12)
+        .regex(/[A-Z]/)
+        .regex(/[a-z]/)
+        .regex(/[0-9]/)
+        .regex(/[^A-Za-z0-9]/)
+        .safeParse(password);
+
+      if (!hipaaCompliant.success) {
+        return { isValid: false, message: 'Password does not meet HIPAA requirements' };
+      }
+
+      return { isValid: true, message: 'Password meets all requirements' };
+    } catch (error) {
+      return { isValid: false, message: 'Password validation failed', details: { error } };
     }
-
-    // Length validation
-    if (password.length < PASSWORD_MIN_LENGTH) {
-      return {
-        isValid: false,
-        message: `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`
-      };
-    }
-
-    // Pattern validation
-    if (!PASSWORD_REGEX.test(password)) {
-      return {
-        isValid: false,
-        message: 'Password must contain uppercase, lowercase, number, and special character'
-      };
-    }
-
-    // Common pattern check
-    const commonPatterns = ['password', '123456', 'qwerty'];
-    if (commonPatterns.some(pattern => password.toLowerCase().includes(pattern))) {
-      return { isValid: false, message: 'Password contains common patterns' };
-    }
-
-    // HIPAA compliance check
-    const hipaaCompliant = z.string()
-      .min(12)
-      .regex(/[A-Z]/)
-      .regex(/[a-z]/)
-      .regex(/[0-9]/)
-      .regex(/[^A-Za-z0-9]/)
-      .safeParse(password);
-
-    if (!hipaaCompliant.success) {
-      return { isValid: false, message: 'Password does not meet HIPAA requirements' };
-    }
-
-    return { isValid: true, message: 'Password meets all requirements' };
-  } catch (error) {
-    return { isValid: false, message: 'Password validation failed', details: { error } };
-  }
-}
+  },
+  10,
+  60000
+);
 
 /**
  * Date validation with timezone and business hours support
@@ -217,8 +220,7 @@ export function validateDate(date: string, timezone: string = BUSINESS_HOURS.tim
  * @param uuid - UUID string to validate
  * @returns ValidationResult object
  */
-@Cached(3600)
-export function validateUUID(uuid: string): ValidationResult {
+export const validateUUID = withCache((uuid: string): ValidationResult => {
   try {
     if (!uuid || typeof uuid !== 'string') {
       return { isValid: false, message: 'UUID is required' };
@@ -238,7 +240,7 @@ export function validateUUID(uuid: string): ValidationResult {
   } catch (error) {
     return { isValid: false, message: 'UUID validation failed', details: { error } };
   }
-}
+}, 3600);
 
 /**
  * Enhanced file validation with type checking and virus scan

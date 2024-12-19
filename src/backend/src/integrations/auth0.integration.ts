@@ -172,7 +172,7 @@ export class Auth0Integration {
         );
       });
 
-      const response = await this.authClient.oauth.refreshTokenWithRefreshToken(refreshToken);
+      const response = await this.authClient.oauth.refreshToken({ refresh_token: refreshToken });
 
       // Verify new tokens
       if (typeof response === 'object' && 'access_token' in response) {

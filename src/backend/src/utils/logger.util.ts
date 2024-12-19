@@ -122,7 +122,6 @@ export class Logger {
           logStreamName: `${NODE_ENV}-${new Date().toISOString()}`,
           awsRegion: AWS_REGION,
           messageFormatter: formatLogMessage,
-          handleExceptions: true,
           jsonMessage: true,
           retentionInDays: 14,
           uploadRate: this.bufferConfig.flushInterval

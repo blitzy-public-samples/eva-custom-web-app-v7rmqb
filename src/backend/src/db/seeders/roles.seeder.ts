@@ -2,7 +2,7 @@
 import { DataSource } from 'typeorm'; // Version: ^0.3.0
 import { UserRole } from '../../types/user.types';
 import { ResourceType, AccessLevel } from '../../types/permission.types';
-import { Logger } from '../../utils/logger.util'; // Updated logger path
+import { logger } from '../../utils/logger.util'; // Updated logger path
 
 /**
  * Default role permission matrix defining access levels and metadata for each role
@@ -88,7 +88,6 @@ const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Array<{
  */
 export async function seedRoles(dataSource: DataSource): Promise<void> {
     const queryRunner = dataSource.createQueryRunner();
-    const logger = new Logger('RolesSeeder');
 
     try {
         // Start transaction with serializable isolation for consistency

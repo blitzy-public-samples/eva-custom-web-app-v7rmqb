@@ -38,6 +38,10 @@ import {
 
 // Types and enums
 import { ResourceType, AccessLevel } from '../../types/permission.types';
+import { AuditEventType, AuditSeverity } from '../../types/audit.types';
+import { AuthGuard } from '../middlewares/auth.middleware';
+import { RBACGuard } from '../middlewares/rbac.middleware';
+import { AuditInterceptor } from '../middlewares/logging.middleware';
 
 @Controller('delegates')
 @ApiTags('Delegates')
@@ -55,7 +59,7 @@ export class DelegatesController {
    * Creates a new delegate relationship with comprehensive security validation
    */
   @Post()
-  @Throttle({ ttl: 60, limit: 10 })
+  @Throttle(10, 60)
   @ApiOperation({ summary: 'Create new delegate relationship' })
   @ApiResponse({ status: 201, description: 'Delegate created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid delegate data' })
@@ -66,12 +70,12 @@ export class DelegatesController {
       const validatedData = await createDelegateSchema.parseAsync(createDelegateDto);
 
       // Create delegate with audit logging
-      const delegate = await this.delegateService.createDelegate(validatedData);
+      const delegate = await this.delegateService.createDelegate(validatedData.userId, validatedData);
 
       // Log delegate creation
       await this.auditService.createAuditLog({
-        eventType: 'DELEGATE_INVITE',
-        severity: 'INFO',
+        eventType: AuditEventType.DELEGATE_INVITE,
+        severity: AuditSeverity.INFO,
         userId: validatedData.userId,
         resourceId: delegate.id,
         resourceType: 'DELEGATE',
@@ -95,7 +99,7 @@ export class DelegatesController {
    * Updates existing delegate relationship with security validation
    */
   @Put(':id')
-  @Throttle({ ttl: 60, limit: 20 })
+  @Throttle(20, 60)
   @ApiOperation({ summary: 'Update delegate relationship' })
   @ApiResponse({ status: 200, description: 'Delegate updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid update data' })
@@ -116,8 +120,8 @@ export class DelegatesController {
 
       // Log delegate update
       await this.auditService.createAuditLog({
-        eventType: 'PERMISSION_CHANGE',
-        severity: 'INFO',
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.INFO,
         userId: updatedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
@@ -140,7 +144,7 @@ export class DelegatesController {
    * Retrieves delegate information with security validation
    */
   @Get(':id')
-  @Throttle({ ttl: 60, limit: 100 })
+  @Throttle(100, 60)
   @ApiOperation({ summary: 'Get delegate by ID' })
   @ApiResponse({ status: 200, description: 'Delegate retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -158,8 +162,8 @@ export class DelegatesController {
 
       // Log delegate access
       await this.auditService.createAuditLog({
-        eventType: 'DELEGATE_ACCESS',
-        severity: 'INFO',
+        eventType: AuditEventType.DELEGATE_ACCESS,
+        severity: AuditSeverity.INFO,
         userId: delegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
@@ -179,7 +183,7 @@ export class DelegatesController {
    * Lists delegates with filtering and security validation
    */
   @Get()
-  @Throttle({ ttl: 60, limit: 50 })
+  @Throttle(50, 60)
   @ApiOperation({ summary: 'List delegates' })
   @ApiResponse({ status: 200, description: 'Delegates retrieved successfully' })
   async getDelegates(@Query() query: any) {
@@ -189,8 +193,8 @@ export class DelegatesController {
 
       // Log delegate list access
       await this.auditService.createAuditLog({
-        eventType: 'DELEGATE_ACCESS',
-        severity: 'INFO',
+        eventType: AuditEventType.DELEGATE_ACCESS,
+        severity: AuditSeverity.INFO,
         userId: query.userId,
         resourceType: 'DELEGATE_LIST',
         ipAddress: '',
@@ -209,7 +213,7 @@ export class DelegatesController {
    * Revokes delegate access with security validation
    */
   @Delete(':id')
-  @Throttle({ ttl: 60, limit: 10 })
+  @Throttle(10, 60)
   @ApiOperation({ summary: 'Revoke delegate access' })
   @ApiResponse({ status: 200, description: 'Delegate access revoked successfully' })
   @ApiResponse({ status: 404, description: 'Delegate not found' })
@@ -223,8 +227,8 @@ export class DelegatesController {
 
       // Log delegate revocation
       await this.auditService.createAuditLog({
-        eventType: 'PERMISSION_CHANGE',
-        severity: 'WARNING',
+        eventType: AuditEventType.PERMISSION_CHANGE,
+        severity: AuditSeverity.WARNING,
         userId: revokedDelegate.userId,
         resourceId: id,
         resourceType: 'DELEGATE',
@@ -247,7 +251,7 @@ export class DelegatesController {
    * Verifies delegate access permissions with security validation
    */
   @Get('verify-access')
-  @Throttle({ ttl: 60, limit: 100 })
+  @Throttle(100, 60)
   @ApiOperation({ summary: 'Verify delegate access permissions' })
   @ApiResponse({ status: 200, description: 'Access verification result' })
   async verifyDelegateAccess(@Query() verifyAccessDto: any) {
@@ -260,8 +264,8 @@ export class DelegatesController {
 
       // Log access verification
       await this.auditService.createAuditLog({
-        eventType: 'DELEGATE_ACCESS',
-        severity: hasAccess ? 'INFO' : 'WARNING',
+        eventType: AuditEventType.DELEGATE_ACCESS,
+        severity: hasAccess ? AuditSeverity.INFO : AuditSeverity.WARNING,
         userId: verifyAccessDto.delegateId,
         resourceType: verifyAccessDto.resourceType,
         ipAddress: '',

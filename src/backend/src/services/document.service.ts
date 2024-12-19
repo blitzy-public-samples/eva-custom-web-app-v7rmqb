@@ -24,7 +24,7 @@ import { logger } from '../utils/logger.util';
 import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
 import { EncryptionService } from './encryption.service';
 import { StorageService } from './storage.service';
-import { DocumentModel } from '../db/models/document.model';
+import { Document as DocumentModel } from '../db/models/document.model';
 import { AuditEventType, AuditSeverity } from '../types/audit.types';
 
 // Constants for security and compliance
@@ -89,7 +89,6 @@ export class DocumentService {
       const encryptedData = await this.encryptionService.encryptWithNewKey(
         compressedContent,
         {
-          keyRotationDays: ENCRYPTION_KEY_ROTATION_DAYS,
           algorithm: 'AES-256-GCM'
         }
       );
@@ -101,7 +100,7 @@ export class DocumentService {
       const uploadResult = await this.s3Client.putObject({
         Bucket: process.env.S3_BUCKET_NAME || '',
         Key: s3Key,
-        Body: encryptedData.content,
+        Body: encryptedData.encryptedData,
         ServerSideEncryption: 'aws:kms',
         SSEKMSKeyId: process.env.KMS_KEY_ID || '',
         Metadata: {

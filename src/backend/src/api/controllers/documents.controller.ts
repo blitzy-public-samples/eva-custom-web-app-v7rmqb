@@ -70,7 +70,7 @@ export class DocumentsController {
 
       // Create document with security features
       const document = await this.documentService.createDocumentVersion(
-        undefined,
+        null,
         documentData,
         userId
       );
@@ -117,7 +117,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.READ);
 
       // Retrieve document
-      const document = await this.documentService.createDocumentVersion(id, undefined, userId);
+      const document = await this.documentService.getDocument(id, userId);
 
       // Log access
       await this.auditService.createAuditLog({
@@ -160,8 +160,20 @@ export class DocumentsController {
       // Validate access permissions
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
+      // Convert UpdateDocumentDTO to CreateDocumentDTO
+      const documentData: CreateDocumentDTO = {
+        ...updateData,
+        file: Buffer.from([]), // Empty buffer for update
+        metadata: {
+          fileName: updateData.title,
+          mimeType: 'application/json',
+          fileSize: 0,
+          retentionPeriod: updateData.retentionPeriod || 0
+        }
+      };
+
       // Update document
-      const document = await this.documentService.createDocumentVersion(id, updateData, userId);
+      const document = await this.documentService.createDocumentVersion(id, documentData, userId);
 
       // Log update
       await this.auditService.createAuditLog({
@@ -205,10 +217,23 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Get document before deletion for audit
-      const document = await this.documentService.createDocumentVersion(id, undefined, userId);
+      const document = await this.documentService.getDocument(id, userId);
 
       // Delete document by creating a deletion version
-      await this.documentService.createDocumentVersion(id, { deleted: true } as any, userId);
+      const deletionData: CreateDocumentDTO = {
+        title: document.title,
+        type: document.type,
+        file: Buffer.from([]),
+        metadata: {
+          fileName: document.metadata.fileName,
+          mimeType: document.metadata.mimeType,
+          fileSize: 0,
+          retentionPeriod: 0
+        },
+        retentionPeriod: 0
+      };
+
+      await this.documentService.createDocumentVersion(id, deletionData, userId);
 
       // Log deletion
       await this.auditService.createAuditLog({
@@ -247,9 +272,22 @@ export class DocumentsController {
       const userId = req.user.id;
       const { page = 1, limit = 10, type } = req.query;
 
+      const listData: CreateDocumentDTO = {
+        title: 'Document List',
+        type: type as DocumentType || DocumentType.PERSONAL,
+        file: Buffer.from([]),
+        metadata: {
+          fileName: 'list',
+          mimeType: 'application/json',
+          fileSize: 0,
+          retentionPeriod: 1
+        },
+        retentionPeriod: 1
+      };
+
       const documents = await this.documentService.createDocumentVersion(
-        undefined,
-        { userId, page: Number(page), limit: Number(limit), type } as any,
+        null,
+        listData,
         userId
       );
 

@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express'; // v4.18.0
 import { logger } from '../../utils/logger.util';
-import { formatErrorResponse, BaseError } from '../../utils/error.util';
+import { formatErrorResponse, BaseError, SecurityImpactLevel } from '../../utils/error.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 
 // Error rate monitoring thresholds
@@ -52,13 +52,13 @@ const trackErrorRate = (error: BaseError): void => {
 
   // Update error counts
   errorStats.total++;
-  if (error instanceof BaseError && error.securityLevel === 'CRITICAL') {
+  if (error instanceof BaseError && error.securityLevel === SecurityImpactLevel.CRITICAL) {
     errorStats.critical++;
   }
 
   // Check thresholds and trigger alerts
   if (errorStats.total >= ERROR_MONITORING.THRESHOLD.TOTAL) {
-    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
       message: 'Error rate threshold exceeded',
       count: errorStats.total,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -67,7 +67,7 @@ const trackErrorRate = (error: BaseError): void => {
   }
 
   if (errorStats.critical >= ERROR_MONITORING.THRESHOLD.CRITICAL) {
-    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
       message: 'Critical error rate threshold exceeded',
       count: errorStats.critical,
       window: ERROR_MONITORING.RATE_WINDOW,
@@ -98,7 +98,8 @@ const createSecurityContext = (req: Request & { user?: { id: string } }, error: 
 const errorMiddleware = (
   error: Error,
   req: Request & { user?: { id: string } },
-  res: Response
+  res: Response,
+  _next: NextFunction
 ): void => {
   try {
     // Create security context for error tracking
@@ -110,7 +111,7 @@ const errorMiddleware = (
       500,
       'INTERNAL_ERROR',
       {},
-      { impactLevel: 'HIGH' }
+      { impactLevel: SecurityImpactLevel.MEDIUM }
     );
 
     // Track error rates
@@ -124,9 +125,9 @@ const errorMiddleware = (
     });
 
     // Create audit log entry
-    logger.logSecurityEvent(AuditEventType.SYSTEM_ERROR, {
-      eventType: AuditEventType.SYSTEM_ERROR,
-      severity: baseError.securityLevel === 'CRITICAL' ? 
+    logger.logSecurityEvent(AuditEventType.PERMISSION_CHANGE, {
+      eventType: AuditEventType.PERMISSION_CHANGE,
+      severity: baseError.securityLevel === SecurityImpactLevel.CRITICAL ? 
         AuditSeverity.CRITICAL : AuditSeverity.ERROR,
       userId: securityContext.userId || 'SYSTEM',
       resourceId: null,

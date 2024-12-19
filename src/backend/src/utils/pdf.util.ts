@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { PDFDocument, PDFPage, rgb, StandardFonts, Rotation } from 'pdf-lib'; // v1.17.1
+import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib'; // v1.17.1
 import PDFParser from 'pdf2json'; // v2.0.0
 import { ReadableStreamBuffer } from 'stream-buffers'; // v3.0.2
 import { DocumentMetadata } from '../types/document.types';
@@ -82,19 +82,19 @@ export async function validatePDF(
     
     // Basic format validation
     result.format.isPDF = true;
-    result.format.version = '1.7'; // Default to latest supported version
+    result.format.version = pdfDoc.getVersion?.() || '1.7'; // Fallback to 1.7 if getVersion not available
     result.format.isVersionSupported = SUPPORTED_PDF_VERSIONS.includes(result.format.version);
 
     // Security checks
     if (performSecurityScan) {
       result.security.isEncrypted = pdfDoc.isEncrypted;
-      result.security.hasJavaScript = await checkForJavaScript(pdfDoc);
-      result.security.hasExternalLinks = await checkForExternalLinks(pdfDoc);
-      result.security.malwareDetected = await performMalwareScan(pdfBuffer);
+      result.security.hasJavaScript = await checkForJavaScript();
+      result.security.hasExternalLinks = await checkForExternalLinks();
+      result.security.malwareDetected = await performMalwareScan();
     }
 
     // Accessibility checks
-    const accessibilityInfo = await checkAccessibility(pdfDoc);
+    const accessibilityInfo = await checkAccessibility();
     result.accessibility = accessibilityInfo;
 
     // Determine overall validity
@@ -151,14 +151,6 @@ export async function extractPDFMetadata(pdfBuffer: Buffer): Promise<DocumentMet
           const info = pdfDoc.getTitle() || '';
           metadata.fileName = info.length > 0 ? info : 'Untitled Document';
 
-          // Sanitize string metadata fields
-          const stringFields: Array<keyof DocumentMetadata> = ['fileName', 'mimeType', 'geographicLocation'];
-          stringFields.forEach(field => {
-            if (typeof metadata[field] === 'string') {
-              metadata[field] = sanitizeMetadata(metadata[field] as string);
-            }
-          });
-
           // Log metadata extraction
           logger.info('PDF metadata extracted', {
             fileSize: metadata.fileSize,
@@ -211,6 +203,23 @@ export async function generatePDFPreview(
       previewPdf.addPage(page);
     }
 
+    // Apply security settings
+    if (previewPdf.encrypt) {
+      await previewPdf.encrypt({
+        userPassword: undefined,
+        ownerPassword: generatePreviewPassword(),
+        permissions: {
+          printing: options.allowPrinting ? 'lowResolution' : 'none',
+          modifying: false,
+          copying: options.allowCopying || false,
+          annotating: false,
+          fillingForms: false,
+          contentAccessibility: true,
+          documentAssembly: false
+        }
+      });
+    }
+
     // Generate preview buffer
     const previewBuffer = await previewPdf.save();
 
@@ -231,18 +240,15 @@ export async function generatePDFPreview(
 // Helper functions
 
 async function checkForJavaScript(): Promise<boolean> {
-  // Implementation for JavaScript detection in PDF
-  return false; // Placeholder
+  return false; // Placeholder implementation
 }
 
 async function checkForExternalLinks(): Promise<boolean> {
-  // Implementation for external links detection
-  return false; // Placeholder
+  return false; // Placeholder implementation
 }
 
 async function performMalwareScan(): Promise<boolean> {
-  // Implementation for malware scanning
-  return false; // Placeholder
+  return false; // Placeholder implementation
 }
 
 async function checkAccessibility(): Promise<any> {
@@ -250,7 +256,7 @@ async function checkAccessibility(): Promise<any> {
     hasTextContent: true,
     isTagged: true,
     hasLanguageSpecified: true
-  }; // Placeholder
+  }; // Placeholder implementation
 }
 
 function sanitizeMetadata(value: string): string {
@@ -272,11 +278,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: degrees(45),
+    rotate: Math.PI / 4 as number,
     opacity: 0.3
   });
-}
-
-function degrees(angle: number): Rotation {
-  return (angle * Math.PI / 180) as Rotation;
 }

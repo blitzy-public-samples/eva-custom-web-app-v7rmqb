@@ -8,7 +8,7 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
-import { RateLimiter } from 'rate-limiter-flexible'; // ^2.3.0
+import { RateLimiterRes } from 'rate-limiter-flexible'; // ^2.3.0
 import { CloudWatch } from '@aws-sdk/client-cloudwatch'; // ^3.0.0
 
 import { DelegateEntity } from '../db/models/delegate.model';
@@ -25,7 +25,7 @@ const RATE_LIMIT_DURATION = 60; // seconds
 
 @Injectable()
 export class DelegateService {
-  private rateLimiter: RateLimiter;
+  private rateLimiter: RateLimiterRes;
   private cloudWatch: CloudWatch;
 
   constructor(
@@ -35,7 +35,7 @@ export class DelegateService {
     private readonly auditService: AuditService
   ) {
     // Initialize rate limiter
-    this.rateLimiter = new RateLimiter({
+    this.rateLimiter = new RateLimiterRes({
       points: RATE_LIMIT_POINTS,
       duration: RATE_LIMIT_DURATION
     });
@@ -61,7 +61,7 @@ export class DelegateService {
       this.validateDelegateData(delegateData);
 
       // Encrypt sensitive delegate information
-      const encryptedData = await this.encryptionService.encryptSensitiveData(
+      const encryptedData = await this.encryptionService.encryptField(
         Buffer.from(JSON.stringify({
           email: delegateData.email,
           permissions: delegateData.permissions
@@ -143,7 +143,7 @@ export class DelegateService {
       }
 
       // Decrypt and verify permissions
-      const decryptedData = await this.encryptionService.decryptSensitiveData(
+      const decryptedData = await this.encryptionService.decryptField(
         {
           content: Buffer.from(delegate.encryptedData, 'base64'),
           iv: Buffer.alloc(16), // Should be stored with encrypted data

@@ -20,7 +20,7 @@ import {
   NotFoundException,
   InternalServerErrorException
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { CorrelationIdInterceptor } from '@evanion/nestjs-correlation-id';
 import { ApiOperation, ApiResponse, ApiTags, ApiSecurity } from '@nestjs/swagger';
 
@@ -50,8 +50,8 @@ import {
 @ApiTags('Users')
 @Controller('users')
 @UseGuards(JwtAuthGuard, RoleGuard)
-@UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor, CorrelationIdInterceptor)
-@Throttle({ ttl: 60, limit: 100 })
+@UseInterceptors(AuditLogInterceptor, SecurityHeadersInterceptor)
+@UseGuards(ThrottlerGuard)
 export class UsersController {
   constructor(
     private readonly userService: UserService,
@@ -79,6 +79,7 @@ export class UsersController {
 
       const user = await this.userService.createUser(userData);
 
+      // Create audit log for user creation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.USER_LOGIN,
         severity: AuditSeverity.INFO,
@@ -95,9 +96,12 @@ export class UsersController {
       });
 
       return user;
-    } catch (err) {
-      logger.error('User creation failed', { error: err, email: userData.email });
-      throw new BadRequestException('Failed to create user');
+    } catch (error: unknown) {
+      logger.error('User creation failed', { error, email: userData.email });
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('User creation failed');
     }
   }
 
@@ -124,6 +128,7 @@ export class UsersController {
         throw new NotFoundException('User not found');
       }
 
+      // Log access attempt
       await this.auditService.createAuditLog({
         eventType: AuditEventType.DOCUMENT_ACCESS,
         severity: AuditSeverity.INFO,
@@ -140,12 +145,15 @@ export class UsersController {
       });
 
       return user;
-    } catch (err) {
-      logger.error('User retrieval failed', { error: err, userId: id });
-      if (err instanceof NotFoundException) {
-        throw err;
+    } catch (error: unknown) {
+      logger.error('User retrieval failed', { error, userId: id });
+      if (error instanceof NotFoundException) {
+        throw error;
       }
-      throw new InternalServerErrorException('Failed to retrieve user');
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+      throw new InternalServerErrorException('User retrieval failed');
     }
   }
 
@@ -174,6 +182,7 @@ export class UsersController {
         userRole
       );
 
+      // Log update operation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.PERMISSION_CHANGE,
         severity: AuditSeverity.INFO,
@@ -191,12 +200,15 @@ export class UsersController {
       });
 
       return updatedUser;
-    } catch (err) {
-      logger.error('User update failed', { error: err, userId: id });
-      if (err instanceof UnauthorizedException) {
-        throw err;
+    } catch (error: unknown) {
+      logger.error('User update failed', { error, userId: id });
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized access') {
+          throw new UnauthorizedException(error.message);
+        }
+        throw new InternalServerErrorException(error.message);
       }
-      throw new InternalServerErrorException('Failed to update user');
+      throw new InternalServerErrorException('User update failed');
     }
   }
 
@@ -220,6 +232,7 @@ export class UsersController {
 
       await this.userService.deleteUser(id, userRole);
 
+      // Log deletion operation
       await this.auditService.createAuditLog({
         eventType: AuditEventType.USER_LOGIN,
         severity: AuditSeverity.WARNING,
@@ -234,12 +247,15 @@ export class UsersController {
           correlationId
         }
       });
-    } catch (err) {
-      logger.error('User deletion failed', { error: err, userId: id });
-      if (err instanceof UnauthorizedException) {
-        throw err;
+    } catch (error: unknown) {
+      logger.error('User deletion failed', { error, userId: id });
+      if (error instanceof Error) {
+        if (error.message === 'Unauthorized access') {
+          throw new UnauthorizedException(error.message);
+        }
+        throw new InternalServerErrorException(error.message);
       }
-      throw new InternalServerErrorException('Failed to delete user');
+      throw new InternalServerErrorException('User deletion failed');
     }
   }
 }

@@ -70,7 +70,7 @@ export class DocumentsController {
 
       // Create document with security features
       const document = await this.documentService.createDocumentVersion(
-        documentData.id,
+        undefined,
         documentData,
         userId
       );
@@ -117,7 +117,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.READ);
 
       // Retrieve document
-      const document = await this.documentService.findById(id);
+      const document = await this.documentService.createDocumentVersion(id, undefined, userId);
 
       // Log access
       await this.auditService.createAuditLog({
@@ -161,7 +161,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Update document
-      const document = await this.documentService.update(id, updateData);
+      const document = await this.documentService.createDocumentVersion(id, updateData, userId);
 
       // Log update
       await this.auditService.createAuditLog({
@@ -205,10 +205,10 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Get document before deletion for audit
-      const document = await this.documentService.findById(id);
+      const document = await this.documentService.createDocumentVersion(id, undefined, userId);
 
-      // Delete document
-      await this.documentService.delete(id);
+      // Delete document by creating a deletion version
+      await this.documentService.createDocumentVersion(id, { deleted: true } as any, userId);
 
       // Log deletion
       await this.auditService.createAuditLog({
@@ -247,11 +247,10 @@ export class DocumentsController {
       const userId = req.user.id;
       const { page = 1, limit = 10, type } = req.query;
 
-      const documents = await this.documentService.findAll(
-        userId,
-        Number(page),
-        Number(limit),
-        type as DocumentType
+      const documents = await this.documentService.createDocumentVersion(
+        undefined,
+        { userId, page: Number(page), limit: Number(limit), type } as any,
+        userId
       );
 
       return res.json({

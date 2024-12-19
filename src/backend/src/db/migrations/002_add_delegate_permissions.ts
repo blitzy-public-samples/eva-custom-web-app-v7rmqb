@@ -1,6 +1,6 @@
 // @ts-check
 import { MigrationInterface, QueryRunner } from 'typeorm'; // Version: ^0.3.0
-import { ResourceType, AccessLevel } from '../../../types/permission.types';
+import { ResourceType, AccessLevel } from '../../types/permission.types';
 
 /**
  * Migration to create and configure the permissions table implementing RBAC

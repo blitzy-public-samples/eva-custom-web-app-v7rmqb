@@ -28,7 +28,7 @@ const clamav = new NodeClam();
 clamav.init({
   removeInfected: true,
   quarantineInfected: false,
-  scanLog: null,
+  scanLog: undefined,
   debugMode: false
 });
 

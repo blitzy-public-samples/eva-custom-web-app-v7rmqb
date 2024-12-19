@@ -14,11 +14,11 @@ import {
   ManyToOne,
   JoinColumn,
   Index
-} from 'typeorm';
+} from 'typeorm'; // ^0.3.0
 
-import { ResourceType, AccessLevel } from '../../../types/permission.types';
+import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { DelegateEntity } from './delegate.model';
-import { AuditLogger } from '../services/audit.service';
+import { AuditLogger } from '../../services/audit.service';
 
 // Initialize audit logger for security tracking
 const auditLogger = new AuditLogger();
@@ -30,10 +30,10 @@ const auditLogger = new AuditLogger();
 @Index('IDX_DELEGATE_RESOURCE', ['delegateId', 'resourceType'])
 export class PermissionEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string = '';
 
   @Column({ type: 'uuid', nullable: false })
-  delegateId!: string;
+  delegateId: string = '';
 
   @Column({
     type: 'enum',
@@ -56,14 +56,14 @@ export class PermissionEntity {
     nullable: false,
     comment: 'Permission expiration date'
   })
-  expiresAt!: Date;
+  expiresAt: Date = new Date();
 
   @Column({
     type: 'boolean',
     default: true,
     comment: 'Whether the permission is currently active'
   })
-  isActive!: boolean;
+  isActive: boolean = true;
 
   @Column({
     type: 'varchar',
@@ -71,14 +71,14 @@ export class PermissionEntity {
     nullable: false,
     comment: 'User ID who granted this permission'
   })
-  grantedBy!: string;
+  grantedBy: string = '';
 
   @Column({
     type: 'jsonb',
     nullable: true,
     comment: 'Additional permission metadata and audit information'
   })
-  metadata!: {
+  metadata: {
     lastAccessed?: Date;
     accessCount?: number;
     restrictions?: string[];
@@ -87,19 +87,19 @@ export class PermissionEntity {
       timestamp: Date;
       performedBy: string;
     }>;
-  };
+  } = {};
 
   @CreateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Record creation timestamp'
   })
-  createdAt!: Date;
+  createdAt: Date = new Date();
 
   @UpdateDateColumn({
     type: 'timestamp with time zone',
     comment: 'Record update timestamp'
   })
-  updatedAt!: Date;
+  updatedAt: Date = new Date();
 
   @ManyToOne(() => DelegateEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'delegateId' })
@@ -132,12 +132,12 @@ export class PermissionEntity {
         auditTrail: [{
           action: 'PERMISSION_CREATED',
           timestamp: new Date(),
-          performedBy: permissionData.grantedBy || 'SYSTEM'
+          performedBy: permissionData.grantedBy || ''
         }]
       };
 
       // Validate expiration date
-      if (permissionData.expiresAt && new Date(permissionData.expiresAt) <= new Date()) {
+      if (this.expiresAt && new Date(this.expiresAt) <= new Date()) {
         throw new Error('Expiration date must be in the future');
       }
     }
@@ -179,7 +179,7 @@ export class PermissionEntity {
 
       // Check access level
       return this.accessLevel >= requiredLevel;
-    } catch (error: unknown) {
+    } catch (error) {
       await auditLogger.logDelegateAccess({
         delegateId: this.delegateId,
         accessType: 'PERMISSION_CHECK_ERROR',

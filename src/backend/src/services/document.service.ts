@@ -98,7 +98,7 @@ export class DocumentService {
       const command = new PutObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME || '',
         Key: s3Key,
-        Body: encryptedData.encryptedData, // Removed Buffer.from() since encryptedData should already be a Buffer
+        Body: Buffer.from(encryptedData.encryptedData), // Convert to Buffer for S3
         ServerSideEncryption: 'aws:kms',
         SSEKMSKeyId: process.env.KMS_KEY_ID || '',
         Metadata: {
@@ -109,9 +109,9 @@ export class DocumentService {
       });
       const uploadResult = await this.s3Client.send(command);
 
-      // Create document record
-      const document = new DocumentModel();
-      Object.assign(document, {
+      // Create document record with all required fields
+      const document: Document = {
+        id: documentId,
         userId,
         title: versionData.title,
         type: versionData.type,
@@ -125,17 +125,17 @@ export class DocumentService {
         storageDetails: {
           bucket: process.env.S3_BUCKET_NAME || '',
           key: s3Key,
-          version: uploadResult.VersionId,
+          version: uploadResult.VersionId || '',
           encryptionType: EncryptionType.KMS_MANAGED,
           kmsKeyId: process.env.KMS_KEY_ID || ''
         },
         resourceType: ResourceType.LEGAL_DOCS,
-        accessLevel: 'WRITE',
+        accessLevel: AccessLevel.WRITE,
         lastAccessedAt: new Date(),
         expiresAt: new Date(Date.now() + versionData.retentionPeriod * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()
-      });
+      };
 
       // Save document to database
       const savedDocument = await this.documentRepository.save(document);
@@ -184,10 +184,14 @@ export class DocumentService {
       const documentAge = this.calculateDocumentAge(document.metadata.uploadedAt);
 
       if (documentAge > retentionPolicy.retentionPeriod) {
-        await this.storageService.archiveDocument(document, {
-          reason: 'system',
-          retentionPeriod: retentionPolicy.retentionPeriod
-        });
+        await this.storageService.archiveDocument(
+          document,
+          {
+            reason: 'system',
+            retentionPeriod: retentionPolicy.retentionPeriod
+          },
+          retentionPolicy.retentionPeriod
+        );
 
         // Log retention action
         await this.auditService.createAuditLog({

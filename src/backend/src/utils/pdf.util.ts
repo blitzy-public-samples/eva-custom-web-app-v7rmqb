@@ -204,10 +204,9 @@ export async function generatePDFPreview(
     }
 
     // Set document security with user permissions
-    const userPassword = generatePreviewPassword();
+    const password = generatePreviewPassword();
     const encryptedPdfBytes = await previewPdf.save({
-      userPassword,
-      ownerPassword: userPassword,
+      password,
       permissions: {
         printing: options.allowPrinting ? 'lowResolution' : 'none',
         modifying: false,

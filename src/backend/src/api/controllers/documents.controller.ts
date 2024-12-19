@@ -118,11 +118,11 @@ export class DocumentsController {
 
       // Retrieve document
       const document = await this.documentService.createDocumentVersion(id, {
-        title: '',
+        title: 'Document Retrieval',
         type: DocumentType.PERSONAL,
         file: Buffer.from([]),
         metadata: {
-          fileName: '',
+          fileName: 'document',
           mimeType: 'application/json',
           fileSize: 0,
           retentionPeriod: 1,
@@ -174,15 +174,17 @@ export class DocumentsController {
 
       // Convert UpdateDocumentDTO to CreateDocumentDTO
       const documentData: CreateDocumentDTO = {
-        ...updateData,
+        title: updateData.title || 'Updated Document',
+        type: updateData.type || DocumentType.PERSONAL,
         file: Buffer.from([]), // Empty buffer for update
         metadata: {
-          fileName: updateData.title || '',
+          fileName: updateData.title || 'updated-document',
           mimeType: 'application/json',
           fileSize: 0,
-          retentionPeriod: updateData.retentionPeriod || 0,
+          retentionPeriod: updateData.retentionPeriod || 1,
           geographicLocation: 'ca-central-1'
-        }
+        },
+        retentionPeriod: updateData.retentionPeriod || 1
       };
 
       // Update document
@@ -231,11 +233,11 @@ export class DocumentsController {
 
       // Get document before deletion for audit
       const document = await this.documentService.createDocumentVersion(id, {
-        title: '',
+        title: 'Deleted Document',
         type: DocumentType.PERSONAL,
         file: Buffer.from([]),
         metadata: {
-          fileName: '',
+          fileName: 'deleted-document',
           mimeType: 'application/json',
           fileSize: 0,
           retentionPeriod: 0,
@@ -246,7 +248,7 @@ export class DocumentsController {
 
       // Delete document by creating a deletion version
       const deletionData: CreateDocumentDTO = {
-        title: document.title,
+        title: `${document.title} (Deleted)`,
         type: document.type,
         file: Buffer.from([]),
         metadata: {

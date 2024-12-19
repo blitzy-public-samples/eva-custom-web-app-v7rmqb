@@ -14,6 +14,17 @@ export enum DocumentType {
 }
 
 /**
+ * Enum defining document retention policies.
+ * Specifies how long different types of documents should be retained.
+ */
+export enum DocumentRetentionPolicy {
+    SHORT_TERM = 'SHORT_TERM',       // 1 year retention
+    MEDIUM_TERM = 'MEDIUM_TERM',     // 5 years retention
+    LONG_TERM = 'LONG_TERM',         // 10 years retention
+    PERMANENT = 'PERMANENT'          // Permanent retention
+}
+
+/**
  * Enum defining possible document processing statuses.
  * Tracks document lifecycle from upload to completion.
  */

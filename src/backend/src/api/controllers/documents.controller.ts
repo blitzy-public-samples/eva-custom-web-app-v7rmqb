@@ -8,7 +8,7 @@
 import { Request, Response } from 'express'; // ^4.18.0
 import { z } from 'zod'; // ^3.22.0
 import rateLimit from 'express-rate-limit'; // ^6.7.0
-import { Controller, Post, Get, Put, Delete, UseMiddleware, Injectable } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Injectable, UseGuards } from '@nestjs/common';
 
 import { DocumentService } from '../../services/document.service';
 import { AuditService } from '../../services/audit.service';
@@ -20,10 +20,11 @@ import {
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { logger } from '../../utils/logger.util';
-import { authMiddleware } from '../middlewares/auth.middleware';
-import { validateRequest } from '../middlewares/validation.middleware';
-import { correlationMiddleware } from '../middlewares/logging.middleware';
-import { rateLimitMiddleware } from '../middlewares/rate-limit.middleware';
+import { AuthGuard } from '../middlewares/auth.middleware';
+import { ValidationPipe } from '../middlewares/validation.middleware';
+import { LoggingInterceptor } from '../middlewares/logging.middleware';
+import { RateLimitGuard } from '../middlewares/rate-limit.middleware';
+import { VirusScanGuard } from '../middlewares/virus-scan.middleware';
 
 // Constants for security and validation
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -51,8 +52,7 @@ const createDocumentSchema = z.object({
  */
 @Injectable()
 @Controller('/documents')
-@UseMiddleware(correlationMiddleware)
-@UseMiddleware(rateLimitMiddleware)
+@UseGuards(LoggingInterceptor, RateLimitGuard)
 export class DocumentsController {
   constructor(
     private readonly documentService: DocumentService,
@@ -63,9 +63,9 @@ export class DocumentsController {
    * Creates a new document with comprehensive security checks
    */
   @Post('/')
-  @UseMiddleware(validateRequest(createDocumentSchema))
-  @UseMiddleware(authMiddleware)
-  @UseMiddleware(virusScanMiddleware)
+  @UseGuards(ValidationPipe(createDocumentSchema))
+  @UseGuards(AuthGuard)
+  @UseGuards(VirusScanGuard)
   async createDocument(req: Request & { user: { id: string } }, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
@@ -78,7 +78,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, documentData.type);
 
       // Create document with security features
-      const document = await this.documentService.create(documentData, userId);
+      const document = await this.documentService.createDocumentVersion(documentData, userId);
 
       // Log audit trail
       await this.auditService.createAuditLog({
@@ -110,7 +110,7 @@ export class DocumentsController {
    * Retrieves a document with security validation
    */
   @Get('/:id')
-  @UseMiddleware(authMiddleware)
+  @UseGuards(AuthGuard)
   async getDocument(req: Request & { user: { id: string } }, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
@@ -123,7 +123,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.READ);
 
       // Retrieve document
-      const document = await this.documentService.findById(id);
+      const document = await this.documentService.getDocumentById(id);
 
       // Log access
       await this.auditService.createAuditLog({
@@ -154,7 +154,7 @@ export class DocumentsController {
    * Updates document metadata with security validation
    */
   @Put('/:id')
-  @UseMiddleware(authMiddleware)
+  @UseGuards(AuthGuard)
   async updateDocument(req: Request & { user: { id: string } }, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
@@ -168,7 +168,7 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Update document
-      const document = await this.documentService.update(id, updateData);
+      const document = await this.documentService.updateDocument(id, updateData);
 
       // Log update
       await this.auditService.createAuditLog({
@@ -200,7 +200,7 @@ export class DocumentsController {
    * Deletes a document with security validation
    */
   @Delete('/:id')
-  @UseMiddleware(authMiddleware)
+  @UseGuards(AuthGuard)
   async deleteDocument(req: Request & { user: { id: string } }, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
@@ -213,10 +213,10 @@ export class DocumentsController {
       await this.validateUserAccess(userId, id, AccessLevel.WRITE);
 
       // Get document before deletion for audit
-      const document = await this.documentService.findById(id);
+      const document = await this.documentService.getDocumentById(id);
 
       // Delete document
-      await this.documentService.delete(id);
+      await this.documentService.deleteDocument(id);
 
       // Log deletion
       await this.auditService.createAuditLog({
@@ -247,7 +247,7 @@ export class DocumentsController {
    * Lists user's documents with pagination and filtering
    */
   @Get('/')
-  @UseMiddleware(authMiddleware)
+  @UseGuards(AuthGuard)
   async listDocuments(req: Request & { user: { id: string } }, res: Response): Promise<Response> {
     const correlationId = req.headers['x-correlation-id'] as string;
     logger.addCorrelationId(correlationId);
@@ -256,7 +256,7 @@ export class DocumentsController {
       const userId = req.user.id;
       const { page = 1, limit = 10, type } = req.query;
 
-      const documents = await this.documentService.findAll(
+      const documents = await this.documentService.getDocuments(
         userId,
         Number(page),
         Number(limit),

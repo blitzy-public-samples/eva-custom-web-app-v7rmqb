@@ -105,7 +105,7 @@ export class IntercomService {
       });
 
       // Create or update user in Intercom
-      const response = await this.client.contacts.create({
+      const response = await this.client.users.create({
         role: 'user',
         external_id: sanitizedData.userId,
         email: sanitizedData.email,
@@ -150,7 +150,7 @@ export class IntercomService {
       // Create conversation in Intercom
       const response = await this.client.messages.create({
         from: {
-          type: 'contact',
+          type: 'user',
           id: userId
         },
         body: conversationData.message,
@@ -187,7 +187,7 @@ export class IntercomService {
       // Track event in Intercom
       await this.client.events.create({
         eventName: eventName,
-        user_id: userId,
+        userId: userId,
         created_at: metadata?.createdAt || Math.floor(Date.now() / 1000),
         metadata: metadata?.metadata
       });

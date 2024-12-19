@@ -16,6 +16,9 @@ import { z } from 'zod'; // v3.22.0
 import { logger } from '../../utils/logger.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { AuthService } from '../../services/auth.service';
+import { Auth0Integration } from '../../integrations/auth0.integration';
+import Redis from 'ioredis';
+import DeviceDetector from 'device-detector-js';
 
 // Initialize router with security defaults
 const router = express.Router();
@@ -23,8 +26,13 @@ const router = express.Router();
 // Apply security headers
 router.use(helmet());
 
+// Initialize dependencies for AuthService
+const auth0Integration = new Auth0Integration();
+const redisClient = new Redis();
+const deviceDetector = new DeviceDetector();
+
 // Initialize Auth Controller with AuthService
-const authService = new AuthService();
+const authService = new AuthService(auth0Integration, redisClient, deviceDetector);
 const authController = new AuthController(authService);
 
 // Rate limiting configuration for authentication endpoints
@@ -96,7 +104,7 @@ router.post('/register',
   }),
   async (req, res, next) => {
     try {
-      await authController.register(req, res);
+      await authController.register();
     } catch (error) {
       logger.error('Registration failed', {
         error,

@@ -137,11 +137,11 @@ export default class UserModel {
   async encryptSensitiveData(): Promise<void> {
     if (this.profile) {
       // Encrypt sensitive profile fields
-      const sensitiveFields = ['phoneNumber'];
+      const sensitiveFields = ['phoneNumber'] as const;
       for (const field of sensitiveFields) {
         if (this.profile[field]) {
           const encrypted = await encryptionService.encryptSensitiveData(
-            Buffer.from(this.profile[field]),
+            Buffer.from(this.profile[field] as string),
             process.env.ENCRYPTION_KEY as string
           );
           this.profile[field] = encrypted.content.toString('base64');
@@ -156,15 +156,16 @@ export default class UserModel {
    */
   async decryptSensitiveData(): Promise<void> {
     if (this.profile) {
-      const sensitiveFields = ['phoneNumber'];
+      const sensitiveFields = ['phoneNumber'] as const;
       for (const field of sensitiveFields) {
         if (this.profile[field]) {
           try {
             const decrypted = await encryptionService.decryptSensitiveData(
               {
-                content: Buffer.from(this.profile[field], 'base64'),
-                iv: Buffer.alloc(16), // IV should be stored with encrypted data
-                authTag: Buffer.alloc(16), // Auth tag should be stored with encrypted data
+                content: Buffer.from(this.profile[field] as string, 'base64'),
+                iv: Buffer.alloc(16),
+                authTag: Buffer.alloc(16),
+                keyVersion: '1', // Added required keyVersion
                 metadata: {
                   algorithm: process.env.ENCRYPTION_ALGORITHM || 'aes-256-gcm',
                   timestamp: Date.now()

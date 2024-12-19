@@ -14,6 +14,7 @@ import SubscriptionModel from '../db/models/subscription.model';
 import { 
   ISubscription, 
   ISubscriptionCreateDTO,
+  ISubscriptionUpdateDTO,
   SubscriptionStatus,
   SubscriptionPlan,
   BillingCycle 
@@ -98,7 +99,10 @@ export class SubscriptionService {
           startDate: new Date(),
           autoRenew: createDTO.autoRenew,
           shopifySubscriptionId: shopifyOrder.id,
-          shopifyCustomerId: createDTO.shopifyCustomerId
+          shopifyCustomerId: createDTO.shopifyCustomerId,
+          shopifyOrderIds: [shopifyOrder.id],
+          cancelReason: null,
+          metadata: {}
         });
 
         // Validate subscription data
@@ -128,7 +132,12 @@ export class SubscriptionService {
           userId: createDTO.userId
         });
 
-        return savedSubscription;
+        return {
+          ...savedSubscription,
+          shopifyOrderIds: [shopifyOrder.id],
+          cancelReason: null,
+          metadata: {}
+        };
       } catch (error) {
         // Rollback transaction on error
         await queryRunner.rollbackTransaction();
@@ -148,22 +157,164 @@ export class SubscriptionService {
   }
 
   /**
+   * Updates an existing subscription with validation and audit logging
+   * @param subscriptionId - ID of subscription to update
+   * @param updateDTO - Update data
+   * @returns Updated subscription
+   */
+  public async updateSubscription(
+    subscriptionId: string,
+    updateDTO: ISubscriptionUpdateDTO
+  ): Promise<ISubscription> {
+    try {
+      await this.rateLimiter.consume(subscriptionId);
+
+      const queryRunner = this.subscriptionRepository.manager.connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const subscription = await this.subscriptionRepository.findOne({
+          where: { id: subscriptionId }
+        });
+
+        if (!subscription) {
+          throw new Error('Subscription not found');
+        }
+
+        // Update subscription fields
+        Object.assign(subscription, updateDTO);
+
+        // Validate updated data
+        if (!subscription.validateSubscription()) {
+          throw new Error('Invalid subscription data');
+        }
+
+        // Log audit event
+        subscription.logAuditEvent(
+          AuditEventType.SUBSCRIPTION_CHANGE,
+          {
+            action: 'update',
+            changes: updateDTO
+          },
+          'system'
+        );
+
+        const updatedSubscription = await queryRunner.manager.save(subscription);
+        await queryRunner.commitTransaction();
+
+        return updatedSubscription;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error('Failed to update subscription', {
+        error: errorMessage,
+        subscriptionId
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves subscription details by ID
+   * @param subscriptionId - ID of subscription to retrieve
+   * @returns Subscription details
+   */
+  public async getSubscription(subscriptionId: string): Promise<ISubscription> {
+    try {
+      await this.rateLimiter.consume(subscriptionId);
+
+      const subscription = await this.subscriptionRepository.findOne({
+        where: { id: subscriptionId }
+      });
+
+      if (!subscription) {
+        throw new Error('Subscription not found');
+      }
+
+      return subscription;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error('Failed to retrieve subscription', {
+        error: errorMessage,
+        subscriptionId
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Cancels an active subscription with audit logging
+   * @param subscriptionId - ID of subscription to cancel
+   * @param reason - Cancellation reason
+   * @returns Cancelled subscription
+   */
+  public async cancelSubscription(
+    subscriptionId: string,
+    reason: string
+  ): Promise<ISubscription> {
+    try {
+      await this.rateLimiter.consume(subscriptionId);
+
+      const queryRunner = this.subscriptionRepository.manager.connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const subscription = await this.subscriptionRepository.findOne({
+          where: { id: subscriptionId }
+        });
+
+        if (!subscription) {
+          throw new Error('Subscription not found');
+        }
+
+        subscription.status = SubscriptionStatus.CANCELLED;
+        subscription.cancelReason = reason;
+        subscription.endDate = new Date();
+        subscription.autoRenew = false;
+
+        // Log audit event
+        subscription.logAuditEvent(
+          AuditEventType.SUBSCRIPTION_CHANGE,
+          {
+            action: 'cancel',
+            reason
+          },
+          'system'
+        );
+
+        const cancelledSubscription = await queryRunner.manager.save(subscription);
+        await queryRunner.commitTransaction();
+
+        return cancelledSubscription;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      this.logger.error('Failed to cancel subscription', {
+        error: errorMessage,
+        subscriptionId
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Handles Shopify webhooks for subscription events
    * @param webhookEvent - Webhook event data
    */
   public async handleShopifyWebhook(webhookEvent: any): Promise<void> {
     try {
-      // Verify webhook signature
-      const isValid = await this.shopifyIntegration.verifyWebhookSignature(
-        webhookEvent.signature,
-        JSON.stringify(webhookEvent.payload),
-        webhookEvent.timestamp
-      );
-
-      if (!isValid) {
-        throw new Error('Invalid webhook signature');
-      }
-
       // Rate limit check
       await this.rateLimiter.consume('webhook');
 

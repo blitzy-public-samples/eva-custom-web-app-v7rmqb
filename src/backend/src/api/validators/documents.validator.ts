@@ -1,5 +1,6 @@
 // External dependencies
 import { z } from 'zod'; // Version: ^3.22.0
+import NodeClam from 'clamscan'; // For virus scanning
 
 // Internal imports
 import { DocumentType } from '../../types/document.types';
@@ -21,7 +22,7 @@ const RATE_LIMIT_WINDOW_MS = 60000;
 const RATE_LIMIT_MAX_REQUESTS = 100;
 
 // Initialize virus scanner
-const clamav = new ClamScan({
+const clamav = new NodeClam({
   removeInfected: true,
   quarantinePath: '/tmp/quarantine',
   debugMode: false

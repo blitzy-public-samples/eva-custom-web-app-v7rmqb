@@ -161,17 +161,22 @@ export class StorageService {
       // Convert readable stream to buffer
       const encryptedBuffer = await this.streamToBuffer(encryptedContent);
 
+      // Get encryption metadata from custom metadata
+      const encryptionMetadata = {
+        iv: metadata.metadata.iv ? Buffer.from(metadata.metadata.iv, 'base64') : Buffer.alloc(0),
+        authTag: metadata.metadata.authTag ? Buffer.from(metadata.metadata.authTag, 'base64') : Buffer.alloc(0),
+        keyVersion: metadata.metadata.encryptionVersion || '1',
+        metadata: {
+          algorithm: metadata.encryption.algorithm,
+          timestamp: Date.now()
+        }
+      };
+
       // Decrypt document content
       const decryptedContent = await this.encryptionService.decryptSensitiveData(
         {
           content: encryptedBuffer,
-          iv: Buffer.from(metadata.encryption.iv || '', 'base64'),
-          authTag: Buffer.from(metadata.encryption.authTag || '', 'base64'),
-          keyVersion: metadata.encryption.encryptionVersion,
-          metadata: {
-            algorithm: 'aes-256-gcm',
-            timestamp: Date.now()
-          }
+          ...encryptionMetadata
         },
         process.env.AWS_KMS_KEY_ID!
       );
@@ -276,9 +281,9 @@ export class StorageService {
         versionId: metadata.versionId,
         lastModified: metadata.lastModified,
         securityContext: {
-          classification: metadata.encryption.securityClassification,
-          accessLevel: metadata.encryption.accessLevel,
-          retentionPolicy: metadata.encryption.retentionPolicy,
+          classification: metadata.metadata.securityClassification || 'UNCLASSIFIED',
+          accessLevel: metadata.metadata.accessLevel || 'PRIVATE',
+          retentionPolicy: metadata.metadata.retentionPolicy,
           encryptionContext: metadata.encryption.keyId
         }
       };

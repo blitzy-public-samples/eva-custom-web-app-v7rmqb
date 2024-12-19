@@ -7,9 +7,10 @@
 import { Injectable } from '@nestjs/common'; // ^9.0.0
 import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
-import { retry } from '@nestjs/common';
-import { compress } from 'compression'; // ^1.7.4
+import { Retryable } from '@nestjs/common';
+import { gzip } from 'zlib';
 import { S3 } from '@aws-sdk/client-s3'; // ^2.1.0
+import { promisify } from 'util';
 
 import {
   Document,
@@ -17,12 +18,13 @@ import {
   DocumentStatus,
   CreateDocumentDTO,
   DocumentMetadata,
-  DocumentRetentionPolicy,
   EncryptionType
 } from '../types/document.types';
 import { AuditService } from './audit.service';
 import { logger } from '../utils/logger.util';
 import { ResourceType, AccessLevel, hasPermission } from '../types/permission.types';
+import { EncryptionService } from './encryption.service';
+import { StorageService } from './storage.service';
 
 // Constants for security and compliance
 const ENCRYPTION_KEY_ROTATION_DAYS = 90;
@@ -38,9 +40,10 @@ const ALLOWED_MIME_TYPES = [
 @Injectable()
 export class DocumentService {
   private readonly s3Client: S3;
+  private readonly gzipAsync = promisify(gzip);
 
   constructor(
-    @InjectRepository('Document')
+    @InjectRepository(Document)
     private readonly documentRepository: Repository<Document>,
     private readonly auditService: AuditService,
     private readonly encryptionService: EncryptionService,
@@ -59,7 +62,7 @@ export class DocumentService {
    * @param userId - ID of the user creating the version
    * @returns Promise<Document>
    */
-  @retry(3)
+  @Retryable({ maxAttempts: 3 })
   async createDocumentVersion(
     documentId: string,
     versionData: CreateDocumentDTO,
@@ -96,20 +99,20 @@ export class DocumentService {
       
       // Upload to S3 with server-side encryption
       const uploadResult = await this.s3Client.putObject({
-        Bucket: process.env.S3_BUCKET_NAME,
+        Bucket: process.env.S3_BUCKET_NAME || '',
         Key: s3Key,
         Body: encryptedData.content,
         ServerSideEncryption: 'aws:kms',
-        SSEKMSKeyId: process.env.KMS_KEY_ID,
+        SSEKMSKeyId: process.env.KMS_KEY_ID || '',
         Metadata: {
           'x-amz-meta-encryption-key-id': encryptedData.keyId,
           'x-amz-meta-user-id': userId,
           'x-amz-meta-document-type': versionData.type
         }
-      }).promise();
+      });
 
       // Create document record
-      const document: Document = {
+      const document = this.documentRepository.create({
         id: documentId,
         userId,
         title: versionData.title,
@@ -122,11 +125,11 @@ export class DocumentService {
           geographicLocation: 'ca-central-1'
         },
         storageDetails: {
-          bucket: process.env.S3_BUCKET_NAME,
+          bucket: process.env.S3_BUCKET_NAME || '',
           key: s3Key,
-          version: uploadResult.VersionId,
+          version: uploadResult.VersionId || '',
           encryptionType: EncryptionType.KMS_MANAGED,
-          kmsKeyId: process.env.KMS_KEY_ID
+          kmsKeyId: process.env.KMS_KEY_ID || ''
         },
         resourceType: ResourceType.LEGAL_DOCS,
         accessLevel: 'WRITE',
@@ -134,15 +137,15 @@ export class DocumentService {
         expiresAt: new Date(Date.now() + versionData.retentionPeriod * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
         updatedAt: new Date()
-      };
+      });
 
       // Save document to database
       const savedDocument = await this.documentRepository.save(document);
 
       // Log audit trail
       await this.auditService.createAuditLog({
-        eventType: AuditEventType.DOCUMENT_UPLOAD,
-        severity: AuditSeverity.INFO,
+        eventType: 'DOCUMENT_UPLOAD',
+        severity: 'INFO',
         userId,
         resourceId: documentId,
         resourceType: ResourceType.LEGAL_DOCS,
@@ -172,7 +175,7 @@ export class DocumentService {
   async enforceRetentionPolicy(documentId: string): Promise<void> {
     try {
       const document = await this.documentRepository.findOne({
-        where: { id: documentId }
+        where: { id: documentId } as any
       });
 
       if (!document) {
@@ -187,8 +190,8 @@ export class DocumentService {
 
         // Log retention action
         await this.auditService.createAuditLog({
-          eventType: AuditEventType.DOCUMENT_RETENTION,
-          severity: AuditSeverity.INFO,
+          eventType: 'DOCUMENT_RETENTION',
+          severity: 'INFO',
           userId: 'system',
           resourceId: documentId,
           resourceType: ResourceType.LEGAL_DOCS,
@@ -218,7 +221,7 @@ export class DocumentService {
     requiredLevel: AccessLevel
   ): Promise<void> {
     const document = await this.documentRepository.findOne({
-      where: { id: documentId }
+      where: { id: documentId } as any
     });
 
     if (!document) {
@@ -243,14 +246,7 @@ export class DocumentService {
   }
 
   private async compressDocument(content: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      compress(content, {
-        level: 6
-      }, (err: Error | null, result: Buffer) => {
-        if (err) reject(err);
-        resolve(result);
-      });
-    });
+    return this.gzipAsync(content);
   }
 
   private generateS3Key(documentId: string, userId: string): string {
@@ -263,7 +259,7 @@ export class DocumentService {
 
   private async getDocumentRetentionPolicy(
     documentType: DocumentType
-  ): Promise<DocumentRetentionPolicy> {
+  ): Promise<{ retentionPeriod: number; action: string }> {
     return {
       retentionPeriod: 730, // 2 years
       action: 'ARCHIVE'

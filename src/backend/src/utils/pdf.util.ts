@@ -82,7 +82,7 @@ export async function validatePDF(
     
     // Basic format validation
     result.format.isPDF = true;
-    result.format.version = pdfDoc.getVersion?.() || '1.7'; // Fallback to 1.7 if getVersion not available
+    result.format.version = '1.7'; // Default to 1.7 as pdf-lib doesn't expose version info
     result.format.isVersionSupported = SUPPORTED_PDF_VERSIONS.includes(result.format.version);
 
     // Security checks
@@ -203,25 +203,20 @@ export async function generatePDFPreview(
       previewPdf.addPage(page);
     }
 
-    // Apply security settings
-    if (previewPdf.encrypt) {
-      await previewPdf.encrypt({
-        userPassword: undefined,
-        ownerPassword: generatePreviewPassword(),
-        permissions: {
-          printing: options.allowPrinting ? 'lowResolution' : 'none',
-          modifying: false,
-          copying: options.allowCopying || false,
-          annotating: false,
-          fillingForms: false,
-          contentAccessibility: true,
-          documentAssembly: false
-        }
-      });
-    }
-
     // Generate preview buffer
-    const previewBuffer = await previewPdf.save();
+    const previewBuffer = await previewPdf.save({
+      userPassword: undefined,
+      ownerPassword: generatePreviewPassword(),
+      permissions: {
+        printing: options.allowPrinting ? 'lowResolution' : 'none',
+        modifying: false,
+        copying: options.allowCopying || false,
+        annotating: false,
+        fillingForms: false,
+        contentAccessibility: true,
+        documentAssembly: false
+      }
+    });
 
     // Log preview generation
     logger.info('PDF preview generated', {
@@ -278,7 +273,7 @@ async function addWatermark(page: PDFPage, text: string): Promise<void> {
     size: fontSize,
     font: font,
     color: rgb(0.8, 0.8, 0.8),
-    rotate: Math.PI / 4 as number,
+    rotate: Math.PI / 4,
     opacity: 0.3
   });
 }

@@ -17,6 +17,8 @@ import {
   updateDocumentSchema, 
   listDocumentsSchema 
 } from '../validators/documents.validator';
+import { DocumentService } from '../../services/document.service';
+import { AuditService } from '../../services/audit.service';
 
 // Constants for security and validation
 const MAX_FILE_SIZE_MB = 50;
@@ -62,56 +64,56 @@ export function configureDocumentRoutes(
   // Create document endpoint with enhanced security
   router.post('/',
     rateLimit(RATE_LIMITS.create),
-    authMiddleware,
+    authMiddleware as any,
     upload.single('file'),
     validateRequest(createDocumentSchema, {
       resourceType: 'DOCUMENT',
       sensitiveFields: ['file'],
       complianceRequirements: ['PIPEDA', 'HIPAA']
     }),
-    controller.createDocument
+    controller.createDocument.bind(controller)
   );
 
   // Get specific document endpoint
   router.get('/:id',
     rateLimit(RATE_LIMITS.read),
-    authMiddleware,
+    authMiddleware as any,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.getDocument
+    controller.getDocument.bind(controller)
   );
 
   // List documents endpoint with pagination and filtering
   router.get('/',
     rateLimit(RATE_LIMITS.read),
-    authMiddleware,
+    authMiddleware as any,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.listDocuments
+    controller.listDocuments.bind(controller)
   );
 
   // Update document endpoint
   router.put('/:id',
     rateLimit(RATE_LIMITS.update),
-    authMiddleware,
+    authMiddleware as any,
     validateRequest(updateDocumentSchema, {
       resourceType: 'DOCUMENT',
       sensitiveFields: ['metadata'],
       complianceRequirements: ['PIPEDA', 'HIPAA']
     }),
-    controller.updateDocument
+    controller.updateDocument.bind(controller)
   );
 
   // Delete document endpoint
   router.delete('/:id',
     rateLimit(RATE_LIMITS.delete),
-    authMiddleware,
+    authMiddleware as any,
     validateRequest(listDocumentsSchema, {
       resourceType: 'DOCUMENT'
     }),
-    controller.deleteDocument
+    controller.deleteDocument.bind(controller)
   );
 
   // Error handling middleware
@@ -144,5 +146,7 @@ export function configureDocumentRoutes(
 
 // Create and export configured router
 const documentsRouter = Router();
-const documentsController = new DocumentsController();
+const documentService = new DocumentService();
+const auditService = new AuditService();
+const documentsController = new DocumentsController(documentService, auditService);
 export default configureDocumentRoutes(documentsRouter, documentsController);

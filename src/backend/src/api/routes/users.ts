@@ -17,6 +17,8 @@ import { createUserSchema, updateUserSchema } from '../validators/users.validato
 import { logger } from '../../utils/logger.util';
 import { AuditEventType, AuditSeverity } from '../../types/audit.types';
 import { UserRole } from '../../types/user.types';
+import { UserService } from '../../services/user.service';
+import { AuditService } from '../../services/audit.service';
 
 // Configure rate limiter
 const rateLimiter = new RateLimiterMemory({
@@ -27,7 +29,9 @@ const rateLimiter = new RateLimiterMemory({
 
 // Initialize router with security settings
 const router = Router();
-const usersController = new UsersController();
+const userService = new UserService();
+const auditService = new AuditService();
+const usersController = new UsersController(userService, auditService);
 
 // Apply security middleware
 router.use(helmet({
@@ -53,7 +57,7 @@ const rateLimitMiddleware = async (req: any, res: any, next: any) => {
     await rateLimiter.consume(req.ip);
     next();
   } catch (error) {
-    logger.securityEvent(AuditEventType.USER_LOGIN, {
+    logger.logSecurityEvent(AuditEventType.USER_LOGIN, {
       severity: AuditSeverity.WARNING,
       message: 'Rate limit exceeded',
       ipAddress: req.ip,
@@ -83,7 +87,7 @@ router.post('/',
     sensitiveFields: ['email', 'phoneNumber'],
     complianceRequirements: ['PIPEDA', 'HIPAA']
   }),
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -91,7 +95,8 @@ router.post('/',
       const result = await usersController.createUser(
         req.validatedData,
         req.headers['user-agent'] as string,
-        req.ip
+        req.ip,
+        correlationId
       );
 
       res.status(201).json({
@@ -110,7 +115,7 @@ router.post('/',
  * GET /api/users/:id
  */
 router.get('/:id',
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -119,7 +124,8 @@ router.get('/:id',
         req.params.id,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip
+        req.ip,
+        correlationId
       );
 
       if (!result) {
@@ -133,7 +139,7 @@ router.get('/:id',
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         data: result,
         meta: { correlationId }
@@ -154,7 +160,7 @@ router.put('/:id',
     sensitiveFields: ['phoneNumber'],
     complianceRequirements: ['PIPEDA', 'HIPAA']
   }),
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -164,7 +170,8 @@ router.put('/:id',
         req.validatedData,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip
+        req.ip,
+        correlationId
       );
 
       res.json({
@@ -183,7 +190,7 @@ router.put('/:id',
  * DELETE /api/users/:id
  */
 router.delete('/:id',
-  async (req, res, next) => {
+  async (req: any, res: any, next: any) => {
     try {
       const correlationId = uuidv4();
       logger.addCorrelationId(correlationId);
@@ -192,7 +199,8 @@ router.delete('/:id',
         req.params.id,
         req.user?.role as UserRole,
         req.headers['user-agent'] as string,
-        req.ip
+        req.ip,
+        correlationId
       );
 
       res.json({

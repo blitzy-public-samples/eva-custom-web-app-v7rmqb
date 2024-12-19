@@ -2,7 +2,7 @@
 import { Request, Response } from 'express'; // v4.18.2
 import { AuthService } from '../../services/auth.service';
 import { UserStatus } from '../../types/user.types';
-import { Auth0Integration } from '../../integrations/auth0.integration';
+import { Auth0Integration, Auth0IntegrationError } from '../../integrations/auth0.integration';
 
 // Custom error types for authentication flows
 class AuthenticationError extends Error {
@@ -55,9 +55,9 @@ export class AuthController {
         return await originalMethod.apply(this, args);
       } catch (error) {
         const res = args[1] as Response;
-        if (error instanceof AuthenticationError || error instanceof Auth0Integration) {
+        if (error instanceof AuthenticationError || error instanceof Auth0IntegrationError) {
           return res.status(401).json({
-            error: (error as AuthenticationError).code,
+            error: error.code,
             message: error.message
           });
         }

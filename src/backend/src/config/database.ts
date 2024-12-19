@@ -134,14 +134,14 @@ export const initializeDatabase = async (): Promise<DataSource> => {
       });
     });
 
-    // Set up query performance monitoring
+    // Set up query performance monitoring using QueryRunner events
     if (process.env.NODE_ENV === 'production') {
-      dataSource.driver.on('query', (query: any) => {
-        if (query.time > 1000) { // Log slow queries (>1s)
+      dataSource.createQueryRunner().afterQuery.subscribe((data: any) => {
+        if (data.executionTime > 1000) { // Log slow queries (>1s)
           logger.warn('Slow query detected', {
-            query: query.query,
-            parameters: query.parameters,
-            time: query.time,
+            query: data.query,
+            parameters: data.parameters,
+            time: data.executionTime,
             timestamp: new Date().toISOString()
           });
         }

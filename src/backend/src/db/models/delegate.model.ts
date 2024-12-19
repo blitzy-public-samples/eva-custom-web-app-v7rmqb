@@ -21,12 +21,12 @@ import {
 import { UserRole, DelegateStatus } from '../../types/delegate.types';
 import { UserModel } from './user.model';
 import { EncryptionService } from '../../services/encryption.service';
-import { AuditLogger } from '../../services/audit.service';
+import { AuditService } from '../../services/audit.service';
 import { randomBytes } from 'crypto';
 
 // Initialize services
 const encryptionService = new EncryptionService();
-const auditLogger = new AuditLogger();
+const auditService = new AuditService();
 
 @Entity('delegates')
 @Index(['ownerId'])
@@ -184,10 +184,18 @@ export class DelegateEntity {
     this.accessCount++;
 
     // Log access attempt
-    await auditLogger.logDelegateAccess({
-      delegateId: this.id,
-      accessType: 'ACCESS_CHECK',
-      success: true
+    await auditService.createAuditLog({
+      eventType: 'DELEGATE_ACCESS',
+      severity: 'INFO',
+      userId: this.delegateId,
+      resourceId: this.id,
+      resourceType: 'DELEGATE',
+      ipAddress: '0.0.0.0', // Should be passed from the request context
+      userAgent: 'system',
+      details: {
+        accessType: 'ACCESS_CHECK',
+        success: true
+      }
     });
 
     return true;
@@ -205,11 +213,11 @@ export class DelegateEntity {
 
     // Encrypt sensitive data if present
     if (this.encryptedData) {
-      const encrypted = await encryptionService.encryptField(
-        this.encryptedData,
+      const encrypted = await encryptionService.encryptSensitiveData(
+        Buffer.from(this.encryptedData),
         this.accessKey
       );
-      this.encryptedData = encrypted;
+      this.encryptedData = encrypted.content.toString('base64');
     }
 
     // Set initial timestamps
@@ -225,21 +233,29 @@ export class DelegateEntity {
   async beforeUpdate(): Promise<void> {
     // Re-encrypt data if modified
     if (this.encryptedData) {
-      const encrypted = await encryptionService.encryptField(
-        this.encryptedData,
+      const encrypted = await encryptionService.encryptSensitiveData(
+        Buffer.from(this.encryptedData),
         this.accessKey
       );
-      this.encryptedData = encrypted;
+      this.encryptedData = encrypted.content.toString('base64');
     }
 
     // Update timestamp
     this.updatedAt = new Date();
 
     // Log update
-    await auditLogger.logDelegateAccess({
-      delegateId: this.id,
-      accessType: 'UPDATE',
-      success: true
+    await auditService.createAuditLog({
+      eventType: 'DELEGATE_ACCESS',
+      severity: 'INFO',
+      userId: this.delegateId,
+      resourceId: this.id,
+      resourceType: 'DELEGATE',
+      ipAddress: '0.0.0.0', // Should be passed from the request context
+      userAgent: 'system',
+      details: {
+        accessType: 'UPDATE',
+        success: true
+      }
     });
   }
 
@@ -251,11 +267,20 @@ export class DelegateEntity {
     // Decrypt sensitive data
     if (this.encryptedData) {
       try {
-        const decrypted = await encryptionService.decryptField(
-          this.encryptedData,
+        const decrypted = await encryptionService.decryptSensitiveData(
+          {
+            content: Buffer.from(this.encryptedData, 'base64'),
+            iv: Buffer.alloc(16),
+            authTag: Buffer.alloc(16),
+            keyVersion: '1',
+            metadata: {
+              algorithm: 'aes-256-gcm',
+              timestamp: Date.now()
+            }
+          },
           this.accessKey
         );
-        this.encryptedData = decrypted;
+        this.encryptedData = decrypted.toString();
       } catch (error) {
         this.encryptedData = '';
         throw new Error('Failed to decrypt delegate data');

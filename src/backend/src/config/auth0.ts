@@ -86,10 +86,6 @@ const MANAGEMENT_API_CONFIG = {
   retry: {
     enabled: true,
     maxRetries: 3
-  },
-  rateLimit: {
-    enabled: true,
-    perSecond: 50
   }
 } as const;
 
@@ -103,15 +99,11 @@ export const getManagementConfig = (): ManagementClientOptions => {
       domain: MANAGEMENT_API_CONFIG.domain,
       clientId: MANAGEMENT_API_CONFIG.clientId,
       clientSecret: MANAGEMENT_API_CONFIG.clientSecret,
-      scope: MANAGEMENT_API_CONFIG.scope,
       tokenProvider: {
         ...MANAGEMENT_API_CONFIG.tokenProvider
       },
       retry: {
         ...MANAGEMENT_API_CONFIG.retry
-      },
-      rateLimit: {
-        ...MANAGEMENT_API_CONFIG.rateLimit
       }
     };
   } catch (error) {
@@ -129,7 +121,6 @@ export const getAuthenticationConfig = (): AuthenticationClientOptions => {
       domain: AUTH0_CONFIG.domain,
       clientId: AUTH0_CONFIG.clientId,
       clientSecret: AUTH0_CONFIG.clientSecret,
-      scope: AUTH0_CONFIG.scope,
       audience: AUTH0_CONFIG.audience,
       maxRetries: 3,
       timeout: 10000, // 10 seconds timeout

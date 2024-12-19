@@ -281,9 +281,15 @@ export default class DocumentModel {
       updatedAt
     } = this;
 
-    // Remove sensitive information from metadata
-    const sanitizedMetadata = { ...metadata };
-    delete sanitizedMetadata.geographicLocation;
+    // Create a new metadata object without geographicLocation
+    const sanitizedMetadata = {
+      fileName: metadata.fileName,
+      fileSize: metadata.fileSize,
+      mimeType: metadata.mimeType,
+      uploadedAt: metadata.uploadedAt,
+      lastModified: metadata.lastModified,
+      retentionPeriod: metadata.retentionPeriod
+    };
 
     return {
       id,

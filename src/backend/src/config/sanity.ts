@@ -136,12 +136,6 @@ const createSanityClient = (options: Partial<SanityConfig> = {}) => {
   // Create client instance with security settings
   const client = createClient({
     ...config,
-    // Additional security headers
-    headers: {
-      'X-Sanity-Client': 'estate-kit-backend',
-      'X-Sanity-Client-Version': '1.0.0'
-    },
-    // Enable token-based authentication
     useProjectHostname: true,
     withCredentials: true
   });

@@ -11,8 +11,7 @@ import {
   GetObjectCommand, 
   DeleteObjectCommand, 
   HeadObjectCommand,
-  GetObjectCommandOutput 
-} from '@aws-sdk/client-s3'; // ^3.0.0
+  GetObjectCommandOutput } from '@aws-sdk/client-s3'; // ^3.0.0
 import { injectable } from 'tsyringe'; // ^4.7.0
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
@@ -46,10 +45,17 @@ export class S3Integration {
   private readonly encryptionConfig: typeof s3Config.encryption;
 
   constructor() {
+    if (!s3Config.bucket) {
+      throw new Error('S3 bucket name is required');
+    }
+
     // Initialize S3 client with enhanced configuration
     this.s3Client = new S3Client({
       region: s3Config.region,
-      credentials: s3Config.credentials,
+      credentials: {
+        accessKeyId: s3Config.credentials.accessKeyId || '',
+        secretAccessKey: s3Config.credentials.secretAccessKey || ''
+      },
       maxAttempts: 3
     });
 

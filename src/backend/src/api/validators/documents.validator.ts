@@ -22,11 +22,7 @@ const RATE_LIMIT_WINDOW_MS = 60000;
 const RATE_LIMIT_MAX_REQUESTS = 100;
 
 // Initialize virus scanner
-const clamav = new NodeClam({
-  removeInfected: true,
-  quarantinePath: '/tmp/quarantine',
-  debugMode: false
-});
+const clamav = new NodeClam();
 
 /**
  * Enhanced validation schema for document creation
@@ -119,7 +115,7 @@ export async function validateDocumentPayload(payload: z.infer<typeof createDocu
     }
 
     // Perform virus scan
-    const scanResult = await clamav.scanBuffer(payload.file.buffer);
+    const scanResult = await clamav.scanFile(payload.file.buffer);
     if (!scanResult.isClean) {
       return {
         isValid: false,

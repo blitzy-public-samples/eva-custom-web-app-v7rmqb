@@ -70,7 +70,7 @@ export class DocumentsController {
 
       // Create document with security features
       const document = await this.documentService.createDocumentVersion(
-        undefined,
+        `${documentData.title}-${userId}`,
         documentData,
         userId
       );
@@ -313,7 +313,7 @@ export class DocumentsController {
       };
 
       const documents = await this.documentService.createDocumentVersion(
-        undefined,
+        `${listData.title}-${userId}`,
         listData,
         userId
       );

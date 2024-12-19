@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm'; // ^0.3.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { retry } from '@nestjs/common';
 import { compress } from 'compression'; // ^1.7.4
-import { S3 } from 'aws-sdk'; // ^2.1.0
+import { S3 } from '@aws-sdk/client-s3'; // ^2.1.0
 
 import {
   Document,

@@ -19,7 +19,7 @@ import {
 } from 'typeorm'; // ^0.3.0
 
 import { UserRole, DelegateStatus } from '../../types/delegate.types';
-import UserModel from './user.model';
+import { UserModel } from './user.model';
 import { EncryptionService } from '../../services/encryption.service';
 import { AuditLogger } from '../../services/audit.service';
 import { randomBytes } from 'crypto';

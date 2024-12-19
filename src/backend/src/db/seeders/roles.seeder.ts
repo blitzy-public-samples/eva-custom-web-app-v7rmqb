@@ -1,7 +1,7 @@
 // @ts-check
 import { DataSource } from 'typeorm'; // Version: ^0.3.0
-import { UserRole } from '../../../types/user.types';
-import { ResourceType, AccessLevel } from '../../../types/permission.types';
+import { UserRole } from '../../types/user.types';
+import { ResourceType, AccessLevel } from '../../types/permission.types';
 import { Logger } from '../../utils/logger.util'; // Updated logger path
 
 /**

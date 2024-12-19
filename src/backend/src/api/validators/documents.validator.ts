@@ -1,6 +1,5 @@
 // External dependencies
 import { z } from 'zod'; // Version: ^3.22.0
-import { ClamScan } from '@estatekit/clamav-client'; // Version: ^1.0.0
 
 // Internal imports
 import { DocumentType } from '../../types/document.types';

@@ -1,6 +1,6 @@
 // @ts-check
 import { DataSource, DataSourceOptions } from 'typeorm'; // ^0.3.0
-import UserModel from '../db/models/user.model';
+import { UserModel } from '../db/models/user.model';
 import DocumentModel from '../db/models/document.model';
 import winston from 'winston'; // ^3.8.0 - For comprehensive logging
 

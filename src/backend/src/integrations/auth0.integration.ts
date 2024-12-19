@@ -2,7 +2,7 @@ import { ManagementClient, AuthenticationClient } from 'auth0'; // v3.0.0
 import { JwtPayload } from 'jsonwebtoken'; // v9.0.0
 import { JwksClient } from 'jwks-rsa'; // v3.0.1
 import rateLimit from 'express-rate-limit'; // v6.0.0
-import { AUTH0_CONFIG as auth0Config, JWT_CONFIG as jwtConfig } from '../../config/auth0';
+import { AUTH0_CONFIG as auth0Config, JWT_CONFIG as jwtConfig } from '../config/auth0';
 
 // Custom error types for better error handling
 export class Auth0IntegrationError extends Error {

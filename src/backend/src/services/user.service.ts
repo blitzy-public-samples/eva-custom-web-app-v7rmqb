@@ -8,7 +8,7 @@ import { Service } from 'typedi'; // ^0.10.0
 import { Repository } from 'typeorm'; // ^0.3.0
 import { InjectRepository } from 'typeorm-typedi-extensions'; // ^0.4.1
 
-import UserModel from '../db/models/user.model';
+import { UserModel } from '../db/models/user.model';
 import { 
   User, 
   CreateUserDTO, 

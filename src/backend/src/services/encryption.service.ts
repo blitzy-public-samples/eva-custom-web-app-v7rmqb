@@ -1,5 +1,5 @@
 // @ts-check
-import AWS from 'aws-sdk'; // ^2.1.0
+import { KMS } from '@aws-sdk/client-kms'; // ^2.1.0
 import winston from 'winston'; // ^3.0.0
 import { 
   encrypt, 
@@ -36,7 +36,7 @@ interface EncryptedDataWithMetadata {
  * Service class providing enterprise-grade encryption operations with enhanced security features
  */
 export class EncryptionService {
-  private kmsClient: AWS.KMS;
+  private kmsClient: KMS;
   private keyCache: Map<string, CachedKeyData>;
   private readonly KEY_ROTATION_INTERVAL_DAYS: number;
   private readonly MAX_RETRY_ATTEMPTS: number;
@@ -52,7 +52,7 @@ export class EncryptionService {
     maxRetryAttempts: number = 3
   ) {
     // Initialize AWS KMS client with provided configuration
-    this.kmsClient = new AWS.KMS(awsConfig);
+    this.kmsClient = new KMS(awsConfig);
     
     // Initialize key cache and configuration
     this.keyCache = new Map<string, CachedKeyData>();

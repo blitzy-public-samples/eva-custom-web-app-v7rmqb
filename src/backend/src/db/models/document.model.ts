@@ -15,10 +15,10 @@ import {
   DocumentType,
   DocumentStatus,
   DocumentMetadata
-} from '../types/document.types';
+} from '../../types/document.types';
 
 import { UserModel } from './user.model';
-import { EncryptionService } from '../services/encryption.service';
+import { EncryptionService } from '../../services/encryption.service';
 import crypto from 'crypto';
 
 // Initialize encryption service for document content encryption

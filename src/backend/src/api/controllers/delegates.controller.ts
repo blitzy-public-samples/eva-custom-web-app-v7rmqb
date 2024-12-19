@@ -39,11 +39,6 @@ import {
 // Types and enums
 import { ResourceType, AccessLevel } from '../../types/permission.types';
 
-// Security guards and interceptors
-import { AuthGuard } from '../guards/auth.guard';
-import { RBACGuard } from '../guards/rbac.guard';
-import { AuditInterceptor } from '../interceptors/audit.interceptor';
-
 @Controller('delegates')
 @ApiTags('Delegates')
 @ApiBearerAuth()

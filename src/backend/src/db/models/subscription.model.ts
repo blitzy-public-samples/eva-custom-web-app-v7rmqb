@@ -21,10 +21,10 @@ import {
   SubscriptionPlan,
   SubscriptionStatus,
   BillingCycle
-} from '../types/subscription.types';
+} from '../../types/subscription.types';
 
-import UserModel from './user.model';
-import { AuditLog } from '../types/audit.types';
+import { UserModel } from './user.model';
+import { AuditLog } from '../../types/audit.types';
 
 /**
  * TypeORM entity model for subscription management with enhanced audit logging and validation

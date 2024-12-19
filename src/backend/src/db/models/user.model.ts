@@ -14,9 +14,9 @@ import {
   UserRole, 
   UserStatus, 
   UserProfile 
-} from '../types/user.types';
+} from '../../types/user.types';
 
-import { EncryptionService } from '../services/encryption.service';
+import { EncryptionService } from '../../services/encryption.service';
 
 // Initialize encryption service for field-level encryption
 const encryptionService = new EncryptionService();

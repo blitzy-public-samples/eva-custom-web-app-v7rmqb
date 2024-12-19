@@ -52,10 +52,39 @@ const formatRequestLog = (req: Request): Record<string, any> => {
   };
 };
 
+interface LogEntry {
+  type: string;
+  timestamp: string;
+  correlationId: string | undefined;
+  statusCode: number;
+  statusMessage: string;
+  responseSize: string | undefined;
+  duration: {
+    microseconds: number;
+    milliseconds: number;
+  };
+  headers: Record<string, string | number | string[]>;
+  environment: string | undefined;
+  error?: {
+    code: number;
+    message: string;
+  };
+  metrics?: {
+    name: string;
+    value: number;
+    unit: string;
+    tags: {
+      statusCode: number;
+      path: string;
+      method: string;
+    };
+  };
+}
+
 /**
  * Formats response details into structured log entry with performance metrics
  */
-const formatResponseLog = (res: Response, duration: number): Record<string, any> => {
+const formatResponseLog = (res: Response, duration: number): LogEntry => {
   const { statusCode, statusMessage } = res;
   const responseSize = res.get('content-length');
   const correlationId = res.get('x-correlation-id');
@@ -70,7 +99,7 @@ const formatResponseLog = (res: Response, duration: number): Record<string, any>
     }
   });
 
-  const logEntry = {
+  const logEntry: LogEntry = {
     type: 'response',
     timestamp: new Date().toISOString(),
     correlationId,
@@ -87,14 +116,14 @@ const formatResponseLog = (res: Response, duration: number): Record<string, any>
 
   // Add error details for non-200 responses
   if (statusCode >= 400) {
-    logEntry['error'] = {
+    logEntry.error = {
       code: statusCode,
       message: statusMessage
     };
   }
 
   // Add performance metrics
-  logEntry['metrics'] = {
+  logEntry.metrics = {
     name: 'request_duration',
     value: duration / 1000, // Convert to milliseconds
     unit: 'milliseconds',
@@ -164,3 +193,23 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 
   next();
 };
+
+/**
+ * Interceptor for audit logging
+ */
+export class AuditInterceptor {
+  intercept(req: Request, res: Response, next: NextFunction): void {
+    // Audit logging implementation
+    next();
+  }
+}
+
+/**
+ * Interceptor for general logging
+ */
+export class LoggingInterceptor {
+  intercept(req: Request, res: Response, next: NextFunction): void {
+    // General logging implementation
+    next();
+  }
+}
